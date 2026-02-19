@@ -1,0 +1,38 @@
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.VC.db
+*.VC.VC.opendb
+
+*.log
+*.tmp
+
+.DS_Store
+
+*.vsconfig
+.vscode/
+.idea/
+
+Visual Studio cache
+.vs/
+*.ipch
+
+Cursor
+.cursor/rules/.mdc
+.cursor/
+
+# 플러그인 임시 파일
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
+# 추가적인 컴파일 결과물
+*.pdb
+*.exe
+*.dll
