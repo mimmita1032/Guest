@@ -22,5 +22,4 @@ void AGuestPlayerController::BeginPlay()
 
 	bShowMouseCursor = false;
 
-	UE_LOG(LogTemp, Log, TEXT("플레이어 컨트롤러 초기화 및 입력 모드 설정 완료"));
 }
