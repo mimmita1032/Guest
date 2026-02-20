@@ -30,6 +30,8 @@ protected:
 	void LookAction(const FInputActionValue& Value);
 
 	void JumpAction(const FInputActionValue& Value);
+	
+	void OnInteract(const struct FInputActionValue& Value);
 
 protected:
 	
@@ -52,5 +54,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> CameraComp;
+
+	//상호작용
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<class UGInteractionComponent> InteractionComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> InteractAction;
 
 };

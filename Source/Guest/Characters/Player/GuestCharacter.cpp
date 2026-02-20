@@ -4,9 +4,11 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
+#include "Guest/Components/Interaction/GInteractionComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
+#include "Guest/Utils/GLog.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -21,6 +23,8 @@ AGuestCharacter::AGuestCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
+
+	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
 
 }
 
@@ -59,6 +63,10 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			EIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
 			EIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
 		}
+
+		if (InteractAction)
+		{
+			EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AGuestCharacter::OnInteract);		}
 	}
 }
 
@@ -94,4 +102,13 @@ void AGuestCharacter::JumpAction(const FInputActionValue& Value)
 {
 	Jump();
 	UE_LOG(LogTemp, Log, TEXT("점프 실행"));
+}
+
+void AGuestCharacter::OnInteract(const FInputActionValue& Value)
+{
+	if (InteractionComponent)
+	{
+		G_LOG(TEXT("상호작용 키 입력됨"));
+		InteractionComponent->DoInteract();
+	}
 }
