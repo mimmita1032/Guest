@@ -7,7 +7,5 @@
 
 AGuestGameState::AGuestGameState()
 {
-	// 초기 상태 설정
-	UE_LOG(LogTemp, Log, TEXT("게임 스테이트 초기화 완료"));
-	G_LOG(TEXT("test"))
+	G_LOG(TEXT("GuestGameState"))
 }

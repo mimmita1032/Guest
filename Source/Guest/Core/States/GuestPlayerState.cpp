@@ -4,8 +4,9 @@
 #include "Guest/Core/States/GuestPlayerState.h"
 
 #include "GuestGameState.h"
+#include "Guest/Utils/GLog.h"
 
 AGuestPlayerState::AGuestPlayerState() 
 {
-	UE_LOG(LogTemp, Log, TEXT("플레이어 스테이트 초기화 완료"));
+	G_LOG(TEXT("GuestPlayerState"))
 }
