@@ -44,19 +44,25 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	if (UEnhancedInputComponent* EIC = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 
-		if (UInputAction* RawMove = Cast<UInputAction>(MoveAction.Get()))
+		if (UInputAction* RawMove = Cast<UInputAction>(IA_Move.Get()))
 		{
-			EIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::Move);
+			EIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::MoveAction);
 		}
 
-		if (UInputAction* RawLook = Cast<UInputAction>(LookAction.Get()))
+		if (UInputAction* RawLook = Cast<UInputAction>(IA_Look.Get()))
 		{
-			EIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::Look);
+			EIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::LookAction);
+		}
+
+		if (UInputAction* RawJump = Cast<UInputAction>(IA_Jump.Get()))
+		{
+			EIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
+			EIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
 		}
 	}
 }
 
-void AGuestCharacter::Move(const FInputActionValue& Value)
+void AGuestCharacter::MoveAction(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -73,7 +79,7 @@ void AGuestCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
-void AGuestCharacter::Look(const FInputActionValue& Value)
+void AGuestCharacter::LookAction(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -84,4 +90,8 @@ void AGuestCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-
+void AGuestCharacter::JumpAction(const FInputActionValue& Value)
+{
+	Jump();
+	UE_LOG(LogTemp, Log, TEXT("점프 실행"));
+}

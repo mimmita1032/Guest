@@ -25,9 +25,11 @@ protected:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void Move(const FInputActionValue& Value);
+	void MoveAction(const FInputActionValue& Value);
 
-	void Look(const FInputActionValue& Value);
+	void LookAction(const FInputActionValue& Value);
+
+	void JumpAction(const FInputActionValue& Value);
 
 protected:
 	
@@ -36,10 +38,13 @@ protected:
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> MoveAction;
+	TObjectPtr<UInputAction> IA_Move;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> LookAction;
+	TObjectPtr<UInputAction> IA_Look;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Jump;
 	
 	//카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
