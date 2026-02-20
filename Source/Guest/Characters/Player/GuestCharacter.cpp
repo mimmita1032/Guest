@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
+#include "GuestCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
-#include "GuestCharacter.h"
 #include "EnhancedInputSubsystems.h"
 
 // Sets default values
