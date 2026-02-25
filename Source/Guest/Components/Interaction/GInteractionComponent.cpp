@@ -5,6 +5,7 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
+#include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
 {
@@ -20,29 +21,41 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 AActor* UGInteractionComponent::FindInteractable() const
 {
+	// 소유자 확인 및 시선 기준 시작점 설정
 	AActor* Owner = GetOwner();
 	if (!Owner) return nullptr;
+	if (!GetWorld()) return nullptr;
 
 	FVector Start;
 	FRotator Rotation;
 	Owner->GetActorEyesViewPoint(Start, Rotation);
-
 	FVector End = Start + (Rotation.Vector() * InteractionRange);
 
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(Owner); // 자신은 제외
+	Params.AddIgnoredActor(Owner); // 본인 제외
 
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+	// 라인 트레이스 실행 (Visibility 채널 사용)
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params);
+
+	// 디버그 라인 그리기 (히트: 초록, 실패: 빨강)
+	FColor DebugColor = bHit ? FColor::Green : FColor::Red;
+	DrawDebugLine(GetWorld(), Start, End, DebugColor, false, 0.1f, 0, 1.0f);
+
+	if (bHit)
 	{
 		AActor* HitActor = HitResult.GetActor();
-		
-		if (HitActor && HitActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
+		if (HitActor)
 		{
-			return HitActor;
+			// 인터페이스 구현 여부 확인
+			if (HitActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
+			{
+				return HitActor;
+			}
 		}
 	}
 
+	// 아무것도 맞지 않았거나 상호작용 객체가 아닐 경우
 	return nullptr;
 }
 
