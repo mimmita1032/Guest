@@ -4,6 +4,7 @@
 
 #include "Blueprint/UserWidget.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/UI/DGDigicamWidget.h"
 #include "Kismet/GameplayStatics.h"
@@ -93,9 +94,9 @@ void UDGDigicamComponent::HandleHorizontalInput(float Value)
 
 void UDGDigicamComponent::HandleShutter()
 {
-	// 1. 현재 주점(여기)에 있는 경우
 	if (IsAtBaseLevel())
 	{
+		// CurrentMatchedData가 선언되어야 아래 로직이 컴파일됨
 		if (CurrentState == EDigicamState::ReadyToSnap)
 		{
 			G_LOG(TEXT("'저기'로 수거를 시작합니다: %s"), *CurrentMatchedData.PlaceName.ToString());
@@ -106,52 +107,40 @@ void UDGDigicamComponent::HandleShutter()
 			G_WARN(TEXT("좌표가 일치하지 않아 수거를 시작할 수 없습니다."));
 		}
 	}
-	// 2. 현재 수거지(저기)에 있는 경우
 	else
 	{
-		if (BaseLevelName.IsNone())
+		if (!BaseLevelName.IsNone())
 		{
-			G_ERR(TEXT("귀가할 주점 레벨 이름이 설정되지 않았습니다!"));
-			return;
+			G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
+			UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
 		}
-
-		G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
-		UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
 	}
 }
 
 void UDGDigicamComponent::UpdateSearch()
 {
-	if (!SpacetimeTable) return;
+	if (!GetWorld() || !GetWorld()->GetGameInstance()) return;
 
-	// 데이터 테이블 탐색 로직 (추후 최적화 필요)
-	static const FString ContextString(TEXT("SpacetimeSearch"));
-	TArray<FSpacetimeData*> AllRows;
-	SpacetimeTable->GetAllRows<FSpacetimeData>(ContextString, AllRows);
-
-	bool bFound = false;
-	for (auto Row : AllRows)
+	// GetWorld()를 거쳐서 서브시스템에 접근
+	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
+	if (SpacetimeSS)
 	{
-		if (Row->TargetYear == SelectedYear && Row->AreaCode == SelectedAreaCode)
+		// 서브시스템에 검색 위임 및 결과 저장
+		bool bFound = SpacetimeSS->SearchSpacetime(SelectedYear, SelectedAreaCode, CurrentMatchedData);
+
+		if (bFound)
 		{
-			CurrentMatchedData = *Row;
 			CurrentState = EDigicamState::ReadyToSnap;
-			bFound = true;
-			G_LOG(TEXT("대상 발견: %s"), *Row->PlaceName.ToString());
-			break;
 		}
-	}
+		else if (CurrentState == EDigicamState::ReadyToSnap)
+		{
+			CurrentState = EDigicamState::LocationFocus;
+		}
 
-	if (!bFound && CurrentState == EDigicamState::ReadyToSnap)
-	{
-		// 대상을 잃었을 경우 이전 모드로 복귀
-		CurrentState = EDigicamState::LocationFocus;
-	}
-
-	if (DigicamWidget)
-	{
-		// UI에 데이터 전달
-		DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
+		if (DigicamWidget)
+		{
+			DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
+		}
 	}
 }
 
