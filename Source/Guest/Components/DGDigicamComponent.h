@@ -66,4 +66,12 @@ protected:
 
 	// 매칭된 현재 데이터
 	FSpacetimeData CurrentMatchedData;
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Digicam|Settings")
+	float InputDelay = 0.15f;
+
+	// 마지막 입력 시간 저장용
+	float LastVerticalInputTime = 0.0f;
+	float LastHorizontalInputTime = 0.0f;
 };

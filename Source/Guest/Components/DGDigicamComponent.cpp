@@ -35,6 +35,8 @@ void UDGDigicamComponent::ActivateDigicam()
 		DigicamWidget = CreateWidget<UDGDigicamWidget>(GetWorld(), WidgetClass);
 		if (DigicamWidget) DigicamWidget->AddToViewport();
 	}
+
+	UpdateSearch();
 }
 
 void UDGDigicamComponent::DeactivateDigicam()
@@ -47,7 +49,13 @@ void UDGDigicamComponent::HandleVerticalInput(float Value)
 {
 	if (Value == 0.0f) return;
 
-	// 상태에 따른 숫자 증감 로직
+	// 시간 체크: 현재 시간 - 마지막 입력 시간이 지연 시간보다 작으면 무시
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastVerticalInputTime < InputDelay) return;
+
+	// 입력 허용 시 시간 갱신
+	LastVerticalInputTime = CurrentTime;
+
 	if (CurrentState == EDigicamState::TimeSetting)
 	{
 		SelectedYear += (Value > 0) ? 1 : -1;
@@ -66,7 +74,11 @@ void UDGDigicamComponent::HandleHorizontalInput(float Value)
 {
 	if (Value == 0.0f) return;
 
-	// 설정 항목 전환 (연도 <-> 구역)
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (CurrentTime - LastHorizontalInputTime < InputDelay) return;
+	
+	LastHorizontalInputTime = CurrentTime;
+
 	if (CurrentState == EDigicamState::TimeSetting && Value > 0)
 	{
 		CurrentState = EDigicamState::LocationFocus;
