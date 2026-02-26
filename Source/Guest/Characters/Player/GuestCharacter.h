@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UDGDigicamComponent;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter
@@ -61,5 +62,29 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> InteractAction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+	TObjectPtr<UDGDigicamComponent> DigicamComponent;
+
+#pragma region Digicam Functions
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_DigicamControl;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_DigicamShutter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_DigicamToggle;
+
+	// 입력 처리 함수
+	UFUNCTION()
+	void DigicamControlAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DigicamShutterAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DigicamToggleAction(const FInputActionValue& Value);
+#pragma endregion
 
 };

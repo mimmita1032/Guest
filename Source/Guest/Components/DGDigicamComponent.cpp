@@ -1,0 +1,155 @@
+﻿// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
+
+#include "DGDigicamComponent.h"
+
+#include "Blueprint/UserWidget.h"
+#include "Guest/Data/DataAssets/GSpacetimeTypes.h"
+#include "Guest/Utils/GLog.h"
+#include "Guest/UI/DGDigicamWidget.h"
+#include "Kismet/GameplayStatics.h"
+
+UDGDigicamComponent::UDGDigicamComponent()
+{
+	PrimaryComponentTick.bCanEverTick = false;
+
+	CurrentState = EDigicamState::Inactive;
+	SelectedYear = 2010; // 소낙이 도망친 기본 연도
+	SelectedAreaCode = 0;
+}
+
+void UDGDigicamComponent::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
+void UDGDigicamComponent::ActivateDigicam()
+{
+	if (CurrentState == EDigicamState::Inactive)
+	{
+		CurrentState = EDigicamState::TimeSetting;
+		G_LOG(TEXT("디카 활성화: 수거 준비"));
+	}
+
+	if (WidgetClass && !DigicamWidget)
+	{
+		DigicamWidget = CreateWidget<UDGDigicamWidget>(GetWorld(), WidgetClass);
+		if (DigicamWidget) DigicamWidget->AddToViewport();
+	}
+}
+
+void UDGDigicamComponent::DeactivateDigicam()
+{
+	CurrentState = EDigicamState::Inactive;
+	G_LOG(TEXT("디카 비활성화: 귀가 상태 유지"));
+}
+
+void UDGDigicamComponent::HandleVerticalInput(float Value)
+{
+	if (Value == 0.0f) return;
+
+	// 상태에 따른 숫자 증감 로직
+	if (CurrentState == EDigicamState::TimeSetting)
+	{
+		SelectedYear += (Value > 0) ? 1 : -1;
+		G_LOG(TEXT("연도 조절: %d"), SelectedYear);
+	}
+	else if (CurrentState == EDigicamState::LocationFocus)
+	{
+		SelectedAreaCode += (Value > 0) ? 1 : -1;
+		G_LOG(TEXT("구역 코드 조절: %d"), SelectedAreaCode);
+	}
+
+	UpdateSearch();
+}
+
+void UDGDigicamComponent::HandleHorizontalInput(float Value)
+{
+	if (Value == 0.0f) return;
+
+	// 설정 항목 전환 (연도 <-> 구역)
+	if (CurrentState == EDigicamState::TimeSetting && Value > 0)
+	{
+		CurrentState = EDigicamState::LocationFocus;
+		G_LOG(TEXT("모드 전환: 장소 설정"));
+	}
+	else if (CurrentState == EDigicamState::LocationFocus && Value < 0)
+	{
+		CurrentState = EDigicamState::TimeSetting;
+		G_LOG(TEXT("모드 전환: 연도 설정"));
+	}
+}
+
+void UDGDigicamComponent::HandleShutter()
+{
+	// 1. 현재 주점(여기)에 있는 경우
+	if (IsAtBaseLevel())
+	{
+		if (CurrentState == EDigicamState::ReadyToSnap)
+		{
+			G_LOG(TEXT("'저기'로 수거를 시작합니다: %s"), *CurrentMatchedData.PlaceName.ToString());
+			UGameplayStatics::OpenLevel(GetWorld(), CurrentMatchedData.LevelName);
+		}
+		else
+		{
+			G_WARN(TEXT("좌표가 일치하지 않아 수거를 시작할 수 없습니다."));
+		}
+	}
+	// 2. 현재 수거지(저기)에 있는 경우
+	else
+	{
+		if (BaseLevelName.IsNone())
+		{
+			G_ERR(TEXT("귀가할 주점 레벨 이름이 설정되지 않았습니다!"));
+			return;
+		}
+
+		G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
+		UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
+	}
+}
+
+void UDGDigicamComponent::UpdateSearch()
+{
+	if (!SpacetimeTable) return;
+
+	// 데이터 테이블 탐색 로직 (추후 최적화 필요)
+	static const FString ContextString(TEXT("SpacetimeSearch"));
+	TArray<FSpacetimeData*> AllRows;
+	SpacetimeTable->GetAllRows<FSpacetimeData>(ContextString, AllRows);
+
+	bool bFound = false;
+	for (auto Row : AllRows)
+	{
+		if (Row->TargetYear == SelectedYear && Row->AreaCode == SelectedAreaCode)
+		{
+			CurrentMatchedData = *Row;
+			CurrentState = EDigicamState::ReadyToSnap;
+			bFound = true;
+			G_LOG(TEXT("대상 발견: %s"), *Row->PlaceName.ToString());
+			break;
+		}
+	}
+
+	if (!bFound && CurrentState == EDigicamState::ReadyToSnap)
+	{
+		// 대상을 잃었을 경우 이전 모드로 복귀
+		CurrentState = EDigicamState::LocationFocus;
+	}
+
+	if (DigicamWidget)
+	{
+		// UI에 데이터 전달
+		DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
+	}
+}
+
+bool UDGDigicamComponent::IsAtBaseLevel() const
+{
+	if (!GetWorld()) return false;
+
+	// 현재 맵의 이름을 가져옴 (에디터 실행 시 붙는 접두사 제거 포함)
+	FString CurrentMapName = GetWorld()->GetMapName();
+	CurrentMapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+	return CurrentMapName == BaseLevelName.ToString();
+}
