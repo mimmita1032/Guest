@@ -8,7 +8,7 @@ void UGSpacetimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	SpacetimeDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Core/DT_SpacetimeData")));    
+	SpacetimeDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Core/Data/DT_SpacetimeData")));    
 	if (SpacetimeDataTable)
 	{
 		G_LOG(TEXT("시공간 데이터 테이블 로드 성공"));

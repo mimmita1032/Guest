@@ -28,4 +28,4 @@ protected:
 public:
 	virtual void Interact(AActor* Interactor) override;
 	virtual FText GetInteractText() const override;
-,};`feaf 3`
+};
