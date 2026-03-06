@@ -38,6 +38,5 @@ Plugins/*/Intermediate/
 *.dll
 
 # RiderLink 포함 관련
-!Plugins/Developer/RiderLink/
 Plugins/Developer/RiderLink/Binaries/
 Plugins/Developer/RiderLink/Intermediate/
