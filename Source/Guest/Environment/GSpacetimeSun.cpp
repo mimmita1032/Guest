@@ -14,6 +14,9 @@ AGSpacetimeSun::AGSpacetimeSun()
 	RootComponent = SunLight;
 	
 	SunLight->SetMobility(EComponentMobility::Movable);
+
+	//SkyAtmoSphere에 태양 본체 그리게
+	SunLight->bAtmosphereSunLight = true;
 }
 
 void AGSpacetimeSun::BeginPlay()
