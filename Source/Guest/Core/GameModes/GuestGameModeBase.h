@@ -17,5 +17,7 @@ class GUEST_API AGuestGameModeBase : public AGameModeBase
 public:
 	
 	AGuestGameModeBase();
+
+	virtual void Tick(float DeltaTime) override;
 	
 };
