@@ -43,6 +43,11 @@ void AGuestPlayerController::SetupInputComponent()
 
 void AGuestPlayerController::ToggleDebugUI()
 {
+	if (!DebugWidgetClass)
+	{
+		G_ERR(TEXT("DebugWidgetClass가 할당되지 않았습니다! BP_GuestPlayerController의 디테일 패널을 확인하세요."));
+		return;
+	}
 	// 위젯이 아직 생성되지 않았다면 최초 1회 생성하여 메모리에 할당
 	if (!DebugWidgetInstance && DebugWidgetClass)
 	{
