@@ -23,7 +23,12 @@ protected:
 	UFUNCTION()
 	void OnTimeUpdated(float CurrentHour);
 
+#pragma region Visuals
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light")
 	TObjectPtr<UDirectionalLightComponent> SunLight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light")
+	TObjectPtr<UDirectionalLightComponent> MoonLight;
+#pragma endregion // Visuals
 };
