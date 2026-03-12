@@ -49,13 +49,24 @@ void AGSpacetimeSun::OnTimeUpdated(float CurrentHour)
 	// 0 = 지평선 (일출 6시)
 	// -180 = 지평선 반대편 (일몰 18시)
 	// 90 = 직각으로 올려쬠 (자정, 0시/24시 - 바닥 아래)
-	
+
+#pragma region SunRotation
 	// 24시간을 360도로 변환하는 선형 보간
 	float CalculatedPitch = (CurrentHour / 24.0f) * -360.0f + 90.0f;
 	// 계산된 Pitch 값으로 새로운 회전값 생성 (Yaw와 Roll은 0으로 고정)
 	FRotator NewRotation = FRotator(CalculatedPitch, 0.0f, 0.0f);
 	// 라이트 컴포넌트에 새로운 회전값 적용
 	SunLight->SetWorldRotation(NewRotation);
+#pragma endregion
+
+#pragma region CurveApplication
+	if (SunIntensityCurve)
+	{
+		// 커브에서 현재 시간(CurrentHour)에 해당하는 밝기 값을 가져오게
+		float NewSunIntensity = SunIntensityCurve->GetFloatValue(CurrentHour);
+		SunLight->SetIntensity(NewSunIntensity);
+	}
+#pragma endregion // CurveApplication
 
 #pragma region MoonRotation
 	if (MoonLight)
@@ -63,8 +74,14 @@ void AGSpacetimeSun::OnTimeUpdated(float CurrentHour)
 		// 태양의 고도(Pitch)에 180도 더함
 		float MoonPitch = CalculatedPitch + 180.0f;
 		FRotator MoonRotation = FRotator(MoonPitch, 0.0f, 0.0f);
-		
 		MoonLight->SetWorldRotation(MoonRotation);
+
+		if (MoonIntensityCurve)
+		{
+			// 커브에서 현재 시간에 해당하는 달의 밝기 값을 가져오게
+			float NewMoonIntensity = MoonIntensityCurve->GetFloatValue(CurrentHour);
+			MoonLight->SetIntensity(NewMoonIntensity);
+		}
 	}
 #pragma endregion // MoonRotation
 }

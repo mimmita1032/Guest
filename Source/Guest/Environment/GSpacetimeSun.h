@@ -23,6 +23,17 @@ protected:
 	UFUNCTION()
 	void OnTimeUpdated(float CurrentHour);
 
+#pragma region Curves
+protected:
+	// 시간(0~24)에 따른 태양의 밝기(Intensity) 그래프
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spacetime|Curves")
+	TObjectPtr<class UCurveFloat> SunIntensityCurve;
+
+	// 이건 달!
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spacetime|Curves")
+	TObjectPtr<class UCurveFloat> MoonIntensityCurve;
+#pragma endregion // Curves
+	
 #pragma region Visuals
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Light")
