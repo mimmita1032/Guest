@@ -18,10 +18,18 @@ AGuestCharacter::AGuestCharacter()
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
-	SpringArmComp->TargetArmLength = 400.0f;
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->TargetArmLength = TargetZoomLength;
-
+	SpringArmComp->bDoCollisionTest = true; 
+	SpringArmComp->ProbeSize = 15.0f; 
+	SpringArmComp->ProbeChannel = ECC_Camera;
+	SpringArmComp->TargetOffset = FVector(0.0f, 0.0f, 70.0f);
+	SpringArmComp->SocketOffset = FVector(0.0f, 40.0f, 0.0f);
+	SpringArmComp->bEnableCameraLag = true; 
+	SpringArmComp->CameraLagSpeed = 15.0f; // 숫자가 작을수록 묵직해짐 (기본 10)
+	SpringArmComp->bEnableCameraRotationLag = true;
+	SpringArmComp->CameraRotationLagSpeed = 20.0f;
+	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
@@ -39,6 +47,11 @@ void AGuestCharacter::BeginPlay()
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
+		if (PC->PlayerCameraManager)
+		{
+			PC->PlayerCameraManager->ViewPitchMin = -60.0f; 
+			PC->PlayerCameraManager->ViewPitchMax = 60.0f;  
+		}
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
