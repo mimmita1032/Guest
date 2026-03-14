@@ -18,7 +18,7 @@ AGuestCharacter::AGuestCharacter()
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
-	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 70.0f));
+	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->TargetArmLength = TargetZoomLength;
 	SpringArmComp->bDoCollisionTest = true; 
@@ -30,8 +30,8 @@ AGuestCharacter::AGuestCharacter()
 	SpringArmComp->bEnableCameraRotationLag = false;
 	SpringArmComp->bEnableCameraLag = false;
 	SpringArmComp->CameraRotationLagSpeed = 20.0f;
-	MinZoomLength = 200.0f;
-	MaxZoomLength = 500.0f;
+	MinZoomLength = 00.0f;
+	MaxZoomLength = 450.0f;
 	TargetZoomLength = FMath::Max(TargetZoomLength, MinZoomLength);
 	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
@@ -48,12 +48,25 @@ void AGuestCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (SpringArmComp)
+	{
+		SpringArmComp->SetRelativeLocation(FVector::ZeroVector);
+		SpringArmComp->SocketOffset = FVector::ZeroVector;
+		
+		SpringArmComp->TargetOffset = FVector(0.0f, 0.0f, 60.0f);
+	}
+
+	if (CameraComp)
+	{
+		CameraComp->SetRelativeLocation(FVector::ZeroVector);
+	}
+	
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		if (PC->PlayerCameraManager)
 		{
-			PC->PlayerCameraManager->ViewPitchMin = -60.0f; 
-			PC->PlayerCameraManager->ViewPitchMax = 20.0f;  
+			PC->PlayerCameraManager->ViewPitchMin = -80.0f; 
+			PC->PlayerCameraManager->ViewPitchMax = 25.0f;  
 		}
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
@@ -69,6 +82,32 @@ void AGuestCharacter::Tick(float DeltaTime)
 	if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, TargetZoomLength, 0.1f))
 	{
 		SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, TargetZoomLength, DeltaTime, ZoomSpeed);
+	}
+
+	float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SpringArmComp->TargetArmLength);
+
+	SpringArmComp->SocketOffset.Y = FMath::Lerp(0.0f, 75.0f, FpsAlpha);
+	SpringArmComp->SocketOffset.Z = FMath::Lerp(0.0f, 140.0f, FpsAlpha);
+	
+	if (SpringArmComp->TargetArmLength < 50.0f)
+	{
+		SpringArmComp->bDoCollisionTest = false;
+	}
+	else
+	{
+		SpringArmComp->bDoCollisionTest = true;
+	}
+	
+	float TargetFOV = FMath::Lerp(100.0f, 90.0f, FpsAlpha);
+	CameraComp->SetFieldOfView(TargetFOV);
+	
+	if (SpringArmComp->TargetArmLength < 20.0f)
+	{
+		if (GetMesh()) GetMesh()->SetOwnerNoSee(true);
+	}
+	else
+	{
+		if (GetMesh()) GetMesh()->SetOwnerNoSee(false);
 	}
 }
 
