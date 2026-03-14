@@ -18,27 +18,30 @@ AGuestCharacter::AGuestCharacter()
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
+	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 70.0f));
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->TargetArmLength = TargetZoomLength;
 	SpringArmComp->bDoCollisionTest = true; 
-	SpringArmComp->ProbeSize = 15.0f; 
+	SpringArmComp->ProbeSize = 12.0f; 
 	SpringArmComp->ProbeChannel = ECC_Camera;
-	SpringArmComp->TargetOffset = FVector(0.0f, 0.0f, 70.0f);
-	SpringArmComp->SocketOffset = FVector(0.0f, 40.0f, 0.0f);
-	SpringArmComp->bEnableCameraLag = true; 
-	SpringArmComp->CameraLagSpeed = 15.0f; // 숫자가 작을수록 묵직해짐 (기본 10)
-	SpringArmComp->bEnableCameraRotationLag = true;
+	SpringArmComp->TargetOffset = FVector::ZeroVector;
+	SpringArmComp->SocketOffset = FVector(0.0f, 75.0f, 0.0f);
+	SpringArmComp->CameraLagSpeed = 15.0f; 
+	SpringArmComp->bEnableCameraRotationLag = false;
+	SpringArmComp->bEnableCameraLag = false;
 	SpringArmComp->CameraRotationLagSpeed = 20.0f;
+	MinZoomLength = 200.0f;
+	MaxZoomLength = 500.0f;
+	TargetZoomLength = FMath::Max(TargetZoomLength, MinZoomLength);
 	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
+	
 	bUseControllerRotationYaw = true;
 
 	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
-
 	DigicamComponent = CreateDefaultSubobject<UDGDigicamComponent>(TEXT("DigicamComponent"));
-
 }
 
 void AGuestCharacter::BeginPlay()
@@ -50,7 +53,7 @@ void AGuestCharacter::BeginPlay()
 		if (PC->PlayerCameraManager)
 		{
 			PC->PlayerCameraManager->ViewPitchMin = -60.0f; 
-			PC->PlayerCameraManager->ViewPitchMax = 60.0f;  
+			PC->PlayerCameraManager->ViewPitchMax = 20.0f;  
 		}
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
@@ -63,10 +66,8 @@ void AGuestCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 현재 셀카봉 길이와 목표 길이가 0.1 이상 차이가 날 때만 연산 수행 (최적화 때매)
 	if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, TargetZoomLength, 0.1f))
 	{
-		// FInterpTo: 현재 값에서 타겟 값으로 DeltaTime에 맞춰 부드럽게 보간(이동)
 		SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, TargetZoomLength, DeltaTime, ZoomSpeed);
 	}
 }
