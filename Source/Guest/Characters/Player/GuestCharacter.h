@@ -24,15 +24,17 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void MoveAction(const FInputActionValue& Value);
-
 	void LookAction(const FInputActionValue& Value);
-
 	void JumpAction(const FInputActionValue& Value);
-	
 	void OnInteract(const struct FInputActionValue& Value);
+	void ZoomAction(const FInputActionValue& Value);
+	void FreeLookStart(const FInputActionValue& Value);
+	void FreeLookEnd(const FInputActionValue& Value);
 
 protected:
 	
@@ -55,6 +57,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> CameraComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Zoom;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_FreeLook;
 
 	//상호작용
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
@@ -86,5 +94,29 @@ protected:
 	UFUNCTION()
 	void DigicamToggleAction(const FInputActionValue& Value);
 #pragma endregion
+#pragma region CameraZoom
+	// 도달해야 할 최종 셀카봉 길이 (기본값 400)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
+	float TargetZoomLength = 400.0f; 
+
+	// 최대 줌인 거리 (어깨너머 숄더뷰 정도)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
+	float MinZoomLength = 150.0f; 
+
+	// 최대 줌아웃 거리 (멀리서 캐릭터 전체를 보는 정도)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
+	float MaxZoomLength = 800.0f; 
+
+	// 마우스 휠 한 칸당 깎이거나 늘어나는 거리 보폭
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
+	float ZoomStep = 50.0f; 
+
+	// 줌이 목표에 도달하는 쫀득한 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
+	float ZoomSpeed = 10.0f; 
+#pragma endregion // CameraZoom
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
+	bool bIsFreeLooking = false;
 
 };

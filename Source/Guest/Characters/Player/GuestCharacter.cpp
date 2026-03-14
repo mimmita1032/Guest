@@ -14,20 +14,22 @@
 // Sets default values
 AGuestCharacter::AGuestCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
 	SpringArmComp->TargetArmLength = 400.0f;
 	SpringArmComp->bUsePawnControlRotation = true;
+	SpringArmComp->TargetArmLength = TargetZoomLength;
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
+	bUseControllerRotationYaw = true;
 
 	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
 
-	DigicamComponent = CreateDefaultSubobject<UDGDigicamComponent>(TEXT("DigicamComponent")); // 추가
+	DigicamComponent = CreateDefaultSubobject<UDGDigicamComponent>(TEXT("DigicamComponent"));
 
 }
 
@@ -41,6 +43,18 @@ void AGuestCharacter::BeginPlay()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+void AGuestCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 현재 셀카봉 길이와 목표 길이가 0.1 이상 차이가 날 때만 연산 수행 (최적화 때매)
+	if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, TargetZoomLength, 0.1f))
+	{
+		// FInterpTo: 현재 값에서 타겟 값으로 DeltaTime에 맞춰 부드럽게 보간(이동)
+		SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, TargetZoomLength, DeltaTime, ZoomSpeed);
 	}
 }
 
@@ -69,9 +83,8 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		if (InteractAction)
 		{
 			EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AGuestCharacter::OnInteract);
-		} // 여기서 하나만 닫아야 합니다.
+		} 
 
-		// 디카 관련 바인딩이 EIC 중괄호 안으로 들어와야 함
 		if (IA_DigicamControl)
 		{
 			EIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
@@ -85,6 +98,17 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		if (IA_DigicamToggle)
 		{
 			EIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
+		}
+
+		if (IA_Zoom)
+		{
+			EIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AGuestCharacter::ZoomAction);
+		}
+
+		if (IA_FreeLook)
+		{
+			EIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
+			EIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
 		}
 	}
 }
@@ -166,5 +190,29 @@ void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 		if (bIsActive) DigicamComponent->ActivateDigicam();
 		else DigicamComponent->DeactivateDigicam();
 	}
+}
+#pragma endregion
+#pragma region Zoom, FreeLook
+void AGuestCharacter::ZoomAction(const FInputActionValue& Value)
+{
+	float ZoomInput = Value.Get<float>();
+
+	TargetZoomLength -= (ZoomInput * ZoomStep);
+	
+	TargetZoomLength = FMath::Clamp(TargetZoomLength, MinZoomLength, MaxZoomLength);
+}
+
+void AGuestCharacter::FreeLookStart(const FInputActionValue& Value)
+{
+	bIsFreeLooking = true;
+	bUseControllerRotationYaw = false;
+	G_LOG(TEXT("자유 시점 시작: 캐릭터는 가만히 있고 카메라만 돕니다.")); 
+}
+
+void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
+{
+	bIsFreeLooking = false;
+	bUseControllerRotationYaw = true;
+	G_LOG(TEXT("자유 시점 종료: 카메라가 다시 제자리로 돌아갑니다."));
 }
 #pragma endregion
