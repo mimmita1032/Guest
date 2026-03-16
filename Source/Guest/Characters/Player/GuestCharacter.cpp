@@ -26,10 +26,10 @@ AGuestCharacter::AGuestCharacter()
 	SpringArmComp->ProbeChannel = ECC_Camera;
 	SpringArmComp->TargetOffset = FVector::ZeroVector;
 	SpringArmComp->SocketOffset = FVector(0.0f, 75.0f, 0.0f);
-	SpringArmComp->CameraLagSpeed = 15.0f; 
-	SpringArmComp->bEnableCameraRotationLag = false;
-	SpringArmComp->bEnableCameraLag = false;
-	SpringArmComp->CameraRotationLagSpeed = 20.0f;
+	SpringArmComp->bEnableCameraRotationLag = true;
+	SpringArmComp->CameraRotationLagSpeed = 15.0f;
+	SpringArmComp->bEnableCameraLag = true;
+	SpringArmComp->CameraLagSpeed = 12.0f; 
 	MinZoomLength = 00.0f;
 	MaxZoomLength = 450.0f;
 	TargetZoomLength = FMath::Max(TargetZoomLength, MinZoomLength);
