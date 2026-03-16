@@ -259,13 +259,25 @@ void AGuestCharacter::FreeLookStart(const FInputActionValue& Value)
 {
 	bIsFreeLooking = true;
 	bUseControllerRotationYaw = false;
-	G_LOG(TEXT("자유 시점 시작: 캐릭터는 가만히 있고 카메라만 돕니다.")); 
+	G_LOG(TEXT("자유 시점 시작!")); 
 }
 
 void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
 {
 	bIsFreeLooking = false;
 	bUseControllerRotationYaw = true;
-	G_LOG(TEXT("자유 시점 종료: 카메라가 다시 제자리로 돌아갑니다."));
+
+	if (Controller != nullptr)
+	{
+		//현재 캐릭터가 바라보고 있는 방향(Yaw)을 가져옴
+		float CharacterYaw = GetActorRotation().Yaw;
+        
+		//카메라의 위아래(Pitch)는 그대로 유지하고, 좌우(Yaw)만 캐릭터 등 뒤로
+		FRotator ResetRotation = FRotator(Controller->GetControlRotation().Pitch, CharacterYaw, 0.0f);
+        
+		Controller->SetControlRotation(ResetRotation);
+	}
+
+	G_LOG(TEXT("자유 시점 종료~"));
 }
 #pragma endregion
