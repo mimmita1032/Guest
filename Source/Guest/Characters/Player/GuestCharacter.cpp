@@ -65,8 +65,8 @@ void AGuestCharacter::BeginPlay()
 	{
 		if (PC->PlayerCameraManager)
 		{
-			PC->PlayerCameraManager->ViewPitchMin = -80.0f; 
-			PC->PlayerCameraManager->ViewPitchMax = 25.0f;  
+			PC->PlayerCameraManager->ViewPitchMin = -50.0f; 
+			PC->PlayerCameraManager->ViewPitchMax = 60.0f;  
 		}
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
