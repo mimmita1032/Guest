@@ -15,7 +15,7 @@ void UGSpacetimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 	else
 	{
-		G_ERR(TEXT("시공간 데이터 테이블 로드 실패! 경로를 확인하세요."));
+		G_ERR(TEXT("시공간 데이터 테이블 로드 실패! 경로를 다시 체크."));
 	}
 }
 #pragma region Space
@@ -85,6 +85,12 @@ void UGSpacetimeSubsystem::SetWorldTime(float NewHour)
     
 	OnTimeChanged.Broadcast(CurrentTime);
     
-	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정되었습니다. (현실 시간 동기화 중지됨)"), CurrentTime);
+	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정 (현실 시간 동기화 중지)"), CurrentTime);
+}
+
+void UGSpacetimeSubsystem::ResumeRealTimeSync()
+{
+	bUseRealTimeSync = true;
+	G_LOG(TEXT("현실 시간 동기화"));
 }
 #pragma endregion

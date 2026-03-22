@@ -42,6 +42,10 @@ public:
 	// 시간을 특정 값으로 강제 설정하는 함수
 	void SetWorldTime(float NewHour);
 
+	// 현실 시간 다시 동기화
+	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
+	void ResumeRealTimeSync();
+
 	// 현재 시간을 반환하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
 	float GetCurrentHour() const { return CurrentTime; }

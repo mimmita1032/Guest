@@ -3,6 +3,7 @@
 
 #include "GDebugTimeWidget.h"
 #include "Components/Slider.h"
+#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,11 @@ void UGDebugTimeWidget::NativeConstruct()
 		TimeSlider->OnValueChanged.AddDynamic(this, &UGDebugTimeWidget::OnTimeSliderChanged);
 	}
 
+	if (SyncButton)
+	{
+		SyncButton->OnClicked.AddDynamic(this, &UGDebugTimeWidget::OnSyncButtonClicked);
+	}
+	
 	if (UGameInstance* GI = GetGameInstance())
 	{
 		if (UGSpacetimeSubsystem* SpacetimeSS = GI->GetSubsystem<UGSpacetimeSubsystem>())
@@ -50,3 +56,14 @@ void UGDebugTimeWidget::UpdateTimeText(float CurrentHour)
 	}
 }
 
+
+void UGDebugTimeWidget::OnSyncButtonClicked()
+{
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UGSpacetimeSubsystem* SpacetimeSS = GI->GetSubsystem<UGSpacetimeSubsystem>())
+		{
+			SpacetimeSS->ResumeRealTimeSync();
+		}
+	}
+}
