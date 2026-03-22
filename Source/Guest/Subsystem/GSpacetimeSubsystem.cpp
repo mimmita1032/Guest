@@ -60,6 +60,10 @@ void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)
 #pragma region Time
 void UGSpacetimeSubsystem::UpdateWorldTime(float DeltaTime)
 {
+	if (!bUseRealTimeSync)
+	{
+		return;
+	}
 
 	FDateTime CurrentRealTime = FDateTime::Now();
     
@@ -74,13 +78,13 @@ void UGSpacetimeSubsystem::UpdateWorldTime(float DeltaTime)
 
 void UGSpacetimeSubsystem::SetWorldTime(float NewHour)
 {
-	// 1. 입력된 시간을 0.0 ~ 23.99 사이로 강제 고정
+	// 디버그 UI(슬라이더)로 이 함수가 호출되는 순간, 현실 시간 동기화를 강제로 끔
+	bUseRealTimeSync = false;
+    
 	CurrentTime = FMath::Clamp(NewHour, 0.0f, 23.99f);
-	
-	// 2. 시간 변경되었음!
+    
 	OnTimeChanged.Broadcast(CurrentTime);
-	
-	// 3. 디버깅 UI추가 후 사용할겁니다
-	G_LOG(TEXT("세계 시간이 %.2f시로 설정되었습니다."), CurrentTime);
+    
+	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정되었습니다. (현실 시간 동기화 중지됨)"), CurrentTime);
 }
 #pragma endregion

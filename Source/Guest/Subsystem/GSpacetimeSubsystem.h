@@ -58,6 +58,9 @@ protected:
 	// 시간 흐름 배율 (현실 시간 대비 게임 시간의 속도)
 	UPROPERTY(EditAnywhere, Category = "Spacetime|Time")
 	float TimeScale = 1.0f;
+
+private:
+	bool bUseRealTimeSync = true; //현실시간 ON/OFF
 #pragma endregion
 	
 	
