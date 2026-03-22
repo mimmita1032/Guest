@@ -10,6 +10,9 @@
 /**
  * 
  */
+
+class UGuestPrimaryLayout;
+
 UCLASS()
 class GUEST_API AGuestPlayerController : public APlayerController
 {
@@ -40,6 +43,16 @@ protected:
 
 	// 입력이 들어왔을 때 실행
 	void ToggleDebugUI();
+#pragma endregion
+#pragma region CommonUI
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Guest|UI")
+	TSubclassOf<UGuestPrimaryLayout> PrimaryLayoutClass;
+
+	UPROPERTY()
+	TObjectPtr<UGuestPrimaryLayout> PrimaryLayoutInstance;
+	
 #pragma endregion
 	
 };

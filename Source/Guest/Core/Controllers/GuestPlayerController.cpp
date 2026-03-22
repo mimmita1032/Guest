@@ -6,6 +6,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Guest/UI/Layout/GuestPrimaryLayout.h"
 #include "Guest/Utils/GLog.h"
 
 void AGuestPlayerController::BeginPlay()
@@ -24,6 +25,25 @@ void AGuestPlayerController::BeginPlay()
 	SetInputMode(InputMode);
 
 	bShowMouseCursor = false;
+
+	// ---------------------------------------------------------
+	// 여기 까지는 디버그 UI인데 Stack에 영향안두게 그냥 두겠슴당
+	// ---------------------------------------------------------
+	
+	if (PrimaryLayoutClass)
+	{
+		PrimaryLayoutInstance = CreateWidget<UGuestPrimaryLayout>(this, PrimaryLayoutClass);
+		if (PrimaryLayoutInstance)
+		{
+			PrimaryLayoutInstance->AddToViewport();
+			G_LOG(TEXT("Primary Layout"));
+		}
+	}
+	else
+	{
+		G_ERR(TEXT("PrimaryLayoutClass가 비어있습니다! BP_GuestPlayerController의 디테일 패널을 확인하세요"));
+	}
+	
 
 }
 
