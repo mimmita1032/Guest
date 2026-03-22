@@ -60,19 +60,15 @@ void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)
 #pragma region Time
 void UGSpacetimeSubsystem::UpdateWorldTime(float DeltaTime)
 {
-	// 1. 증가할 시간 계산 (초 단위 델타타임을 시간 단위로 변환)
-	float AddedHour = (DeltaTime * TimeScale) / 3600.0f;
-	
-	// 2. 현재 시간에 누적
-	CurrentTime += AddedHour;
 
-	// 3. 24시가 넘어가면 0시로 초기화 (24시간 순환)
-	if (CurrentTime >= 24.0f)
-	{
-		CurrentTime -= 24.0f;
-	}
+	FDateTime CurrentRealTime = FDateTime::Now();
+    
+	int32 Hour = CurrentRealTime.GetHour();
+	int32 Minute = CurrentRealTime.GetMinute();
+	int32 Second = CurrentRealTime.GetSecond();
+    
+	CurrentTime = Hour + (Minute / 60.0f) + (Second / 3600.0f);
 
-	// 4. 시간 변경되었음!
 	OnTimeChanged.Broadcast(CurrentTime);
 }
 
