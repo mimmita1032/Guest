@@ -20,7 +20,7 @@ void UGDebugTimeWidget::NativeConstruct()
 
 	if (SyncButton)
 	{
-		SyncButton->OnClicked.AddDynamic(this, &UGDebugTimeWidget::OnSyncButtonClicked);
+		SyncButton->OnClicked.AddUniqueDynamic(this, &UGDebugTimeWidget::OnSyncButtonClicked);
 	}
 	
 	if (UGameInstance* GI = GetGameInstance())
