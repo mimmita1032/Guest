@@ -16,8 +16,7 @@ void UGDebugTimeWidget::NativeConstruct()
 	{
 		TimeSlider->SetMinValue(0.0f);
 		TimeSlider->SetMaxValue(23.99f);
-		TimeSlider->OnValueChanged.AddDynamic(this, &UGDebugTimeWidget::OnTimeSliderChanged);
-	}
+		TimeSlider->OnValueChanged.AddUniqueDynamic(this, &UGDebugTimeWidget::OnTimeSliderChanged);	}
 
 	if (SyncButton)
 	{
@@ -28,7 +27,7 @@ void UGDebugTimeWidget::NativeConstruct()
 	{
 		if (UGSpacetimeSubsystem* SpacetimeSS = GI->GetSubsystem<UGSpacetimeSubsystem>())
 		{
-			SpacetimeSS->OnTimeChanged.AddDynamic(this, &UGDebugTimeWidget::UpdateTimeText);
+			SpacetimeSS->OnTimeChanged.AddUniqueDynamic(this, &UGDebugTimeWidget::UpdateTimeText);
 			
 			// 생성 직후 현재 시간으로 텍스트 1회 초기화
 			UpdateTimeText(SpacetimeSS->GetCurrentHour());
