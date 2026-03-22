@@ -9,7 +9,7 @@
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
-#include "Guest/Components/DGDigicamComponent.h"
+#include "Guest/Components/GDigicamComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -41,7 +41,7 @@ AGuestCharacter::AGuestCharacter()
 	bUseControllerRotationYaw = true;
 
 	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
-	DigicamComponent = CreateDefaultSubobject<UDGDigicamComponent>(TEXT("DigicamComponent"));
+	DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
 }
 
 void AGuestCharacter::BeginPlay()

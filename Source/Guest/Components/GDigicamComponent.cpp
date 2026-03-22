@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
-#include "DGDigicamComponent.h"
+#include "GDigicamComponent.h"
 
 #include "Blueprint/UserWidget.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
@@ -9,7 +9,7 @@
 #include "Guest/UI/DGDigicamWidget.h"
 #include "Kismet/GameplayStatics.h"
 
-UDGDigicamComponent::UDGDigicamComponent()
+UGDigicamComponent::UGDigicamComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
@@ -18,12 +18,12 @@ UDGDigicamComponent::UDGDigicamComponent()
 	SelectedAreaCode = 0;
 }
 
-void UDGDigicamComponent::BeginPlay()
+void UGDigicamComponent::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void UDGDigicamComponent::ActivateDigicam()
+void UGDigicamComponent::ActivateDigicam()
 {
 	if (CurrentState == EDigicamState::Inactive)
 	{
@@ -40,13 +40,13 @@ void UDGDigicamComponent::ActivateDigicam()
 	UpdateSearch();
 }
 
-void UDGDigicamComponent::DeactivateDigicam()
+void UGDigicamComponent::DeactivateDigicam()
 {
 	CurrentState = EDigicamState::Inactive;
 	G_LOG(TEXT("디카 비활성화: 귀가 상태 유지"));
 }
 
-void UDGDigicamComponent::HandleVerticalInput(float Value)
+void UGDigicamComponent::HandleVerticalInput(float Value)
 {
 	if (Value == 0.0f) return;
 
@@ -71,7 +71,7 @@ void UDGDigicamComponent::HandleVerticalInput(float Value)
 	UpdateSearch();
 }
 
-void UDGDigicamComponent::HandleHorizontalInput(float Value)
+void UGDigicamComponent::HandleHorizontalInput(float Value)
 {
 	if (Value == 0.0f) return;
 
@@ -92,7 +92,7 @@ void UDGDigicamComponent::HandleHorizontalInput(float Value)
 	}
 }
 
-void UDGDigicamComponent::HandleShutter()
+void UGDigicamComponent::HandleShutter()
 {
 	if (IsAtBaseLevel())
 	{
@@ -117,7 +117,7 @@ void UDGDigicamComponent::HandleShutter()
 	}
 }
 
-void UDGDigicamComponent::UpdateSearch()
+void UGDigicamComponent::UpdateSearch()
 {
 	if (!GetWorld() || !GetWorld()->GetGameInstance()) return;
 
@@ -144,7 +144,7 @@ void UDGDigicamComponent::UpdateSearch()
 	}
 }
 
-bool UDGDigicamComponent::IsAtBaseLevel() const
+bool UGDigicamComponent::IsAtBaseLevel() const
 {
 	if (!GetWorld()) return false;
 

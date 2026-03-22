@@ -5,15 +5,15 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
-#include "DGDigicamComponent.generated.h"
+#include "GDigicamComponent.generated.h"
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class GUEST_API UDGDigicamComponent : public UActorComponent
+class GUEST_API UGDigicamComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UDGDigicamComponent();
+	UGDigicamComponent();
 
 	// 수거 작업 시작 (디카 꺼내기)
 	void ActivateDigicam();

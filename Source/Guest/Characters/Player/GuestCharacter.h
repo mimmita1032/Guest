@@ -11,7 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-class UDGDigicamComponent;
+class UGDigicamComponent;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter
@@ -72,7 +72,7 @@ protected:
 	TObjectPtr<class UInputAction> InteractAction;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
-	TObjectPtr<UDGDigicamComponent> DigicamComponent;
+	TObjectPtr<UGDigicamComponent> DigicamComponent;
 
 #pragma region Digicam Functions
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
