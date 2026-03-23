@@ -36,3 +36,7 @@ Plugins/*/Intermediate/
 *.pdb
 *.exe
 *.dll
+
+# RiderLink 포함 관련
+Plugins/Developer/RiderLink/Binaries/
+Plugins/Developer/RiderLink/Intermediate/
