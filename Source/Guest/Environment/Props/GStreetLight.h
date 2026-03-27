@@ -26,13 +26,17 @@ protected:
 	void HandleTimeChanged(float CurrentHour);
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	TObjectPtr<UPointLightComponent> LightComponent;
-
+	
 	//불 켜고 꺼지는 시간
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float TurnOnTime = 18.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float TurnOffTime = 6.0f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<USceneComponent> SceneRoot;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UPointLightComponent> LightComponent;
 };

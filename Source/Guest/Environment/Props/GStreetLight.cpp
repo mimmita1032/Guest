@@ -10,9 +10,12 @@ AGStreetLight::AGStreetLight()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
+	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+	SetRootComponent(SceneRoot);
+
 	LightComponent = CreateDefaultSubobject<UPointLightComponent>(TEXT("StreetLight"));
-	SetRootComponent(LightComponent);
-	
+	LightComponent->SetupAttachment(SceneRoot);
+    
 	LightComponent->SetIntensity(0.0f);
 }
 
