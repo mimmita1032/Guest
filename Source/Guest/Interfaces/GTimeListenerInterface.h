@@ -22,5 +22,5 @@ class GUEST_API IGTimeListenerInterface
 
 public:
 
-	virtual void OnTimeChanged(int32 Hours, int32 Minutes) = 0;
+	virtual void OnTimeChanged(float CurrentHour) = 0;
 };
