@@ -8,7 +8,7 @@
 
 AGCollectableItem::AGCollectableItem()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AGCollectableItem::Interact(AActor* Interactor)
