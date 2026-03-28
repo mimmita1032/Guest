@@ -6,6 +6,14 @@
 #include "Engine/DataAsset.h"
 #include "GItemData.generated.h"
 
+UENUM(BlueprintType)
+enum class EItemCategory : uint8
+{
+	None,
+	Collectible UMETA(DisplayName = "Collectibles"),
+	Usable		UMETA(DisplayName = "Expendables")
+};
+
 UCLASS(BlueprintType)
 class GUEST_API UGItemData : public UPrimaryDataAsset
 {
@@ -31,4 +39,18 @@ public:
 	// 에디터에서 보여질 아이템의 3D 메쉬
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	TObjectPtr<class UStaticMesh> ItemMesh;
+	
+	// 인벤토리에서 보여질 아이템 아이콘 -> 회의 필요
+	/*
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Visuals")
+	TObjectPtr<UTexture2D> ItemIcon;
+	*/
+	
+	// 아이템 Type (어떤 용도로 사용되는 것인지 구분)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Info")
+    EItemCategory Category;
+	
+	// Slot Occupancy를 위한 Size
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Inventory")
+	FIntPoint GridSize = FIntPoint(1, 1);
 };
