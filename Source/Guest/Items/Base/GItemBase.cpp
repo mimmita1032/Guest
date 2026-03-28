@@ -33,11 +33,13 @@ void AGItemBase::Interact(AActor* Interactor)
 		G_ERR(TEXT("InterActor 오류"));
 		return;
 	}
-	if (!ItemData)
+	
+	// Item Data 추가 후 활성화
+	/*if (!ItemData)
 	{
 		G_ERR(TEXT("%s: 아이템 데이터가 할당되지 않았습니다."), *GetName());
 		return;
-	}
+	}*/
 	
 	G_LOG(TEXT("%s와(과) 상호작용했습니다. (주체: %s)"), *GetName(), *Interactor->GetName());
 }
