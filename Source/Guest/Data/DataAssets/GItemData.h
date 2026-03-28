@@ -6,6 +6,9 @@
 #include "Engine/DataAsset.h"
 #include "GItemData.generated.h"
 
+/*================
+	Item Type
+ ===============*/
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
