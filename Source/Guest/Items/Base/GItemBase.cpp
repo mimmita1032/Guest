@@ -20,6 +20,8 @@ AGItemBase::AGItemBase()
 void AGItemBase::BeginPlay()
 {
 	// Mesh 자동 적용
+	Super::BeginPlay();
+	
 	if (ItemData && ItemData.Get()->ItemMesh)
 	{
 		MeshComp->SetStaticMesh(ItemData->ItemMesh);
