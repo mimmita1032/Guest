@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{D702059A-C7DA-4782-8E98-E3653EE7E52D}" SchemaVersion="133">
+	<GameParameters>
+		<WorkUnit Name="Default Work Unit" ID="{D702059A-C7DA-4782-8E98-E3653EE7E52D}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="Volume" ID="{699A3771-850B-4824-957C-5AA3B001845C}" ShortID="687291470"/>
+			</ChildrenList>
+		</WorkUnit>
+	</GameParameters>
+</WwiseDocument>

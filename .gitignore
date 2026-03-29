@@ -67,16 +67,19 @@ Plugins/Developer/RiderLink/Intermediate/
 # Wwise (혼자 사용 · 로컬 전용 관리)
 # =====================================
 
-# 원본 WAV (용량 큼 · 로컬 백업 필수)
-/WwiseProject/Originals/
+# Wwise 플러그인 전체 (각자 설치)
+Plugins/Wwise*/
 
 # Wwise 프로젝트 내 자동 생성 / 개인 설정
-/WwiseProject/.cache/
-/WwiseProject/Backups/
-/WwiseProject/Logs/
-/WwiseProject/.WwiseProject.user
-/WwiseProject/Control Surface Sessions/
+Guest_WwiseProject/.cache/
+Guest_WwiseProject/Backups/
+Guest_WwiseProject/Logs/
+Guest_WwiseProject/.WwiseProject.user
+Guest_WwiseProject/Control Surface Sessions/
 
-# 사운드뱅크 (팀원이 UE에서 소리 들으려면 추적 필요)
-!/WwiseProject/GeneratedSoundBanks/
-!/WwiseProject/GeneratedSoundBanks/**
+# 원본 WAV
+Guest_WwiseProject/Originals/
+
+# 사운드뱅크 추적 유지
+!Guest_WwiseProject/GeneratedSoundBanks/
+!Guest_WwiseProject/GeneratedSoundBanks/**

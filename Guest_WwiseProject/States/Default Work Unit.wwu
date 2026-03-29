@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{4782226F-B959-4F19-B9CA-C663C4DAAE91}" SchemaVersion="133">
+	<States>
+		<WorkUnit Name="Default Work Unit" ID="{4782226F-B959-4F19-B9CA-C663C4DAAE91}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="Location" ID="{52D79E7E-730A-4D26-B1B9-00C29D5023A3}" ShortID="286282311"/>
+				<Folder Name="TimePeriod" ID="{6C092F0F-5466-4D0C-8B59-C8A48A201D46}" ShortID="868162570"/>
+				<Folder Name="Weather" ID="{4F30C759-5B54-41EF-9485-31F66F020E5F}" ShortID="76825694"/>
+				<Folder Name="GameMonde" ID="{A81F4022-31EE-42AC-BE76-90884667CDDF}" ShortID="69360556"/>
+			</ChildrenList>
+		</WorkUnit>
+	</States>
+</WwiseDocument>

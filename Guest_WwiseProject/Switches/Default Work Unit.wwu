@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{69737E05-A1B3-4497-B9DD-52F128842200}" SchemaVersion="133">
+	<Switches>
+		<WorkUnit Name="Default Work Unit" ID="{69737E05-A1B3-4497-B9DD-52F128842200}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="Surface" ID="{A2BB4639-01AC-4FD6-AEF9-8C02108525B6}" ShortID="629666153"/>
+			</ChildrenList>
+		</WorkUnit>
+	</Switches>
+</WwiseDocument>

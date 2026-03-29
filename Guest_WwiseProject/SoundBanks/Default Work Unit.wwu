@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{E4F681AE-6DDA-4D1D-8A1F-9A341AF3DA41}" SchemaVersion="133">
+	<SoundBanks>
+		<WorkUnit Name="Default Work Unit" ID="{E4F681AE-6DDA-4D1D-8A1F-9A341AF3DA41}" PersistMode="Standalone">
+			<ChildrenList>
+				<SoundBank Name="InitSoundBank" ID="{84663071-D9D1-48CF-B247-7D20A45241C3}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="BGM" ID="{A2A3769B-6379-49BF-B384-C56AEDD61A6A}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="Ambience" ID="{A920E369-741B-4F3A-986B-75857A08FDE7}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="SFX" ID="{7A8CDA2F-24F5-4ED7-955F-6C1453E5C66D}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="Voice" ID="{C8FFEDFA-2B77-425E-8865-C90AE5DE1773}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="UI" ID="{75A6BF86-A283-4833-8860-762AF134863F}">
+					<ObjectInclusionList/>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+			</ChildrenList>
+		</WorkUnit>
+	</SoundBanks>
+</WwiseDocument>

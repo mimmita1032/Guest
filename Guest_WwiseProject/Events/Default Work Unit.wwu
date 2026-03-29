@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{CCF2102C-2D21-426B-A928-4F94FF0694F8}" SchemaVersion="133">
+	<Events>
+		<WorkUnit Name="Default Work Unit" ID="{CCF2102C-2D21-426B-A928-4F94FF0694F8}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="BGM" ID="{FD67B0A9-A1CF-46ED-BF0B-BF9038272692}" ShortID="40680765"/>
+				<Folder Name="Ambience" ID="{12E8A222-D691-4ED9-9AF4-8CFE14A0980A}" ShortID="421106538"/>
+				<Folder Name="SFX" ID="{98A2075C-10C5-4A00-AA4C-F4C5AAF7E55C}" ShortID="30708705"/>
+				<Folder Name="Voice" ID="{5943A56D-275D-465B-B0DC-ADACE8C695F1}" ShortID="914352766"/>
+				<Folder Name="UI" ID="{A765C4A3-4825-4FA2-834B-921CAF709F13}" ShortID="119758367"/>
+			</ChildrenList>
+		</WorkUnit>
+	</Events>
+</WwiseDocument>
