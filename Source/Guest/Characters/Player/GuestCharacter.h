@@ -142,7 +142,7 @@ protected:
 	void StopSprinting();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
-	float WalkSpeed = 250.0f;
+	float WalkSpeed = 180.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
 	float SprintSpeed = 500.0f;
