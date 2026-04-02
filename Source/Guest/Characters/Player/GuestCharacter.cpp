@@ -21,9 +21,9 @@ AGuestCharacter::AGuestCharacter()
 	SpringArmComp->SetupAttachment(RootComponent);
 	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
 	SpringArmComp->bUsePawnControlRotation = true;
-	SpringArmComp->bInheritPitch = false;
-	SpringArmComp->bInheritYaw = false;
-	SpringArmComp->bInheritRoll = false;
+	SpringArmComp->bInheritPitch = true;
+	SpringArmComp->bInheritYaw = true;
+	SpringArmComp->bInheritRoll = true;
 	SpringArmComp->TargetArmLength = TargetZoomLength;
 	SpringArmComp->bDoCollisionTest = true; 
 	SpringArmComp->ProbeSize = 12.0f; 
@@ -86,22 +86,6 @@ void AGuestCharacter::BeginPlay()
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-	}
-
-	bUseControllerRotationYaw = true; 
-
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
-	}
-
-	if (SpringArmComp)
-	{
-		SpringArmComp->bUsePawnControlRotation = true;
-		SpringArmComp->bInheritPitch = true;
-		SpringArmComp->bInheritYaw = true;
-		SpringArmComp->bInheritRoll = true;
 	}
 	
 }
