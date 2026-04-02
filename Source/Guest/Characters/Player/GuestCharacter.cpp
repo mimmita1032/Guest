@@ -21,6 +21,9 @@ AGuestCharacter::AGuestCharacter()
 	SpringArmComp->SetupAttachment(RootComponent);
 	SpringArmComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
 	SpringArmComp->bUsePawnControlRotation = true;
+	SpringArmComp->bInheritPitch = false;
+	SpringArmComp->bInheritYaw = false;
+	SpringArmComp->bInheritRoll = false;
 	SpringArmComp->TargetArmLength = TargetZoomLength;
 	SpringArmComp->bDoCollisionTest = true; 
 	SpringArmComp->ProbeSize = 12.0f; 
@@ -30,7 +33,7 @@ AGuestCharacter::AGuestCharacter()
 	SpringArmComp->bEnableCameraRotationLag = true;
 	SpringArmComp->CameraRotationLagSpeed = 15.0f;
 	SpringArmComp->bEnableCameraLag = true;
-	SpringArmComp->CameraLagSpeed = 12.0f; 
+	SpringArmComp->CameraLagSpeed = 12.0f;
 	MinZoomLength = 00.0f;
 	MaxZoomLength = 450.0f;
 	TargetZoomLength = FMath::Max(TargetZoomLength, MinZoomLength);
@@ -39,7 +42,10 @@ AGuestCharacter::AGuestCharacter()
 	CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
 	CameraComp->bUsePawnControlRotation = false;
 	
-	bUseControllerRotationYaw = true;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	
 
 	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
 	DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
@@ -81,6 +87,23 @@ void AGuestCharacter::BeginPlay()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	}
+
+	bUseControllerRotationYaw = true; 
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	}
+
+	if (SpringArmComp)
+	{
+		SpringArmComp->bUsePawnControlRotation = true;
+		SpringArmComp->bInheritPitch = true;
+		SpringArmComp->bInheritYaw = true;
+		SpringArmComp->bInheritRoll = true;
+	}
+	
 }
 
 void AGuestCharacter::Tick(float DeltaTime)
@@ -279,13 +302,11 @@ void AGuestCharacter::FreeLookStart(const FInputActionValue& Value)
 void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
 {
 	bIsFreeLooking = false;
-	bUseControllerRotationYaw = true;
 
 	if (Controller != nullptr)
 	{
 		//현재 캐릭터가 바라보고 있는 방향(Yaw)을 가져옴
 		float CharacterYaw = GetActorRotation().Yaw;
-        
 		//카메라의 위아래(Pitch)는 그대로 유지하고, 좌우(Yaw)만 캐릭터 등 뒤로
 		FRotator ResetRotation = FRotator(Controller->GetControlRotation().Pitch, CharacterYaw, 0.0f);
         
