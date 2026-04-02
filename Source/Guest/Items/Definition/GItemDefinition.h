@@ -44,5 +44,12 @@ public:
 	
 	//Fragment 검색
 	template<typename T>
-	const T* FindFragmentByClass() const;
+	const T* FindFragmentByClass() const
+	{
+		for (const auto& Fragment : Fragments)
+		{
+			if (const T* FoundFragment = Cast<T>(Fragment)) return FoundFragment;
+		}
+		return nullptr;
+	}
 };
