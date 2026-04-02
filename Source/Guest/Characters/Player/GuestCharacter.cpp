@@ -71,6 +71,8 @@ void AGuestCharacter::BeginPlay()
 		}
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
+			Subsystem->ClearAllMappings();
+			
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
