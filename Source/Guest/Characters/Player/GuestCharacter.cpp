@@ -281,3 +281,10 @@ void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
 	G_LOG(TEXT("자유 시점 종료~"));
 }
 #pragma endregion
+#pragma region anim
+float AGuestCharacter::GetMovementSpeed() const
+{
+	// 평면(X, Y) 이동 속도만 계산하여 반환
+	return GetVelocity().Size2D();
+}
+#pragma endregion
