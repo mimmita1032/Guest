@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "Guest/Components/Interaction/GInteractionComponent.h"
 #include "InputMappingContext.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
@@ -163,6 +164,12 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			EIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
 			EIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
 		}
+
+		if (IA_Sprint)
+		{
+			EIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
+			EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
+		}
 	}
 }
 
@@ -286,5 +293,26 @@ float AGuestCharacter::GetMovementSpeed() const
 {
 	// 평면(X, Y) 이동 속도만 계산하여 반환
 	return GetVelocity().Size2D();
+}
+#pragma endregion
+#pragma region Sprint
+void AGuestCharacter::StartSprinting()
+{
+	// 무브먼트 컴포넌트의 최대 속도를 달리기 속도로 변경
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("달리기 시작: 현재 속도 %f"), SprintSpeed);
+	}
+}
+
+void AGuestCharacter::StopSprinting()
+{
+	// 최대 속도를 다시 걷기 속도로 복구
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		UE_LOG(LogTemp, Warning, TEXT("달리기 중지: 현재 속도 %f"), WalkSpeed);
+	}
 }
 #pragma endregion

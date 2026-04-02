@@ -132,6 +132,20 @@ protected:
 	bool bIsAiming = false;
 	
 #pragma endregion
+#pragma region Sprint
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Sprint;
 
+	void StartSprinting();
+
+	void StopSprinting();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
+	float WalkSpeed = 250.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
+	float SprintSpeed = 500.0f;
+#pragma endregion // Sprint
 	
 };
