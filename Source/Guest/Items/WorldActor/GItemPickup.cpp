@@ -6,6 +6,7 @@
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentVisuals.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Items/Instance//GItemInstance.h"
 
 
 AGItemPickup::AGItemPickup()
@@ -22,9 +23,13 @@ void AGItemPickup::Interact(AActor* Interactor)
 {
 	if (!ItemDefinition) return;
 
+	UGItemInstance* NewInstance = NewObject<UGItemInstance>(this);
+	NewInstance->SetItemDefinition(ItemDefinition);
+	
 	G_LOG(TEXT("%s 아이템을 획득했습니다!"), *ItemDefinition->ItemName.ToString());
+	G_LOG(TEXT("%s 인스턴스가 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
     
-	// TODO: 인벤토리 작업
+	// TODO: 인벤토리에 NewInstance 전달
 
 	Destroy();
 }
