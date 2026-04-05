@@ -111,12 +111,41 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
 	float ZoomStep = 50.0f; 
 
-	// 줌이 목표에 도달하는 쫀득한 속도
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float ZoomSpeed = 10.0f; 
-#pragma endregion // CameraZoom
+	float ZoomSpeed = 10.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
 	bool bIsFreeLooking = false;
 
+#pragma endregion // CameraZoom
+#pragma region anim
+	
+public:
+	UFUNCTION(BlueprintPure, Category = "Character|Animation")
+	float GetMovementSpeed() const;
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
+	bool bIsCrouching = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
+	bool bIsAiming = false;
+	
+#pragma endregion
+#pragma region Sprint
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Sprint;
+
+	void StartSprinting();
+
+	void StopSprinting();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
+	float WalkSpeed = 180.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
+	float SprintSpeed = 500.0f;
+#pragma endregion // Sprint
+	
 };
