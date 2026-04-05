@@ -1,0 +1,53 @@
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Engine/DeveloperSettings.h"
+#include "GameplayTagContainer.h"
+#include "GuestUISettings.generated.h"
+
+/* Tag → 위젯 클래스 단일 매핑 항목. */
+USTRUCT()
+struct FGuestWidgetMapping
+{
+    GENERATED_BODY()
+
+    /* 위젯 식별 태그. 예: Guest.Widget.CameraUI. */
+    UPROPERTY(EditAnywhere, config)
+    FGameplayTag WidgetTag;
+
+    /* 연결할 위젯 클래스. 소프트 레퍼런스로 비동기 로드 지원. */
+    UPROPERTY(EditAnywhere, config)
+    TSoftClassPtr<UUserWidget> WidgetClass;
+};
+
+
+/**
+ * UGuestUISettings
+ *
+ * UI 프레임워크 전역 설정 클래스.
+ * Tag → 위젯 클래스 매핑 테이블을 한 곳에서 관리.
+ * 코드 수정 없이 DefaultGame.ini 또는
+ * Project Settings > Game > Guest UI Settings 에서 편집 가능.
+ */
+UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Guest UI Settings"))
+class GUESTUI_API UGuestUISettings : public UDeveloperSettings
+{
+    GENERATED_BODY()
+
+public:
+
+    UGuestUISettings();
+
+    /* Primary Layout 위젯 클래스. 모든 스택을 포함하는 최상위 위젯. */
+    UPROPERTY(config, EditAnywhere, Category = "Widgets")
+    TSoftClassPtr<UUserWidget> PrimaryLayoutClass;
+
+    /* Tag → 위젯 클래스 매핑 배열. */
+    UPROPERTY(config, EditAnywhere, Category = "Widgets")
+    TArray<FGuestWidgetMapping> WidgetMappings;
+
+    /* WidgetTag 에 대응하는 위젯 소프트 클래스 반환. 없으면 nullptr. */
+    TSoftClassPtr<UUserWidget> FindWidgetClassByTag(const FGameplayTag& Tag) const;
+};

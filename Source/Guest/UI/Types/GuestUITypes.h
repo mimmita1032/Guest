@@ -1,0 +1,38 @@
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GuestUITypes.generated.h"
+
+/**
+ * GuestUITypes.h
+ * UI 프레임워크 전반에서 사용하는 열거형 / 구조체 정의.
+ */
+
+/* 확인 모달 버튼 결과. */
+UENUM(BlueprintType)
+enum class EGuestConfirmResult : uint8
+{
+    Confirmed UMETA(DisplayName = "확인"),
+    Cancelled UMETA(DisplayName = "취소"),
+    Closed    UMETA(DisplayName = "닫힘"),
+    Unknown   UMETA(DisplayName = "알 수 없음"),
+};
+
+/* 확인 모달에 넘길 설정 데이터. */
+USTRUCT(BlueprintType)
+struct FGuestConfirmData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FText TitleText;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FText BodyText;
+
+    /* true = Yes/No 모드, false = OK/Cancel 모드. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bYesNoMode = false;
+};

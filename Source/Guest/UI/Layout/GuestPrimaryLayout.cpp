@@ -14,6 +14,7 @@ void UGuestPrimaryLayout::NativeOnInitialized()
 	{
 		if (UGuestUISubsystem* UISubsystem = GI->GetSubsystem<UGuestUISubsystem>())
 		{
+			// 각 스택을 태그와 함께 Subsystem 에 등록.
 			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Frontend, Stack_Frontend);
 			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameHUD, Stack_GameHUD);
 			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameMenu, Stack_GameMenu);
