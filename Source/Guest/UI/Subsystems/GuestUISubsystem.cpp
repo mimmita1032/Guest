@@ -172,6 +172,7 @@ void UGuestUISubsystem::PopTopWidget(const FGameplayTag& StackTag)
 void UGuestUISubsystem::ShowConfirmModal(const FGuestConfirmData& ConfirmData, FOnConfirmResult OnResult)
 {
     // TODO: ConfirmData를 서브시스템 멤버 변수에 보관하거나, 위젯 생성 직후 주입하는 로직 필요
+    //내용을 체울 로직이 없습니다.
     // 현재는 단순 Push 로직만 수행합니다.
     PushWidgetByTag(GuestGameplayTags::TAG_Widget_Confirm);
 }
