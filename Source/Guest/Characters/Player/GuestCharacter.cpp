@@ -307,7 +307,8 @@ void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
 	G_LOG(TEXT("자유 시점 종료~"));
 }
 #pragma endregion
-#pragma region anim
+#pragma region MovementSpeed
+
 float AGuestCharacter::GetMovementSpeed() const
 {
 	// 평면(X, Y) 이동 속도만 계산하여 반환
@@ -335,7 +336,7 @@ void AGuestCharacter::StopSprinting()
 	}
 }
 #pragma endregion
-#pragma region Jump
+#pragma region Crouch
 void AGuestCharacter::StartCrouch(const FInputActionValue& Value)
 {
 	Crouch();

@@ -145,7 +145,6 @@ protected:
 	TObjectPtr<UInputAction> IA_Sprint;
 
 	void StartSprinting();
-
 	void StopSprinting();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
@@ -154,5 +153,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
 	float SprintSpeed = 500.0f;
 #pragma endregion // Sprint
+
 	
 };
