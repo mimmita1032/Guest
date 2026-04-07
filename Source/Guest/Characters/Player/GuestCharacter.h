@@ -31,6 +31,8 @@ protected:
 	void MoveAction(const FInputActionValue& Value);
 	void LookAction(const FInputActionValue& Value);
 	void JumpAction(const FInputActionValue& Value);
+	void StartCrouch(const FInputActionValue& Value);
+	void EndCrouch(const FInputActionValue& Value);
 	void OnInteract(const struct FInputActionValue& Value);
 	void ZoomAction(const FInputActionValue& Value);
 	void FreeLookStart(const FInputActionValue& Value);
@@ -50,6 +52,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> IA_Jump;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> IA_Crouch;
+
+	
 	
 	//카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -138,7 +145,6 @@ protected:
 	TObjectPtr<UInputAction> IA_Sprint;
 
 	void StartSprinting();
-
 	void StopSprinting();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
@@ -147,5 +153,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
 	float SprintSpeed = 500.0f;
 #pragma endregion // Sprint
+
 	
 };

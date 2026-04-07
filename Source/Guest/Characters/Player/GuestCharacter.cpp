@@ -45,6 +45,7 @@ AGuestCharacter::AGuestCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	
 
 	InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
@@ -184,6 +185,12 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 			EIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
 			EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
 		}
+
+		if (IA_Crouch)
+		{
+			EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
+			EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
+		}
 	}
 }
 
@@ -300,7 +307,8 @@ void AGuestCharacter::FreeLookEnd(const FInputActionValue& Value)
 	G_LOG(TEXT("자유 시점 종료~"));
 }
 #pragma endregion
-#pragma region anim
+#pragma region MovementSpeed
+
 float AGuestCharacter::GetMovementSpeed() const
 {
 	// 평면(X, Y) 이동 속도만 계산하여 반환
@@ -326,5 +334,18 @@ void AGuestCharacter::StopSprinting()
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 		UE_LOG(LogTemp, Warning, TEXT("달리기 중지: 현재 속도 %f"), WalkSpeed);
 	}
+}
+#pragma endregion
+#pragma region Crouch
+void AGuestCharacter::StartCrouch(const FInputActionValue& Value)
+{
+	Crouch();
+	UE_LOG(LogTemp, Log, TEXT("캐릭터 조작: 앉기 상태 진입"));
+}
+
+void AGuestCharacter::EndCrouch(const FInputActionValue& Value)
+{
+	UnCrouch();
+	UE_LOG(LogTemp, Log, TEXT("캐릭터 조작: 앉기 상태 해제"));
 }
 #pragma endregion
