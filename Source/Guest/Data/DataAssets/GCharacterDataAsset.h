@@ -25,10 +25,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float CrouchSpeed = 300.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float JumpZVelocity = 500.0f;
+
 	// --- 카메라 관련 수치 ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 	float TargetZoomLength = 400.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 	float ZoomSpeed = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	float MinZoomLength = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	float MaxZoomLength = 800.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	float ZoomStep = 50.0f;
 };

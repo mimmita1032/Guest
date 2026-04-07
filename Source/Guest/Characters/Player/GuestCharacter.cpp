@@ -36,8 +36,6 @@ AGuestCharacter::AGuestCharacter()
     SpringArmComp->CameraRotationLagSpeed = 15.0f;
     SpringArmComp->bEnableCameraLag = true;
     SpringArmComp->CameraLagSpeed = 12.0f;
-    MinZoomLength = 00.0f;
-    MaxZoomLength = 450.0f;
     
     CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
     CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
@@ -87,22 +85,19 @@ void AGuestCharacter::BeginPlay()
     }
 
     // 데이터 에셋에서 수치 로드
-    if (CharacterData)
-    {
-       GetCharacterMovement()->MaxWalkSpeed = CharacterData->WalkSpeed;
-       GetCharacterMovement()->MaxWalkSpeedCrouched = CharacterData->CrouchSpeed;
-       TargetZoomLength = CharacterData->TargetZoomLength;
-       ZoomSpeed = CharacterData->ZoomSpeed;
+   if (CharacterData)
+   {
+      GetCharacterMovement()->MaxWalkSpeed = CharacterData->WalkSpeed;
+      GetCharacterMovement()->MaxWalkSpeedCrouched = CharacterData->CrouchSpeed;
+      // 점프력 세팅 추가
+      GetCharacterMovement()->JumpZVelocity = CharacterData->JumpZVelocity;
+
+      // 줌 연산용 초기값 세팅 (초기 타겟 거리를 범위 안으로 클램핑)
+      TargetZoomLength = FMath::Clamp(CharacterData->TargetZoomLength, CharacterData->MinZoomLength, CharacterData->MaxZoomLength);
+      ZoomSpeed = CharacterData->ZoomSpeed;
        
-       UE_LOG(LogTemp, Log, TEXT("캐릭터 데이터 에셋 로드 성공. 걷기 속도: %f"), CharacterData->WalkSpeed);
-    }
-    else
-    {
-       // 데이터 에셋 할당 누락 대비 방어 코드
-       GetCharacterMovement()->MaxWalkSpeed = 180.0f;
-       GetCharacterMovement()->MaxWalkSpeedCrouched = 300.0f;
-       UE_LOG(LogTemp, Error, TEXT("캐릭터 데이터 에셋이 할당되지 않았습니다. 기본값을 사용합니다."));
-    }
+      UE_LOG(LogTemp, Log, TEXT("캐릭터 데이터 에셋 로드 성공. 점프력: %f"), CharacterData->JumpZVelocity);
+   }
 
     SpringArmComp->TargetArmLength = TargetZoomLength;
 }
@@ -290,9 +285,13 @@ void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 #pragma region Zoom, FreeLook
 void AGuestCharacter::ZoomAction(const FInputActionValue& Value)
 {
-    float ZoomInput = Value.Get<float>();
-    TargetZoomLength -= (ZoomInput * ZoomStep);
-    TargetZoomLength = FMath::Clamp(TargetZoomLength, MinZoomLength, MaxZoomLength);
+   float ZoomInput = Value.Get<float>();
+    
+   if (CharacterData)
+   {
+      TargetZoomLength -= (ZoomInput * CharacterData->ZoomStep);
+      TargetZoomLength = FMath::Clamp(TargetZoomLength, CharacterData->MinZoomLength, CharacterData->MaxZoomLength);
+   }
 }
 
 void AGuestCharacter::FreeLookStart(const FInputActionValue& Value)

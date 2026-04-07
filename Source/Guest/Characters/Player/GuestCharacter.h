@@ -114,18 +114,6 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float ZoomSpeed;
 
-    // 최대 줌인 거리
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-    float MinZoomLength = 150.0f; 
-
-    // 최대 줌아웃 거리
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-    float MaxZoomLength = 800.0f; 
-
-    // 휠 보폭
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-    float ZoomStep = 50.0f; 
-    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
     bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
