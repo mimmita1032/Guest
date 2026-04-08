@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{4B217B06-3F17-40B5-90BA-2BC1A1721205}" SchemaVersion="133">
+	<Containers>
+		<WorkUnit Name="Default Work Unit" ID="{4B217B06-3F17-40B5-90BA-2BC1A1721205}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="BGM" ID="{5D40E825-9B76-4F66-9338-D5523D04AF1B}" ShortID="542247665">
+					<ChildrenList>
+						<Sound Name="0_BGM_EX" ID="{A07AD58D-5743-402F-8E07-A4B56340EB6E}" ShortID="686720414">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="BGM Bus" ID="{6BA8CEC8-164E-497B-8EC9-EB3D3A929FB3}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+								</Reference>
+							</ReferenceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
+				<Folder Name="Ambience" ID="{F2A30E38-858F-44BC-8418-CD7DE060891A}" ShortID="271280612">
+					<ChildrenList>
+						<Sound Name="0_Ambience_EX" ID="{64604D50-569B-4E5F-BFBC-DABC3CA72FCD}" ShortID="643974963">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Ambience_Bus" ID="{1911D101-149B-44F1-B646-7BE785C530FA}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+								</Reference>
+							</ReferenceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
+				<Folder Name="SFX" ID="{4304BE9D-F9FD-4F8D-90EE-85F2A89DF15E}" ShortID="220546311">
+					<ChildrenList>
+						<Sound Name="0_SFX_EX" ID="{3F03C123-0551-48AE-A9B4-9B42295F9D2A}" ShortID="640246406">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="SFX_Bus" ID="{87D36340-9D71-4A13-8405-11BC9FA2EDBF}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+								</Reference>
+							</ReferenceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
+				<Folder Name="Vioce" ID="{188820AA-E946-4915-9F34-A7CC161BB03D}" ShortID="340750771">
+					<ChildrenList>
+						<Sound Name="0_Voice_EX" ID="{69330FAD-32EC-4865-A813-AF3B3523EC8C}" ShortID="57725520">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="UI_Bus" ID="{35F4501E-0F15-4825-96E6-478431737E2B}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+								</Reference>
+							</ReferenceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
+				<Folder Name="UI" ID="{545D0E7F-4AF4-4D36-9FC9-120A1B070709}" ShortID="132588744">
+					<ChildrenList>
+						<Sound Name="0_UI_EX" ID="{585B0225-E231-45DA-AF50-A6910393E5FF}" ShortID="164823032">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="UI_Bus" ID="{35F4501E-0F15-4825-96E6-478431737E2B}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+								</Reference>
+							</ReferenceList>
+						</Sound>
+					</ChildrenList>
+				</Folder>
+			</ChildrenList>
+		</WorkUnit>
+	</Containers>
+</WwiseDocument>

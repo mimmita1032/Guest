@@ -1,0 +1,21 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Mac",
+  "BasePlatform": "Mac",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "172",
+  "SoundBanks": [
+   {
+    "Id": "3170124113",
+    "Type": "User",
+    "GUID": "{C8FFEDFA-2B77-425E-8865-C90AE5DE1773}",
+    "Language": "SFX",
+    "Hash": "{C23ED180-69D9-C98D-3D69-A6CB47F2BE9E}",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\Voice",
+    "ShortName": "Voice",
+    "Path": "Voice.bnk"
+   }
+  ],
+  "FileHash": "{D170BE8F-AD70-4501-0921-E4037E524096}"
+ }
+}

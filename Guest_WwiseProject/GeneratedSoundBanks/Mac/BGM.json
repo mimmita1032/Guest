@@ -1,0 +1,21 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Mac",
+  "BasePlatform": "Mac",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "172",
+  "SoundBanks": [
+   {
+    "Id": "412724365",
+    "Type": "User",
+    "GUID": "{A2A3769B-6379-49BF-B384-C56AEDD61A6A}",
+    "Language": "SFX",
+    "Hash": "{54550E88-239B-9947-B072-C506CE703002}",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\BGM",
+    "ShortName": "BGM",
+    "Path": "BGM.bnk"
+   }
+  ],
+  "FileHash": "{20D27DAD-6799-A31F-01F7-7F800E9949FB}"
+ }
+}

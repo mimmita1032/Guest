@@ -1,0 +1,79 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Mac",
+  "BasePlatform": "Mac",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "172",
+  "SoundBanks": [
+   {
+    "Id": "1355168291",
+    "Type": "User",
+    "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
+    "Language": "SFX",
+    "Hash": "{9C3757FC-ECD4-2B35-C452-6AEF095FCE36}",
+    "ObjectPath": "Init",
+    "ShortName": "Init",
+    "Path": "Init.bnk",
+    "Plugins": {
+     "AudioDevices": [
+      {
+       "Id": "2317455096",
+       "Name": "No_Output",
+       "ObjectPath": "\\Devices\\Default Work Unit\\No_Output",
+       "GUID": "{61A89A7A-4A9A-4BF0-A578-216F1C590A14}",
+       "LibName": "No Output",
+       "LibId": "11862023"
+      },
+      {
+       "Id": "3859886410",
+       "Name": "System",
+       "ObjectPath": "\\Devices\\Default Work Unit\\System",
+       "GUID": "{E861CCE9-E653-45D5-AA70-7D8B88D2FB45}",
+       "LibName": "System",
+       "LibId": "11403271"
+      }
+     ]
+    },
+    "Busses": [
+     {
+      "Id": "174546974",
+      "Name": "Ambience_Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus\\Ambience_Bus",
+      "GUID": "{1911D101-149B-44F1-B646-7BE785C530FA}"
+     },
+     {
+      "Id": "213475909",
+      "Name": "SFX_Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus\\SFX_Bus",
+      "GUID": "{87D36340-9D71-4A13-8405-11BC9FA2EDBF}"
+     },
+     {
+      "Id": "287439398",
+      "Name": "Voice_Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus\\Voice_Bus",
+      "GUID": "{EA8C0AC8-2116-43F4-9519-4E80D9043690}"
+     },
+     {
+      "Id": "1697111475",
+      "Name": "BGM Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus\\BGM Bus",
+      "GUID": "{6BA8CEC8-164E-497B-8EC9-EB3D3A929FB3}"
+     },
+     {
+      "Id": "2246998526",
+      "Name": "Main Audio Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus",
+      "GUID": "{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}"
+     },
+     {
+      "Id": "3247222208",
+      "Name": "UI_Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Main Audio Bus\\UI_Bus",
+      "GUID": "{35F4501E-0F15-4825-96E6-478431737E2B}"
+     }
+    ]
+   }
+  ],
+  "FileHash": "{8C1E67A5-3FDA-D3C3-90C3-757611AB904E}"
+ }
+}

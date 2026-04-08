@@ -1,0 +1,12 @@
+Audio Bus	ID	Name			Wwise Object Path	Notes
+	174546974	Ambience_Bus			\Default Work Unit\Main Audio Bus\Ambience_Bus	
+	213475909	SFX_Bus			\Default Work Unit\Main Audio Bus\SFX_Bus	
+	287439398	Voice_Bus			\Default Work Unit\Main Audio Bus\Voice_Bus	
+	1697111475	BGM Bus			\Default Work Unit\Main Audio Bus\BGM Bus	
+	2246998526	Main Audio Bus			\Default Work Unit\Main Audio Bus	
+	3247222208	UI_Bus			\Default Work Unit\Main Audio Bus\UI_Bus	
+
+Audio Devices	ID	Name	Type				Notes
+	2317455096	No_Output	No Output			
+	3859886410	System	System			
+
