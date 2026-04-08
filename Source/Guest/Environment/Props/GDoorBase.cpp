@@ -3,6 +3,7 @@
 #include "GDoorBase.h"
 #include "Components/StaticMeshComponent.h"
 #include "Curves/CurveFloat.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 AGDoorBase::AGDoorBase()
@@ -38,6 +39,17 @@ void AGDoorBase::BeginPlay()
 		TimelineProgress.BindUFunction(this, FName("OnDoorTimelineUpdate"));
 		DoorTimeline->AddInterpFloat(DoorCurve, TimelineProgress);
 	}
+
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UGSpacetimeSubsystem* TimeSubsystem = GI->GetSubsystem<UGSpacetimeSubsystem>())
+		{
+			TimeSubsystem->OnTimeChanged.AddDynamic(this, &AGDoorBase::OnTimeChanged);
+            
+			// 게임 시작 시점의 현재 시간에 맞춰 문 상태 초기 설정
+			OnTimeChanged(TimeSubsystem->GetCurrentHour());
+		}
+	}
 }
 
 void AGDoorBase::Tick(float DeltaTime)
@@ -49,7 +61,15 @@ void AGDoorBase::Interact(AActor* Interactor)
 {
 	if (bIsLocked)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("문 조작 실패: 잠겨있음"));
+		// 플레이어가 필요한 열쇠(Tag)를 가지고 있는지 검사
+		// 실제 구현 시에는 Interactor의 컴포넌트나 인터페이스에서 Tag를 확인하는 로직이 들어가야댐
+		if (RequiredKeyTag.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("문 조작 실패: 열쇠(태그: %s)가 필요합니다."), *RequiredKeyTag.ToString());
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("문 조작 실패: 현재는 영업 시간이 아닙니다."));
 		return;
 	}
 

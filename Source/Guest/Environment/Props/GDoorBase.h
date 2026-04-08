@@ -85,19 +85,20 @@ protected:
 
 public:	
 	virtual void Interact(AActor* Interactor) override;
-	virtual FText GetInteractText() const override; // UI 텍스트 반환
+	virtual FText GetInteractText() const override;
+
+	UFUNCTION()
 	virtual void OnTimeChanged(float CurrentHour) override;
 
 protected:
 	void OpenDoor();
 	void CloseDoor();
 
-	// 타임라인 실행 시 매 프레임 호출될 함수
 	UFUNCTION()
 	void OnDoorTimelineUpdate(float Value);
 
 private:
-	// 문의 원래 위치와 회전값을 기억하기 위한 변수
+	// 문의 원래 위치와 회전값을 저장용
 	FRotator InitialRotation_Left;
 	FRotator InitialRotation_Right;
 	FVector InitialLocation_Left;
