@@ -9,8 +9,6 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "GuestNPCBase.generated.h"
 
-class UBehaviorTree;
-
 // NPC의 역할 구분용
 UENUM(BlueprintType)
 enum class ENPCType : uint8
@@ -35,6 +33,4 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guest|NPC")
 	ENPCType NPCType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|AI")
-	TObjectPtr<UBehaviorTree> BehaviorTree;
 };
