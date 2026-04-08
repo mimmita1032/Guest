@@ -12,147 +12,131 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
+class UGCharacterDataAsset;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AGuestCharacter();
+    AGuestCharacter();
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void MoveAction(const FInputActionValue& Value);
-	void LookAction(const FInputActionValue& Value);
-	void JumpAction(const FInputActionValue& Value);
-	void StartCrouch(const FInputActionValue& Value);
-	void EndCrouch(const FInputActionValue& Value);
-	void OnInteract(const struct FInputActionValue& Value);
-	void ZoomAction(const FInputActionValue& Value);
-	void FreeLookStart(const FInputActionValue& Value);
-	void FreeLookEnd(const FInputActionValue& Value);
+    void MoveAction(const FInputActionValue& Value);
+    void LookAction(const FInputActionValue& Value);
+    void JumpAction(const FInputActionValue& Value);
+    void StartCrouch(const FInputActionValue& Value);
+    void EndCrouch(const FInputActionValue& Value);
+    void OnInteract(const struct FInputActionValue& Value);
+    void ZoomAction(const FInputActionValue& Value);
+    void FreeLookStart(const FInputActionValue& Value);
+    void FreeLookEnd(const FInputActionValue& Value);
+
+    // 기획 데이터 에셋 참조
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+    TObjectPtr<UGCharacterDataAsset> CharacterData;
 
 protected:
-	
-	//입력
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+    
+    //입력
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Move;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Move;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Look;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Look;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Jump;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Jump;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Crouch;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Crouch;
 
-	
-	
-	//카메라
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	TObjectPtr<USpringArmComponent> SpringArmComp;
+    //카메라
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+    TObjectPtr<USpringArmComponent> SpringArmComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	TObjectPtr<UCameraComponent> CameraComp;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+    TObjectPtr<UCameraComponent> CameraComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Zoom;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Zoom;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_FreeLook;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_FreeLook;
 
-	//상호작용
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
-	TObjectPtr<class UGInteractionComponent> InteractionComponent;
+    //상호작용
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+    TObjectPtr<class UGInteractionComponent> InteractionComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<class UInputAction> InteractAction;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<class UInputAction> InteractAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
-	TObjectPtr<UGDigicamComponent> DigicamComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UGDigicamComponent> DigicamComponent;
 
 #pragma region Digicam Functions
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_DigicamControl;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_DigicamControl;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_DigicamShutter;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_DigicamShutter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_DigicamToggle;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_DigicamToggle;
 
-	// 입력 처리 함수
-	UFUNCTION()
-	void DigicamControlAction(const FInputActionValue& Value);
+    // 입력 처리 함수
+    UFUNCTION()
+    void DigicamControlAction(const FInputActionValue& Value);
 
-	UFUNCTION()
-	void DigicamShutterAction(const FInputActionValue& Value);
+    UFUNCTION()
+    void DigicamShutterAction(const FInputActionValue& Value);
 
-	UFUNCTION()
-	void DigicamToggleAction(const FInputActionValue& Value);
+    UFUNCTION()
+    void DigicamToggleAction(const FInputActionValue& Value);
 #pragma endregion
+
 #pragma region CameraZoom
-	// 도달해야 할 최종 셀카봉 길이 (기본값 400)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float TargetZoomLength = 400.0f; 
+    // 연산용 줌 타겟
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float TargetZoomLength;
 
-	// 최대 줌인 거리 (어깨너머 숄더뷰 정도)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float MinZoomLength = 150.0f; 
+    // 연산용 줌 속도
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float ZoomSpeed;
 
-	// 최대 줌아웃 거리 (멀리서 캐릭터 전체를 보는 정도)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float MaxZoomLength = 800.0f; 
-
-	// 마우스 휠 한 칸당 깎이거나 늘어나는 거리 보폭
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float ZoomStep = 50.0f; 
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Zoom")
-	float ZoomSpeed = 10.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
-	bool bIsFreeLooking = false;
-
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
+    bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
+
 #pragma region anim
-	
 public:
-	UFUNCTION(BlueprintPure, Category = "Character|Animation")
-	float GetMovementSpeed() const;
+    UFUNCTION(BlueprintPure, Category = "Character|Animation")
+    float GetMovementSpeed() const;
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
-	bool bIsCrouching = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
+    bool bIsCrouching = false;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
-	bool bIsAiming = false;
-	
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character|State")
+    bool bIsAiming = false;
 #pragma endregion
+
 #pragma region Sprint
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Sprint;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_Sprint;
 
-	void StartSprinting();
-	void StopSprinting();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
-	float WalkSpeed = 180.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character|Movement")
-	float SprintSpeed = 500.0f;
+    void StartSprinting();
+    void StopSprinting();
 #pragma endregion // Sprint
-
-	
 };
