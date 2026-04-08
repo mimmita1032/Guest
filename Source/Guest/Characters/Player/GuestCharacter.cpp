@@ -151,7 +151,7 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 		if (InteractAction)
 		{
-			EIC->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AGuestCharacter::OnInteract);
+			EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
 		} 
 
 		if (IA_DigicamControl)
