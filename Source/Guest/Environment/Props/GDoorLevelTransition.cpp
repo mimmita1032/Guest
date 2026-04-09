@@ -10,6 +10,13 @@ void AGDoorLevelTransition::Interact(AActor* Interactor)
 	// 부모의 상호작용 로직(문 열리는 애니메이션, 소리 등 << 아직 안넣음)을 먼저 실행
 	Super::Interact(Interactor);
 
+	// 문 잠긴 상태 방어코드
+	if (bIsLocked) 
+	{
+		G_LOG(TEXT("레벨 이동 문: 시간에 의해 문이 잠겨 있어 이동할 수 없습니다."));
+		return; 
+	}
+	
 	// 태그없으면 이동x
 	if (TargetLevelName == NAME_None || TargetSpawnTag == NAME_None)
 	{
