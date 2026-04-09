@@ -12,9 +12,11 @@
 #include "DrawDebugHelpers.h"
 
 // Blackboard 키 이름 정의
-const FName AGuestAIController::BB_TargetActor        = TEXT("TargetActor");
-const FName AGuestAIController::BB_TargetLocation     = TEXT("TargetLocation");
-const FName AGuestAIController::BB_LastKnownLocation  = TEXT("LastKnownLocation");
+const FName AGuestAIController::BB_TargetActor           = TEXT("TargetActor");
+const FName AGuestAIController::BB_TargetLocation        = TEXT("TargetLocation");
+const FName AGuestAIController::BB_LastKnownLocation     = TEXT("LastKnownLocation");
+const FName AGuestAIController::BB_ScheduledDestination  = TEXT("ScheduledDestination");
+const FName AGuestAIController::BB_bHasSchedule          = TEXT("bHasSchedule");
 
 AGuestAIController::AGuestAIController()
 {

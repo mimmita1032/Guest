@@ -22,6 +22,10 @@ public:
 	static const FName BB_TargetLocation;
 	static const FName BB_LastKnownLocation;
 
+	// 시간대 스케줄 관련 BB 키
+	static const FName BB_ScheduledDestination; // Vector — 스케줄로 지정된 목적지
+	static const FName BB_bHasSchedule;          // Bool   — 현재 시간대에 스케줄이 활성화됐는지
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
