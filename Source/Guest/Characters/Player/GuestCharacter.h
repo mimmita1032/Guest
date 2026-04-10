@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "AbilitySystemInterface.h"
 #include "GuestCharacter.generated.h"
 
 class USpringArmComponent;
@@ -15,7 +16,7 @@ class UGDigicamComponent;
 class UGCharacterDataAsset;
 
 UCLASS()
-class GUEST_API AGuestCharacter : public ACharacter
+class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -24,6 +25,8 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    
+    virtual void PossessedBy(AController* NewController) override;
 
     virtual void Tick(float DeltaTime) override;
 
@@ -139,4 +142,17 @@ protected:
     void StartSprinting();
     void StopSprinting();
 #pragma endregion // Sprint
+    
+    ///     GAS     ///
+
+public:
+    // IAbilitySystemInterface begin
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    // IAbilitySystemInterface end
+private:
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAbilitySystemComponent* GuestAbilitySystemComponent;
+    
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAttributeSet* GuestAttributeSet;
 };

@@ -13,6 +13,9 @@
 #include "Guest/Components/GDigicamComponent.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
+//gas
+#include "Guest/GAS/GuestAbilitySystemComponent.h"
+#include "Guest/GAS/GuestAttributeSet.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -52,6 +55,9 @@ AGuestCharacter::AGuestCharacter()
     // 연산용 초기값
     TargetZoomLength = 400.0f;
     ZoomSpeed = 10.0f;
+   
+   GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
+   GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
 }
 
 void AGuestCharacter::BeginPlay()
@@ -100,6 +106,16 @@ void AGuestCharacter::BeginPlay()
    }
 
     SpringArmComp->TargetArmLength = TargetZoomLength;
+}
+
+void AGuestCharacter::PossessedBy(AController* NewController)
+{
+   Super::PossessedBy(NewController);
+   
+   if (GuestAbilitySystemComponent)
+   {
+      GuestAbilitySystemComponent->InitAbilityActorInfo(this,this);
+   }
 }
 
 void AGuestCharacter::Tick(float DeltaTime)
@@ -341,6 +357,8 @@ void AGuestCharacter::StopSprinting()
        UE_LOG(LogTemp, Warning, TEXT("달리기 중지: 현재 속도 %f"), CharacterData->WalkSpeed);
     }
 }
+
+
 #pragma endregion
 
 #pragma region Crouch
@@ -356,3 +374,8 @@ void AGuestCharacter::EndCrouch(const FInputActionValue& Value)
     UE_LOG(LogTemp, Log, TEXT("캐릭터 조작: 앉기 상태 해제"));
 }
 #pragma endregion
+
+UAbilitySystemComponent* AGuestCharacter::GetAbilitySystemComponent() const
+{
+   return GuestAbilitySystemComponent;
+}
