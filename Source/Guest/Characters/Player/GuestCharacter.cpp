@@ -16,6 +16,8 @@
 //gas
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
+//gas DATA
+#include "Guest/DATA/DataAssets/GCharacterGASData.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -115,6 +117,13 @@ void AGuestCharacter::PossessedBy(AController* NewController)
    if (GuestAbilitySystemComponent)
    {
       GuestAbilitySystemComponent->InitAbilityActorInfo(this,this);
+   }
+   
+   ensureMsgf(!CharacterGasData.IsNull(), TEXT("캐릭터 GAS 데이터 할당 안됨"));
+   
+   if (UGCharacterGASData* LoadedData = CharacterGasData.LoadSynchronous())
+   {
+      LoadedData->GiveToASC(GuestAbilitySystemComponent);
    }
 }
 

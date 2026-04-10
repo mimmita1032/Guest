@@ -14,6 +14,7 @@ class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
 class UGCharacterDataAsset;
+class UGCharacterGASData;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
@@ -155,4 +156,7 @@ private:
     
     UPROPERTY(VisibleAnywhere, Category = "GAS")
     class UGuestAttributeSet* GuestAttributeSet;
+    
+    UPROPERTY(EditDefaultsOnly, Category = "Data")
+    TSoftObjectPtr<UGCharacterGASData> CharacterGasData;
 };
