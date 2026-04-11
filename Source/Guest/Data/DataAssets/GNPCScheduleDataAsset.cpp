@@ -6,7 +6,15 @@ const FNPCScheduleEntry* UGNPCScheduleDataAsset::FindActiveEntry(float CurrentHo
 {
 	for (const FNPCScheduleEntry& Entry : Schedule)
 	{
-		if (CurrentHour >= Entry.GetStartAsFloat() && CurrentHour < Entry.GetEndAsFloat())
+		const float Start = Entry.GetStartAsFloat();
+		const float End   = Entry.GetEndAsFloat();
+
+		// 자정을 넘기는 구간 (예: 23:00 ~ 06:00)
+		const bool bActive = (Start > End)
+			? (CurrentHour >= Start || CurrentHour < End)
+			: (CurrentHour >= Start && CurrentHour < End);
+
+		if (bActive)
 		{
 			return &Entry;
 		}

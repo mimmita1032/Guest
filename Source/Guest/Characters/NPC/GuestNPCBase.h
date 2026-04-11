@@ -48,4 +48,7 @@ private:
 
 	// 현재 시각에 맞는 스케줄 목적지를 BB에 반영
 	void ApplySchedule(float CurrentHour);
+
+	// 직전에 적용된 스케줄의 목적지 태그 (변경 감지용)
+	FName LastActiveScheduleTag = NAME_None;
 };

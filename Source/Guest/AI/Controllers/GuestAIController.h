@@ -25,6 +25,7 @@ public:
 	// 시간대 스케줄 관련 BB 키
 	static const FName BB_ScheduledDestination; // Vector — 스케줄로 지정된 목적지
 	static const FName BB_bHasSchedule;          // Bool   — 현재 시간대에 스케줄이 활성화됐는지
+	static const FName BB_bScheduleArrived;      // Bool   — 스케줄 목적지에 이미 도착했는지
 
 protected:
 	virtual void BeginPlay() override;

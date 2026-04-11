@@ -17,6 +17,7 @@ const FName AGuestAIController::BB_TargetLocation        = TEXT("TargetLocation"
 const FName AGuestAIController::BB_LastKnownLocation     = TEXT("LastKnownLocation");
 const FName AGuestAIController::BB_ScheduledDestination  = TEXT("ScheduledDestination");
 const FName AGuestAIController::BB_bHasSchedule          = TEXT("bHasSchedule");
+const FName AGuestAIController::BB_bScheduleArrived      = TEXT("bScheduleArrived");
 
 AGuestAIController::AGuestAIController()
 {

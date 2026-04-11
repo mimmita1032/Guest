@@ -66,11 +66,19 @@ void UGSpacetimeSubsystem::UpdateWorldTime(float DeltaTime)
 	}
 
 	FDateTime CurrentRealTime = FDateTime::Now();
-    
-	int32 Hour = CurrentRealTime.GetHour();
-	int32 Minute = CurrentRealTime.GetMinute();
-	int32 Second = CurrentRealTime.GetSecond();
-    
+
+	const int32 Hour   = CurrentRealTime.GetHour();
+	const int32 Minute = CurrentRealTime.GetMinute();
+	const int32 Second = CurrentRealTime.GetSecond();
+
+	// 분이 바뀌지 않으면 브로드캐스트 생략
+	if (Hour == LastBroadcastHour && Minute == LastBroadcastMinute)
+	{
+		return;
+	}
+	LastBroadcastHour   = Hour;
+	LastBroadcastMinute = Minute;
+
 	CurrentTime = Hour + (Minute / 60.0f) + (Second / 3600.0f);
 
 	OnTimeChanged.Broadcast(CurrentTime);

@@ -70,30 +70,40 @@ void AGuestNPCBase::ApplySchedule(float CurrentHour)
 
 	if (ActiveEntry)
 	{
-		// 레벨에서 태그가 일치하는 웨이포인트 액터를 탐색
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsWithTag(this, ActiveEntry->DestinationTag, FoundActors);
-
-		if (FoundActors.IsEmpty())
+		// 스케줄 항목이 바뀐 경우에만 목적지를 갱신하고 도착 플래그를 리셋
+		if (ActiveEntry->DestinationTag != LastActiveScheduleTag)
 		{
-			G_WARN(TEXT("[NPC Schedule] %s — 목적지 태그 '%s'에 해당하는 액터를 찾지 못했습니다."),
-				*GetName(), *ActiveEntry->DestinationTag.ToString());
-			return;
+			// 레벨에서 태그가 일치하는 웨이포인트 액터를 탐색
+			TArray<AActor*> FoundActors;
+			UGameplayStatics::GetAllActorsWithTag(this, ActiveEntry->DestinationTag, FoundActors);
+
+			if (FoundActors.IsEmpty())
+			{
+				G_WARN(TEXT("[NPC Schedule] %s — 목적지 태그 '%s'에 해당하는 액터를 찾지 못했습니다."),
+					*GetName(), *ActiveEntry->DestinationTag.ToString());
+				return;
+			}
+
+			const FVector Destination = FoundActors[0]->GetActorLocation();
+			BB->SetValueAsVector(AGuestAIController::BB_ScheduledDestination, Destination);
+			BB->SetValueAsBool(AGuestAIController::BB_bHasSchedule, true);
+			BB->SetValueAsBool(AGuestAIController::BB_bScheduleArrived, false);
+
+			LastActiveScheduleTag = ActiveEntry->DestinationTag;
+
+			G_LOG(TEXT("[NPC Schedule] %s — %02d:%02d 새 스케줄: '%s' → %s"),
+				*GetName(), ActiveEntry->StartHour, ActiveEntry->StartMinute,
+				*ActiveEntry->DestinationTag.ToString(),
+				*Destination.ToString());
 		}
-
-		const FVector Destination = FoundActors[0]->GetActorLocation();
-		BB->SetValueAsVector(AGuestAIController::BB_ScheduledDestination, Destination);
-		BB->SetValueAsBool(AGuestAIController::BB_bHasSchedule, true);
-
-		G_LOG(TEXT("[NPC Schedule] %s — %02d:%02d 트리거: '%s' → %s"),
-			*GetName(), ActiveEntry->StartHour, ActiveEntry->StartMinute,
-			*ActiveEntry->DestinationTag.ToString(),
-			*Destination.ToString());
 	}
 	else
 	{
 		// 스케줄 없는 시간대 — BB 클리어 후 기본 배회로 복귀
 		BB->ClearValue(AGuestAIController::BB_ScheduledDestination);
 		BB->SetValueAsBool(AGuestAIController::BB_bHasSchedule, false);
+		BB->SetValueAsBool(AGuestAIController::BB_bScheduleArrived, false);
+
+		LastActiveScheduleTag = NAME_None;
 	}
 }
