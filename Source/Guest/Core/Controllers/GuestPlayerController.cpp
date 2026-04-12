@@ -10,6 +10,8 @@
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
 #include "Guest/Save/GuestSaveGame.h"
+#include "Guest/UI/SaveLoad/GuestSaveBoardWidget.h"
+#include "Guest/UI/SaveLoad/GuestLoadBoardWidget.h"
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
 
 namespace
@@ -69,11 +71,11 @@ void AGuestPlayerController::SetupInputComponent()
 		}
 		if (IA_SaveGame)
 		{
-			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::OnSaveGamePressed);
+			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
 		}
 		if (IA_LoadGame)
 		{
-			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::OnLoadGamePressed);
+			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
 		}
 	}
 	
@@ -163,4 +165,40 @@ void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 		GI->RequestLoadFromSlot(GGuestTestSaveSlot, 0);
 	}
 }
+
+void AGuestPlayerController::ShowSaveBoard()
+{
+	G_LOG(TEXT("Show save"))
+	if (SaveBoardClass)
+	{
+		SaveBoardWidget = CreateWidget<UGuestSaveBoardWidget>(this, SaveBoardClass);
+	}
+	
+	if (SaveBoardWidget)
+	{
+		SaveBoardWidget->AddToViewport();
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(SaveBoardWidget->TakeWidget());
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+}
+
+void AGuestPlayerController::ShowLoadBoard()
+{
+	G_LOG(TEXT("Show Load"))
+	if (LoadBoardClass)
+	{
+		LoadBoardWidget = CreateWidget<UGuestLoadBoardWidget>(this, LoadBoardClass);
+	}
+	if (LoadBoardWidget)
+	{
+		SaveBoardWidget->AddToViewport();
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(SaveBoardWidget->TakeWidget());
+		SetInputMode(InputMode);
+		bShowMouseCursor = true;
+	}
+}
+
 #pragma endregion

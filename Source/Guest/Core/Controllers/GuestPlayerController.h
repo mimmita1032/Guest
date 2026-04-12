@@ -56,7 +56,22 @@ protected:
 	
 #pragma endregion
 #pragma region SaveDebug
+
+
 protected:
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Save|UI")
+	class UGuestSaveBoardWidget* SaveBoardWidget;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Save|UI")
+	class UGuestLoadBoardWidget* LoadBoardWidget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Save|UI")
+	TSubclassOf<class UGuestSaveBoardWidget> SaveBoardClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Save|UI")
+	TSubclassOf<class UGuestLoadBoardWidget> LoadBoardClass;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputAction> IA_SaveGame;
 	
@@ -65,6 +80,8 @@ protected:
 	
 	void OnSaveGamePressed(const FInputActionValue& Value);
 	void OnLoadGamePressed(const FInputActionValue& Value);
+	void ShowSaveBoard();
+	void ShowLoadBoard();
 	
 #pragma endregion
 };

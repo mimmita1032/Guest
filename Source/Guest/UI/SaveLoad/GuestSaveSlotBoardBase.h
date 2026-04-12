@@ -1,0 +1,27 @@
+﻿#pragma once
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "GuestSaveSlotBoardBase.generated.h"
+
+
+UCLASS()
+class GUEST_API UGuestSaveSlotBoardBase:public UUserWidget
+{
+	GENERATED_BODY()
+	
+protected:
+	virtual void NativeOnInitialized() override;
+	
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UScrollBox> SB_SlotList;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<class UButton> Btn_close;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Save")
+	TSubclassOf<class UGuestSaveSlotWidget> SaveSlotClass;
+
+	// --- 버튼 이벤트 ---
+	UFUNCTION()
+	void OnCloseClicked();
+};
