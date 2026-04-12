@@ -150,6 +150,19 @@ void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
 
 void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 {
-	G_LOG(TEXT("로드 바인딩"))
+	if (!UGameplayStatics::DoesSaveGameExist(GGuestTestSaveSlot,0))
+	{
+		return;
+	}
+	
+	USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(GGuestTestSaveSlot,0);
+	UGuestSaveGame* SaveObject = Cast<UGuestSaveGame>(Loaded);
+	if (!SaveObject) return;
+	
+	APawn* ControllerPawn = GetPawn();
+	if (!ControllerPawn) return;
+	
+	ControllerPawn -> SetActorLocation(SaveObject->PlayerWorld.Location,false,nullptr, ETeleportType::TeleportPhysics);
+	ControllerPawn -> SetActorRotation(SaveObject->PlayerWorld.Rotation,ETeleportType::TeleportPhysics);
 }
 #pragma endregion
