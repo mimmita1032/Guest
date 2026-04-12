@@ -13,6 +13,7 @@
 #include "Guest/UI/SaveLoad/GuestSaveBoardWidget.h"
 #include "Guest/UI/SaveLoad/GuestLoadBoardWidget.h"
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
+#include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
 
 namespace
@@ -146,9 +147,10 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 
 	if (UWorld* World = GetWorld())
 	{
-		SaveObject->MapPackageName = World->PersistentLevel
+		const FString RawPackage = World->PersistentLevel
 			? World->PersistentLevel->GetOutermost()->GetName()
 			: FString();
+		SaveObject->MapPackageName = GuestMapPackage::StripPIEFromPackagePath(RawPackage);
 	}
 
 	SaveObject->SaveVersion = 2;

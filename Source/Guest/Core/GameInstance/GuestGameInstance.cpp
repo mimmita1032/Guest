@@ -1,10 +1,11 @@
-﻿#include "Guest/Core/GameInstance/GuestGameInstance.h"
+#include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Engine/World.h"
 #include "Engine/Level.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Guest/Save/GuestMapPackageUtils.h"
 
 void UGuestGameInstance::Init()
 {
@@ -40,48 +41,58 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 	{
 		return;
 	}
-	
+
 	USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, UserIndex);
 	UGuestSaveGame* SaveObject = Cast<UGuestSaveGame>(Loaded);
-	if (!SaveObject) return;
-	
+	if (!SaveObject)
+	{
+		return;
+	}
+
 	UWorld* World = GetWorld();
-	if (!World) return;
-	
+	if (!World)
+	{
+		return;
+	}
+
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
-	const FString SavedPackage = SaveObject-> MapPackageName;
-	
-	//구 세이브 데이터 인 경우(map 없는 버전)
+	const FString SavedPackage = SaveObject->MapPackageName;
+
+	// 구 세이브 데이터 (맵 패키지 없음)
 	if (SavedPackage.IsEmpty())
 	{
-		if (APlayerController* PC = UGameplayStatics::CreatePlayer(World, 0))
+		if (APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0))
 		{
-			if (APawn* Pawn = PC -> GetPawn())
+			if (APawn* Pawn = PC->GetPawn())
 			{
-				Pawn -> SetActorLocation(SaveObject -> PlayerWorld.Location);
-				Pawn -> SetActorRotation(SaveObject -> PlayerWorld.Rotation);
+				Pawn->SetActorLocation(SaveObject->PlayerWorld.Location);
+				Pawn->SetActorRotation(SaveObject->PlayerWorld.Rotation);
 			}
 		}
 		return;
 	}
-	
-	//현재 맵과 저장된 맵이 같은 경우
-	if (CurrentPackage.Equals(SavedPackage,ESearchCase::IgnoreCase))
+
+	const FString CurrentNorm = GuestMapPackage::StripPIEFromPackagePath(CurrentPackage);
+	const FString SavedNorm = GuestMapPackage::StripPIEFromPackagePath(SavedPackage);
+	const bool bSameMap = CurrentNorm.Equals(SavedNorm, ESearchCase::IgnoreCase);
+
+	if (bSameMap)
 	{
-		if (APlayerController* PC = UGameplayStatics::CreatePlayer(World, 0))
+		if (APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0))
 		{
-			if (APawn* Pawn = PC -> GetPawn())
+			if (APawn* Pawn = PC->GetPawn())
 			{
-				Pawn -> SetActorLocation(SaveObject -> PlayerWorld.Location);
-				Pawn -> SetActorRotation(SaveObject -> PlayerWorld.Rotation);
+				Pawn->SetActorLocation(SaveObject->PlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
+				Pawn->SetActorRotation(SaveObject->PlayerWorld.Rotation, ETeleportType::TeleportPhysics);
 			}
 		}
+		return;
 	}
-	
-	PendingPlayerWorld = SaveObject -> PlayerWorld;
+
+	PendingPlayerWorld = SaveObject->PlayerWorld;
 	bPendingApplyPlayerWorld = true;
-	
-	const FString ShortMapName = FPackageName::GetShortName(SavedPackage);
+
+	const FString ShortMapName = FPackageName::GetShortName(SavedNorm);
 	UGameplayStatics::OpenLevel(World, FName(*ShortMapName));
 }
 
