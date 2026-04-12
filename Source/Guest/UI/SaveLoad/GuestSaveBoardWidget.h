@@ -9,6 +9,9 @@ class GUEST_API UGuestSaveBoardWidget:public UGuestSaveSlotBoardBase
 {
 	
 	GENERATED_BODY()
-public:
 	
+protected:
+	virtual void OnSlotWidgetCreated(UGuestSaveSlotWidget* SlotWidget, int32 SlotIndex) override;
+	UFUNCTION()
+	void HandleSaveSlotClicked(int32 SlotIndex);
 };

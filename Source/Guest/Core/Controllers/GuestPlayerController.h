@@ -19,6 +19,11 @@ class GUEST_API AGuestPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	/** 현재 맵·폰 위치/회전을 주어진 슬롯에 저장 */
+	UFUNCTION(BlueprintCallable, Category = "Save")
+	bool SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex = 0);
+
 protected:
 	virtual void BeginPlay() override;
 

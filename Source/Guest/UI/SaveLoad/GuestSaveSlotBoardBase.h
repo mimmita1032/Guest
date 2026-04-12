@@ -3,6 +3,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GuestSaveSlotBoardBase.generated.h"
 
+class UGuestSaveSlotWidget;
 
 UCLASS()
 class GUEST_API UGuestSaveSlotBoardBase:public UUserWidget
@@ -23,6 +24,8 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Save")
 	int32 NumSlots = 4;
+	
+	virtual void OnSlotWidgetCreated(UGuestSaveSlotWidget* SlotWidget, int32 SlotIndex) {}
 	
 	// --- 버튼 이벤트 ---
 	UFUNCTION()

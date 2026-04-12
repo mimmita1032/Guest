@@ -13,6 +13,7 @@
 #include "Guest/UI/SaveLoad/GuestSaveBoardWidget.h"
 #include "Guest/UI/SaveLoad/GuestLoadBoardWidget.h"
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
+#include "Guest/Save/GuestSaveSlotNames.h"
 
 namespace
 {
@@ -126,43 +127,59 @@ void AGuestPlayerController::ToggleDebugUI()
 #pragma endregion
 
 #pragma region SaveGame
-void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
+
+bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex)
 {
 	UGuestSaveGame* SaveObject = Cast<UGuestSaveGame>(
-	UGameplayStatics::CreateSaveGameObject(UGuestSaveGame::StaticClass()));
-	
-	if (!SaveObject) return;
-	
+		UGameplayStatics::CreateSaveGameObject(UGuestSaveGame::StaticClass()));
+
+	if (!SaveObject)
+	{
+		return false;
+	}
+
 	APawn* ControllerPawn = GetPawn();
-	if (!ControllerPawn) return;
-	
+	if (!ControllerPawn)
+	{
+		return false;
+	}
+
 	if (UWorld* World = GetWorld())
 	{
 		SaveObject->MapPackageName = World->PersistentLevel
 			? World->PersistentLevel->GetOutermost()->GetName()
 			: FString();
 	}
-	
-	SaveObject -> SaveVersion = 2;
-	SaveObject -> PlayerWorld.Location = ControllerPawn -> GetActorLocation();
-	SaveObject -> PlayerWorld.Rotation = ControllerPawn -> GetActorRotation();
-	
-	const bool bOk = UGameplayStatics::SaveGameToSlot(SaveObject, GGuestTestSaveSlot, 0);
-	
+
+	SaveObject->SaveVersion = 2;
+	SaveObject->SavedAt = FDateTime::Now();
+	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
+	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();
+
+	const bool bOk = UGameplayStatics::SaveGameToSlot(SaveObject, SlotName, UserIndex);
+
 	if (bOk)
 	{
-		G_LOG(TEXT("저장 성공"));
-	}else
-	{
-		G_LOG(TEXT("저장 실패"));
+		G_LOG(TEXT("저장 성공: %s"), *SlotName);
 	}
+	else
+	{
+		G_LOG(TEXT("저장 실패: %s"), *SlotName);
+	}
+
+	return bOk;
+}
+
+void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
+{
+	SaveCurrentGameToSlot(GGuestTestSaveSlot, GuestSaveSlots::DefaultUserIndex());
 }
 
 void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 {
 	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
 	{
-		GI->RequestLoadFromSlot(GGuestTestSaveSlot, 0);
+		GI->RequestLoadFromSlot(GGuestTestSaveSlot, GuestSaveSlots::DefaultUserIndex());
 	}
 }
 

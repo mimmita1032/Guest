@@ -1,7 +1,9 @@
-﻿#include "GuestSaveSlotBoardBase.h"
+#include "GuestSaveSlotBoardBase.h"
 #include "Components/ScrollBox.h"
 #include "Components/Button.h"
 #include "GameFramework/PlayerController.h"
+#include "Guest/Save/GuestSaveGame.h"
+#include "Guest/Save/GuestSaveSlotNames.h"
 #include "Guest/UI/SaveLoad/GuestSaveSlotWidget.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -43,17 +45,27 @@ void UGuestSaveSlotBoardBase::PopulateSlots()
 		{
 			continue;
 		}
-		SlotWidget ->SetSlotIndex(i);
-		const FString SlotName = FString::Printf(TEXT("GuestSave_%d"), i);
-		const bool bExists = UGameplayStatics::DoesSaveGameExist(SlotName, 0);
+		SlotWidget->SetSlotIndex(i);
+		const FString SlotName = GuestSaveSlots::MakeSlotName(i);
+		const int32 UserIndex = GuestSaveSlots::DefaultUserIndex();
+		const bool bExists = UGameplayStatics::DoesSaveGameExist(SlotName, UserIndex);
+		
 		if (bExists)
 		{
-			// LoadGameFromSlot 후 Cast<UGuestSaveGame> → SavedAt 포맷해서 SetCreateAtDisplay
+			if (USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(SlotName, UserIndex))
+			{
+				if (UGuestSaveGame* GuestSave = Cast<UGuestSaveGame>(Loaded))
+				{
+					SlotWidget->SetCreateAtDisplay(FText::AsDateTime(GuestSave->SavedAt));
+					SlotWidget->setMainQuestDisplay();
+				}
+			}
+			else
+			{
+				SlotWidget->SetCreateAtDisplay(NSLOCTEXT("Guest", "EmptySlot", "-"));
+			}
 		}
-		else
-		{
-			SlotWidget ->SetCreateAtDisplay(NSLOCTEXT("Guest", "EmptySlot", "-"));
-		}
-		SB_SlotList->AddChild(SlotWidget);
+			SB_SlotList->AddChild(SlotWidget);
+			OnSlotWidgetCreated(SlotWidget, i);
 	}
 }
