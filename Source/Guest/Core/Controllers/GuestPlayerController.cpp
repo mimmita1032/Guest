@@ -8,6 +8,14 @@
 #include "Blueprint/UserWidget.h"
 #include "Guest/UI/Layout/GuestPrimaryLayout.h"
 #include "Guest/Utils/GLog.h"
+#include "Kismet/GameplayStatics.h"
+#include "Guest/Save/GuestSaveGame.h"
+
+namespace
+{
+	const FString GGuestTestSaveSlot(TEXT("GuestTestSlot"));
+}
+
 
 void AGuestPlayerController::BeginPlay()
 {
@@ -47,7 +55,7 @@ void AGuestPlayerController::BeginPlay()
 
 }
 
-#pragma region DebugUI
+
 void AGuestPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -58,8 +66,19 @@ void AGuestPlayerController::SetupInputComponent()
 		{
 			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
 		}
+		if (IA_SaveGame)
+		{
+			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::OnSaveGamePressed);
+		}
+		if (IA_LoadGame)
+		{
+			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::OnLoadGamePressed);
+		}
 	}
+	
 }
+
+#pragma region DebugUI
 
 void AGuestPlayerController::ToggleDebugUI()
 {
@@ -100,5 +119,37 @@ void AGuestPlayerController::ToggleDebugUI()
 			G_LOG(TEXT("디버그 UI 활성화"));
 		}
 	}
+}
+#pragma endregion
+
+#pragma region SaveGame
+void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
+{
+	UGuestSaveGame* SaveObject = Cast<UGuestSaveGame>(
+	UGameplayStatics::CreateSaveGameObject(UGuestSaveGame::StaticClass()));
+	
+	if (!SaveObject) return;
+	
+	APawn* ControllerPawn = GetPawn();
+	if (!ControllerPawn) return;
+	
+	SaveObject -> SaveVersion = 1;
+	SaveObject -> PlayerWorld.Location = ControllerPawn -> GetActorLocation();
+	SaveObject -> PlayerWorld.Rotation = ControllerPawn -> GetActorRotation();
+	
+	const bool bOk = UGameplayStatics::SaveGameToSlot(SaveObject, GGuestTestSaveSlot, 0);
+	
+	if (bOk)
+	{
+		G_LOG(TEXT("저장 성공"));
+	}else
+	{
+		G_LOG(TEXT("저장 실패"));
+	}
+}
+
+void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
+{
+	G_LOG(TEXT("로드 바인딩"))
 }
 #pragma endregion

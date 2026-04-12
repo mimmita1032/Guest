@@ -54,5 +54,16 @@ protected:
 	TObjectPtr<UGuestPrimaryLayout> PrimaryLayoutInstance;
 	
 #pragma endregion
+#pragma region SaveDebug
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_SaveGame;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_LoadGame;
+	
+	void OnSaveGamePressed(const FInputActionValue& Value);
+	void OnLoadGamePressed(const FInputActionValue& Value);
+	
+#pragma endregion
 };
