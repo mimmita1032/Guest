@@ -193,9 +193,9 @@ void AGuestPlayerController::ShowLoadBoard()
 	}
 	if (LoadBoardWidget)
 	{
-		SaveBoardWidget->AddToViewport();
+		LoadBoardWidget->AddToViewport();
 		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(SaveBoardWidget->TakeWidget());
+		InputMode.SetWidgetToFocus(LoadBoardWidget->TakeWidget());
 		SetInputMode(InputMode);
 		bShowMouseCursor = true;
 	}
