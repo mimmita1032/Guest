@@ -17,6 +17,21 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	FocusedActor = FindInteractable();
+
+	// 상호작용 대상이 갱신되었을 때 텍스트를 화면에 출력 (UI 구현 전 디버그용)
+	if (FocusedActor)
+	{
+		if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+		{
+			FText PromptText = Interactable->GetInteractText();
+          
+			if (GEngine && !PromptText.IsEmpty())
+			{
+				// Key 값을 1로 주어 텍스트가 여러 줄 안 생기게
+				GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, FString::Printf(TEXT("[E] %s"), *PromptText.ToString()));
+			}
+		}
+	}
 }
 
 AActor* UGInteractionComponent::FindInteractable() const
@@ -74,3 +89,4 @@ void UGInteractionComponent::DoInteract()
 		G_WARN(TEXT("상호작용 대상이 없습니다."));
 	}
 }
+
