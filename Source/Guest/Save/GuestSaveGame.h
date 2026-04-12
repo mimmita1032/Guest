@@ -25,7 +25,10 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	
 	public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save|Meta")
-	int32 SaveVersion = 1;
+	int32 SaveVersion = 2;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|World")
+	FString MapPackageName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Player")
 	FGuestPlayerWorldState PlayerWorld;

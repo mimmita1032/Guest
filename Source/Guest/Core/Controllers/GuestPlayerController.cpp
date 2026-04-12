@@ -10,6 +10,7 @@
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
 #include "Guest/Save/GuestSaveGame.h"
+#include "Guest/Core/GameInstance/GuestGameInstance.h"
 
 namespace
 {
@@ -133,7 +134,14 @@ void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
 	APawn* ControllerPawn = GetPawn();
 	if (!ControllerPawn) return;
 	
-	SaveObject -> SaveVersion = 1;
+	if (UWorld* World = GetWorld())
+	{
+		SaveObject->MapPackageName = World->PersistentLevel
+			? World->PersistentLevel->GetOutermost()->GetName()
+			: FString();
+	}
+	
+	SaveObject -> SaveVersion = 2;
 	SaveObject -> PlayerWorld.Location = ControllerPawn -> GetActorLocation();
 	SaveObject -> PlayerWorld.Rotation = ControllerPawn -> GetActorRotation();
 	
@@ -150,19 +158,9 @@ void AGuestPlayerController::OnSaveGamePressed(const FInputActionValue& Value)
 
 void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 {
-	if (!UGameplayStatics::DoesSaveGameExist(GGuestTestSaveSlot,0))
+	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
 	{
-		return;
+		GI->RequestLoadFromSlot(GGuestTestSaveSlot, 0);
 	}
-	
-	USaveGame* Loaded = UGameplayStatics::LoadGameFromSlot(GGuestTestSaveSlot,0);
-	UGuestSaveGame* SaveObject = Cast<UGuestSaveGame>(Loaded);
-	if (!SaveObject) return;
-	
-	APawn* ControllerPawn = GetPawn();
-	if (!ControllerPawn) return;
-	
-	ControllerPawn -> SetActorLocation(SaveObject->PlayerWorld.Location,false,nullptr, ETeleportType::TeleportPhysics);
-	ControllerPawn -> SetActorRotation(SaveObject->PlayerWorld.Rotation,ETeleportType::TeleportPhysics);
 }
 #pragma endregion

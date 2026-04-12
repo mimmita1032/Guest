@@ -12,6 +12,7 @@
  */
 
 class UGuestPrimaryLayout;
+class UGuestGameInstance;
 
 UCLASS()
 class GUEST_API AGuestPlayerController : public APlayerController
