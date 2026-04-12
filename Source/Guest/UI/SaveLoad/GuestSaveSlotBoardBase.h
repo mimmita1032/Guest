@@ -20,8 +20,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Save")
 	TSubclassOf<class UGuestSaveSlotWidget> SaveSlotClass;
-
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Save")
+	int32 NumSlots = 4;
+	
 	// --- 버튼 이벤트 ---
 	UFUNCTION()
 	void OnCloseClicked();
+	
+	void PopulateSlots();
 };

@@ -1,4 +1,4 @@
-﻿#include "GuestSaveSlotwidget.h"
+﻿#include "GuestSaveSlotWidget.h"
 #include "Components/TextBlock.h"
 
 void UGuestSaveSlotWidget::SetCreateAtDisplay(const FText& InText)
