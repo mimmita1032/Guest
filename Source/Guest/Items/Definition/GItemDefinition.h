@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "GItemDefinition.generated.h"
 
 /*=================
-아이템 카테고리
+아이템 카테고리 (추후 태그로 대체 예정)
 =================*/
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
@@ -36,6 +37,10 @@ public:
 	//아이템 카테고리
 	UPROPERTY(EditDefaultsOnly, Category = "Default")
 	EItemCategory Category;
+
+	//아이템 고유 속성 태그들
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer ItemTags;
 	
 	
 	//Fragment 조립 배열
@@ -51,5 +56,12 @@ public:
 			if (const T* FoundFragment = Cast<T>(Fragment)) return FoundFragment;
 		}
 		return nullptr;
+	}
+
+	//태그 포함 여부 확인 함수
+	UFUNCTION(BlueprintCallable, Category = "Tags")
+	bool HasTag(FGameplayTag TagToCheck) const
+	{
+		return ItemTags.HasTag(TagToCheck);
 	}
 };
