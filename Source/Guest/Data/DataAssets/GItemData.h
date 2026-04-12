@@ -6,9 +6,10 @@
 #include "Engine/DataAsset.h"
 #include "GItemData.generated.h"
 
+/*
 /*================
 	Item Type
- ===============*/
+ ===============#1#
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
@@ -16,6 +17,7 @@ enum class EItemCategory : uint8
 	Collectible UMETA(DisplayName = "Collectibles"),
 	Usable		UMETA(DisplayName = "Expendables")
 };
+*/
 
 UCLASS(BlueprintType)
 class GUEST_API UGItemData : public UPrimaryDataAsset
@@ -49,9 +51,9 @@ public:
 	TObjectPtr<UTexture2D> ItemIcon;
 	*/
 	
-	// 아이템 Type (어떤 용도로 사용되는 것인지 구분)
+	/*// 아이템 Type (어떤 용도로 사용되는 것인지 구분)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Info")
-    EItemCategory Category;
+    EItemCategory Category;*/
 	
 	// Slot Occupancy를 위한 Size
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Inventory")
