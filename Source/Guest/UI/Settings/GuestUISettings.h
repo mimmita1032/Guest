@@ -7,17 +7,21 @@
 #include "GameplayTagContainer.h"
 #include "GuestUISettings.generated.h"
 
-/* Tag → 위젯 클래스 단일 매핑 항목. */
+/** Tag → 위젯 클래스 단일 매핑 항목. */
 USTRUCT()
 struct FGuestWidgetMapping
 {
     GENERATED_BODY()
 
-    /* 위젯 식별 태그. 예: Guest.Widget.CameraUI. */
+    /** 위젯 식별 태그. 예: Guest.Widget.CameraUI. */
     UPROPERTY(EditAnywhere, config)
     FGameplayTag WidgetTag;
 
-    /* 연결할 위젯 클래스. 소프트 레퍼런스로 비동기 로드 지원. */
+    /**
+     * 연결할 위젯 클래스.
+     * 소프트 레퍼런스로 선언하여 게임 시작 시 전부 로드되지 않고
+     * PushWidgetByTag 호출 시점에 비동기로 로드됨.
+     */
     UPROPERTY(EditAnywhere, config)
     TSoftClassPtr<UUserWidget> WidgetClass;
 };
@@ -32,7 +36,7 @@ struct FGuestWidgetMapping
  * Project Settings > Game > Guest UI Settings 에서 편집 가능.
  */
 UCLASS(config = Game, defaultconfig, meta = (DisplayName = "Guest UI Settings"))
-class GUESTUI_API UGuestUISettings : public UDeveloperSettings
+class GUEST_API UGuestUISettings : public UDeveloperSettings
 {
     GENERATED_BODY()
 
@@ -40,14 +44,21 @@ public:
 
     UGuestUISettings();
 
-    /* Primary Layout 위젯 클래스. 모든 스택을 포함하는 최상위 위젯. */
+    /**
+     * Primary Layout 위젯 클래스.
+     * 모든 Widget Stack 을 포함하는 최상위 레이아웃.
+     * GuestPlayerController::BeginPlay 에서 동기 로드 후 뷰포트에 추가됨.
+     */
     UPROPERTY(config, EditAnywhere, Category = "Widgets")
     TSoftClassPtr<UUserWidget> PrimaryLayoutClass;
 
-    /* Tag → 위젯 클래스 매핑 배열. */
+    /** Tag → 위젯 클래스 매핑 배열. PushWidgetByTag 에서 조회됨. */
     UPROPERTY(config, EditAnywhere, Category = "Widgets")
     TArray<FGuestWidgetMapping> WidgetMappings;
 
-    /* WidgetTag 에 대응하는 위젯 소프트 클래스 반환. 없으면 nullptr. */
+    /**
+     * WidgetTag 에 대응하는 위젯 소프트 클래스 반환.
+     * 없으면 nullptr 반환 및 Warning 로그 출력.
+     */
     TSoftClassPtr<UUserWidget> FindWidgetClassByTag(const FGameplayTag& Tag) const;
 };

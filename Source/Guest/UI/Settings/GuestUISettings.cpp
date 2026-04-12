@@ -12,8 +12,13 @@ TSoftClassPtr<UUserWidget> UGuestUISettings::FindWidgetClassByTag(const FGamepla
 {
     for (const FGuestWidgetMapping& Mapping : WidgetMappings)
     {
-        if (Mapping.WidgetTag == Tag) return Mapping.WidgetClass;
+        if (Mapping.WidgetTag == Tag)
+        {
+            return Mapping.WidgetClass;
+        }
     }
-    UE_LOG(LogTemp, Warning, TEXT("[GuestUI] Tag '%s' 매핑된 위젯 클래스 없음."), *Tag.ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("[GuestUI] Tag '%s' 에 매핑된 위젯 클래스 없음. DefaultGame.ini 확인."),
+        *Tag.ToString());
     return nullptr;
 }

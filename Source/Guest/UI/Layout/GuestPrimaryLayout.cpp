@@ -1,24 +1,24 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
-
 #include "GuestPrimaryLayout.h"
-#include "Widgets/CommonActivatableWidgetContainer.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Widgets/CommonActivatableWidgetContainer.h"
 
 void UGuestPrimaryLayout::NativeOnInitialized()
 {
-	Super::NativeOnInitialized();
+    Super::NativeOnInitialized();
 
-	if (UGameInstance* GI = GetGameInstance())
-	{
-		if (UGuestUISubsystem* UISubsystem = GI->GetSubsystem<UGuestUISubsystem>())
-		{
-			// 각 스택을 태그와 함께 Subsystem 에 등록.
-			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Frontend, Stack_Frontend);
-			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameHUD, Stack_GameHUD);
-			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameMenu, Stack_GameMenu);
-			UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Modal, Stack_Modal);
-		}
-	}
+    UGameInstance* GI = GetGameInstance();
+    if (!GI) return;
+
+    UGuestUISubsystem* UISubsystem = GI->GetSubsystem<UGuestUISubsystem>();
+    if (!UISubsystem) return;
+
+    // 각 스택을 태그와 함께 Subsystem 에 등록.
+    // 이후 PushWidgetByTag 에서 태그로 스택을 찾아 위젯을 Push 함.
+    UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Frontend, Stack_Frontend);
+    UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameHUD,  Stack_GameHUD);
+    UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameMenu, Stack_GameMenu);
+    UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Modal,    Stack_Modal);
 }
