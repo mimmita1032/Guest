@@ -2,45 +2,29 @@
 
 #pragma once
 
+#include "CoreMinimal.h"
 #include "NativeGameplayTags.h"
 
 /**
- * GuestGameplayTags.h
- *
- * UI 시스템에서 사용하는 모든 GameplayTag 선언.
- * NativeGameplayTag 방식을 사용하여 코드에서 안전하게 참조 가능.
- *
- *  Guest.WidgetStack.*  → Widget Stack 레이어 식별자
- *  Guest.Widget.*       → 개별 위젯 식별자
+ * 
  */
+
 namespace GuestGameplayTags
 {
-    // ── Widget Stack Layers ──
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Frontend);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameHUD);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameMenu);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Modal);
+	//UI 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Frontend); //최하단 타이틀, 메인 메뉴, 설정
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameHUD); //2 시간대, 수거 목표, 상호작용 프롬프트
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameMenu); //3 수거 일지, 인벤토리, NPC 대화
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Modal); //최상단 확인창, 아이템 발견 연출
 
-    // ── Frontend ──
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_MainMenu);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Options);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_LoadingScreen);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
 
-    // ── GameHUD ──
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_GameHUD);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_InteractionPrompt);
-
-    // ── GameMenu ──
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_CameraUI);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_QuestJournal);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Inventory);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_TavernManage);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_NPCDialogue);
-
-    // ── Modal ──
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Confirm);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Notification);
-    GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_ItemDiscovered);
+	//아이템 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Consumable);
+	
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_1995);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_2026);
 }
+
