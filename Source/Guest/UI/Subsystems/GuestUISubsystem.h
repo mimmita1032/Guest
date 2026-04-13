@@ -1,5 +1,4 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,29 +6,43 @@
 #include "GameplayTagContainer.h"
 #include "GuestUISubsystem.generated.h"
 
-class UCommonActivatableWidgetStack;
+class UCommonActivatableWidget;
+class UCommonActivatableWidgetContainerBase;
+
+/**  스타일: 위젯이 푸시되었을 때 알림을 주는 델리게이트 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableWidget*, Widget);
 
 UCLASS()
 class GUEST_API UGuestUISubsystem : public UGameInstanceSubsystem
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    //~ Begin USubsystem Interface
+    virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+    virtual void Deinitialize() override;
+    //~ End USubsystem Interface
 
-	// PrimaryLayout에서 4개의 Stack을 전달받아 기억해두는 함수
-	UFUNCTION(BlueprintCallable, Category = "Guest|UI")
-	void RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetStack* InStack);
+    /** 방식: 컨테이너(Stack) 등록 */
+    void RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetContainerBase* Stack);
 
-	// 태그(예: TAG_Widget_PauseMenu)를 던지면 알맞은 층에 위젯을 띄워줌
-	UFUNCTION(BlueprintCallable, Category = "Guest|UI")
-	void PushWidgetByTag(FGameplayTag WidgetTag);
+    /** *설계의 핵심 함수
+     * @param StackTag  어느 레이어에 띄울 것인가 (예: Guest.Stack.GameMenu)
+     * @param WidgetTag 무엇을 띄울 것인가 (예: Guest.Widget.Inventory)
+     */
+    UFUNCTION(BlueprintCallable, Category = "UI", meta = (DisplayName = "Push Widget Stack"))
+    void PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag);
+
+    /** 스택의 최상위 위젯 제거 */
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void PopWidget(FGameplayTag StackTag);
+
+    /** 전역 알림용 델리게이트 */
+    UPROPERTY(BlueprintAssignable, Category = "UI")
+    FOnWidgetPushed OnWidgetPushed;
 
 private:
-	// 위젯 태그를 보고 라우팅해주기
-	FGameplayTag ResolveStackTagForWidget(FGameplayTag WidgetTag);
-
-	// 등록된 Stack들을 태그와 함께 보관
-	UPROPERTY()
-	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> Stacks;
+    /**  방식: 레이어들을 관리하는 맵 (일반 포인터 사용) */
+    UPROPERTY()
+    TMap<FGameplayTag, UCommonActivatableWidgetContainerBase*> StackMap;
 };
