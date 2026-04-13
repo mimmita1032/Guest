@@ -51,6 +51,30 @@ void AGuestPlayerController::BeginPlay()
 	SetInputMode(InputMode);
 }
 
+// 디버그 및 테스트용 UI (Common UI 미사용)
+void AGuestPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		if (IA_ToggleDebugUI)
+		{
+			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
+		}
+		if (IA_SaveGame)
+		{
+			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
+		}
+		if (IA_LoadGame)
+		{
+			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
+		}
+	}
+}
+
+#pragma region PrimaryLayout
+
 void AGuestPlayerController::CreatePrimaryLayout()
 {
 	// 1. UI 설정 로드
@@ -81,6 +105,7 @@ void AGuestPlayerController::CreatePrimaryLayout()
 	}
 }
 
+
 UGuestUISubsystem* AGuestPlayerController::GetUISubsystem() const
 {
 	if (UGameInstance* GI = GetGameInstance())
@@ -89,29 +114,10 @@ UGuestUISubsystem* AGuestPlayerController::GetUISubsystem() const
 	}
 	return nullptr;
 }
+#pragma endregion
 
 #pragma region DebugUI
-void AGuestPlayerController::SetupInputComponent()
-{
-	Super::SetupInputComponent();
 
-	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		if (IA_ToggleDebugUI)
-		{
-			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
-		}
-		if (IA_SaveGame)
-		{
-			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
-		}
-		if (IA_LoadGame)
-		{
-			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
-		}
-	}
-	
-}
 
 void AGuestPlayerController::ToggleDebugUI()
 {
