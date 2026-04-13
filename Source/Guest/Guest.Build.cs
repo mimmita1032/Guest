@@ -8,7 +8,7 @@ public class Guest : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "CommonUI", "CommonInput", "GameplayTags","AkAudio","WwiseResourceLoader","DeveloperSettings" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "CommonUI", "CommonInput", "GameplayTags","AkAudio","WwiseResourceLoader","DeveloperSettings", "NavigationSystem" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

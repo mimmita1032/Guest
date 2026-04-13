@@ -9,7 +9,7 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "GuestNPCBase.generated.h"
 
-class UBehaviorTree;
+class UGNPCScheduleDataAsset;
 
 // NPC의 역할 구분용
 UENUM(BlueprintType)
@@ -27,6 +27,8 @@ class GUEST_API AGuestNPCBase : public ACharacter, public IGInteractableInterfac
 public:
 	AGuestNPCBase();
 
+	virtual void BeginPlay() override;
+
 	// 상호작용 규약 구현: 플레이어가 E키를 눌렀을 때 실행될 함수
 	virtual void Interact(AActor* Interactor) override;
 
@@ -35,6 +37,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guest|NPC")
 	ENPCType NPCType;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|AI")
-	TObjectPtr<UBehaviorTree> BehaviorTree;
+	// 시간대별 이동 스케줄 데이터 에셋
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Schedule")
+	TObjectPtr<UGNPCScheduleDataAsset> ScheduleDataAsset;
+
+private:
+	// GSpacetimeSubsystem::OnTimeChanged 델리게이트 핸들러
+	UFUNCTION()
+	void HandleTimeChanged(float CurrentHour);
+
+	// 현재 시각에 맞는 스케줄 목적지를 BB에 반영
+	void ApplySchedule(float CurrentHour);
+
+	// 직전에 적용된 스케줄의 목적지 태그 (변경 감지용)
+	FName LastActiveScheduleTag = NAME_None;
 };
