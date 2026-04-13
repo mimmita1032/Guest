@@ -60,7 +60,7 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_Crouch;
-    
+
     //카메라
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     TObjectPtr<USpringArmComponent> SpringArmComp;

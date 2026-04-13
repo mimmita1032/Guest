@@ -1,80 +1,48 @@
-#include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/UI/Settings/GuestUISettings.h"
-#include "CommonActivatableWidget.h"
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
+
+
+#include "GuestUISubsystem.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
-#include "Engine/AssetManager.h"
-#include "Engine/StreamableManager.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/Utils/GLog.h"
 
-bool UGuestUISubsystem::ShouldCreateSubsystem(UObject* Outer) const
+void UGuestUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-    if (!Super::ShouldCreateSubsystem(Outer)) return false;
-    // 전용 서버가 아닐 때만 생성
-    if (const UGameInstance* GI = Cast<UGameInstance>(Outer))
-    {
-        return !GI->IsDedicatedServerInstance();
-    }
-    return true;
+	Super::Initialize(Collection);
+	G_LOG(TEXT("Guest UI 서브시스템 가동 준비 완료"));
 }
 
-void UGuestUISubsystem::Deinitialize()
+void UGuestUISubsystem::RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetStack* InStack)
 {
-    StackMap.Empty();
-    Super::Deinitialize();
+	if (InStack)
+	{
+		Stacks.Add(StackTag, InStack);
+		G_LOG(TEXT("UI 레이어 스택 등록 완료: %s"), *StackTag.ToString());
+	}
 }
 
-void UGuestUISubsystem::RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetContainerBase* Stack)
+FGameplayTag UGuestUISubsystem::ResolveStackTagForWidget(FGameplayTag WidgetTag)
 {
-    if (StackTag.IsValid() && Stack)
-    {
-        StackMap.Add(StackTag, Stack);
-        UE_LOG(LogTemp, Log, TEXT("Stack Registered: %s"), *StackTag.ToString());
-    }
+	if (WidgetTag == GuestGameplayTags::TAG_Widget_PauseMenu)
+	{
+		return GuestGameplayTags::TAG_WidgetStack_GameMenu;
+	}
+	
+	return GuestGameplayTags::TAG_WidgetStack_Frontend;
 }
 
-void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag)
+void UGuestUISubsystem::PushWidgetByTag(FGameplayTag WidgetTag)
 {
-    // 1. 목표 스택 검사
-    if (!StackMap.Contains(StackTag))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Stack Tag %s not found!"), *StackTag.ToString());
-        return;
-    }
-    UCommonActivatableWidgetContainerBase* TargetStack = StackMap[StackTag];
+	FGameplayTag TargetStackTag = ResolveStackTagForWidget(WidgetTag);
 
-    // 2. 위젯 클래스 설정 로드
-    const UGuestUISettings* Settings = GetDefault<UGuestUISettings>();
-    TSoftClassPtr<UUserWidget> SoftClass = Settings->FindWidgetClassByTag(WidgetTag);
-
-    if (SoftClass.IsNull()) return;
-
-    // 3. 비동기 로딩 ( 스타일 핵심)
-    FStreamableManager& Streamable = UAssetManager::GetStreamableManager();
-    Streamable.RequestAsyncLoad(
-        SoftClass.ToSoftObjectPath(),
-        [this, SoftClass, TargetStack]()
-        {
-            UClass* LoadedClass = SoftClass.Get();
-            if (!LoadedClass || !TargetStack) return;
-
-            // CommonUI의 AddWidget으로 스택에 추가
-            UCommonActivatableWidget* NewWidget = TargetStack->AddWidget<UCommonActivatableWidget>(LoadedClass);
-            
-            if (NewWidget)
-            {
-                OnWidgetPushed.Broadcast(NewWidget);
-                UE_LOG(LogTemp, Log, TEXT(" Pushed Widget: %s"), *NewWidget->GetName());
-            }
-        }
-    );
+	if (UCommonActivatableWidgetStack* FoundStack = Stacks.FindRef(TargetStackTag))
+	{
+		// TODO: 실제 위젯 로드 로직
+		G_LOG(TEXT("위젯 푸시 요청 성공! 태그: %s -> 대상 레이어: %s"), *WidgetTag.ToString(), *TargetStackTag.ToString());
+	}
+	else
+	{
+		G_ERR(TEXT("에러! 대상 레이어 스택을 찾을 수 없습니다: %s"), *TargetStackTag.ToString());
+	}
 }
 
-void UGuestUISubsystem::PopWidget(FGameplayTag StackTag)
-{
-    if (StackMap.Contains(StackTag))
-    {
-        if (UCommonActivatableWidget* ActiveWidget = StackMap[StackTag]->GetActiveWidget())
-        {
-            ActiveWidget->DeactivateWidget();
-        }
-    }
-}
