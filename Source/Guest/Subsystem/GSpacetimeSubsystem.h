@@ -65,8 +65,6 @@ protected:
 
 private:
 	bool bUseRealTimeSync = true; //현실시간 ON/OFF
-	int32 LastBroadcastHour   = -1;
-	int32 LastBroadcastMinute = -1;
 #pragma endregion
 	
 	

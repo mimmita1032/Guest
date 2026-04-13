@@ -11,7 +11,6 @@
 
 namespace GuestGameplayTags
 {
-	//UI 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Frontend); //최하단 타이틀, 메인 메뉴, 설정
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameHUD); //2 시간대, 수거 목표, 상호작용 프롬프트
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameMenu); //3 수거 일지, 인벤토리, NPC 대화
@@ -19,12 +18,5 @@ namespace GuestGameplayTags
 
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
-
-	//아이템 태그
-	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
-	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Consumable);
-	
-	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_1995);
-	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_2026);
 }
 
