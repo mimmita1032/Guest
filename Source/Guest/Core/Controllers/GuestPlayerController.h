@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "InputActionValue.h"
 #include "GuestPlayerController.generated.h"
 
 class UGuestUISubsystem;
 class UGuestPrimaryLayout;
+class UGuestGameInstance;
 
 /**
  * AGuestPlayerController
@@ -18,27 +20,93 @@ class GUEST_API AGuestPlayerController : public APlayerController
 {
     GENERATED_BODY()
 
-public:
-    AGuestPlayerController();
+protected:
+	virtual void BeginPlay() override;
 
-    /** UI 서브시스템에 빠르게 접근하기 위한 헬퍼 */
-    UFUNCTION(BlueprintPure, Category = "Guest|UI")
-    UGuestUISubsystem* GetUISubsystem() const;
-
-    /** 현재 활성화된 최상위 레이아웃 반환 */
-    UFUNCTION(BlueprintPure, Category = "Guest|UI")
-    UGuestPrimaryLayout* GetPrimaryLayout() const { return PrimaryLayout; }
+	virtual void SetupInputComponent() override;
 
 protected:
-    virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
 
-    /** * GuestUISettings에 정의된 PrimaryLayoutClass를 생성하여 뷰포트에 추가합니다.
-     * 폰(Pawn)이 생성되기 전, UI 환경을 먼저 구축하기 위해 호출됩니다.
-     */
-    virtual void CreatePrimaryLayout();
+#pragma region DebugUI
+protected:
+	// WBP_DebugTime
+	UPROPERTY(EditAnywhere, Category = "Debug|UI")
+	TSubclassOf<class UUserWidget> DebugWidgetClass;
+
+	// F1 키 에 바인딩할 입력 액션
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<class UInputAction> IA_ToggleDebugUI;
+
+	// 화면에 띄울 위젯의 인스턴스를 보관
+	UPROPERTY()
+	TObjectPtr<class UUserWidget> DebugWidgetInstance;
+
+	// 입력이 들어왔을 때 실행
+	void ToggleDebugUI();
+#pragma endregion
+#pragma region CommonUI
+
+public:
+
+	AGuestPlayerController();
+	
+	/** UI 서브시스템에 빠르게 접근하기 위한 헬퍼 */
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	UGuestUISubsystem* GetUISubsystem() const;
+
+	/** 현재 활성화된 최상위 레이아웃 반환 */
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	UGuestPrimaryLayout* GetPrimaryLayout() const { return PrimaryLayout; }
+	
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Guest|UI")
+	TSubclassOf<UGuestPrimaryLayout> PrimaryLayoutClass;
+
+	UPROPERTY()
+	TObjectPtr<UGuestPrimaryLayout> PrimaryLayoutInstance;
+
+	virtual void CreatePrimaryLayout();
 
 private:
-    /** 생성된 최상위 레이아웃 인스턴스 보관 */
-    UPROPERTY()
-    TObjectPtr<UGuestPrimaryLayout> PrimaryLayout;
+	/** 생성된 최상위 레이아웃 인스턴스 보관 */
+	UPROPERTY()
+	TObjectPtr<UGuestPrimaryLayout> PrimaryLayout;
+
+	
+#pragma endregion
+#pragma region SaveDebug
+
+public:
+	/** 현재 맵·폰 위치/회전을 주어진 슬롯에 저장 */
+	UFUNCTION(BlueprintCallable, Category = "Save")
+	bool SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex = 0);
+
+protected:
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Save|UI")
+	class UGuestSaveBoardWidget* SaveBoardWidget;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Save|UI")
+	class UGuestLoadBoardWidget* LoadBoardWidget;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Save|UI")
+	TSubclassOf<class UGuestSaveBoardWidget> SaveBoardClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Save|UI")
+	TSubclassOf<class UGuestLoadBoardWidget> LoadBoardClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_SaveGame;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_LoadGame;
+	
+	void OnSaveGamePressed(const FInputActionValue& Value);
+	void OnLoadGamePressed(const FInputActionValue& Value);
+	void ShowSaveBoard();
+	void ShowLoadBoard();
+	
+#pragma endregion
 };
