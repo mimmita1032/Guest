@@ -84,8 +84,8 @@ protected:
 #pragma endregion
 
 public:	
-	virtual void Interact(AActor* Interactor) override;
-	virtual FText GetInteractText() const override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual FText GetInteractText_Implementation() const override;
 
 	UFUNCTION()
 	virtual void OnTimeChanged(float CurrentHour) override;

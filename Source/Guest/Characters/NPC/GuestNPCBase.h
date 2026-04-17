@@ -30,7 +30,7 @@ public:
 	virtual void BeginPlay() override;
 
 	// 상호작용 규약 구현: 플레이어가 E키를 눌렀을 때 실행될 함수
-	virtual void Interact(AActor* Interactor) override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
 
 public:
 	// NPC 역할

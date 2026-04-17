@@ -20,35 +20,34 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	AActor* NewFocusedActor = FindInteractable();
 
-	//바라보는 대상이 달라졌을 때만 연산허게
 	if (FocusedActor != NewFocusedActor)
 	{
 		FocusedActor = NewFocusedActor;
 
-		UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>();
+		if (!bIsPromptPushed)
+		{
+			if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+			{
+				UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
+				bIsPromptPushed = true;
+			}
+		}
 
+		// 텍스트 데이터만 갱신 (위젯을 끄거나 켜지 않음)
 		if (FocusedActor)
 		{
 			if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
 			{
+				G_LOG(TEXT("C++ 델리게이트 송출: %s"), *CurrentInteractText.ToString());
 				CurrentInteractText = Interactable->GetInteractText();
-				
-				if (UISubsystem)
-				{
-					UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
-				}
-				
 				OnInteractTextChanged.Broadcast(CurrentInteractText);
 			}
 		}
 		else
 		{
+			// 허공을 바라보면 빈 텍스트
 			CurrentInteractText = FText::GetEmpty();
-			
-			if (UISubsystem)
-			{
-				UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD);
-			}
+			OnInteractTextChanged.Broadcast(CurrentInteractText);
 		}
 	}
 }

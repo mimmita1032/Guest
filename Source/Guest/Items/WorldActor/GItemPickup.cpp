@@ -21,7 +21,7 @@ AGItemPickup::AGItemPickup()
     MeshComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 }
 
-void AGItemPickup::Interact(AActor* Interactor)
+void AGItemPickup::Interact_Implementation(AActor* Interactor)
 {
 	if (!ItemDefinition) return;
 
@@ -50,6 +50,12 @@ void AGItemPickup::Interact(AActor* Interactor)
 	// TODO: 인벤토리에 NewInstance 전달
 
 	Destroy();
+}
+
+FText AGItemPickup::GetInteractText_Implementation() const
+{
+	// 블루프린트에서 오버라이드하지 않았을 때 출력될 기본값
+	return FText::GetEmpty();
 }
 
 void AGItemPickup::BeginPlay()
