@@ -4,6 +4,8 @@
 #include "GItemPickup.h"
 
 #include "Guest/Items/Definition/GItemDefinition.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Guest/Items/Fragments/GItemFragmentVisuals.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Items/Fragments/GItemFragmentNarrative.h"
@@ -48,6 +50,15 @@ void AGItemPickup::Interact(AActor* Interactor)
 	}
 	
 	// TODO: 인벤토리에 NewInstance 전달
+
+	// 퀘스트 서브시스템에 아이템 획득 알림 (ItemID가 퀘스트 목표 TargetID와 일치하면 자동 갱신)
+	if (UGameInstance* GI = UGameplayStatics::GetGameInstance(this))
+	{
+		if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+		{
+			QuestSys->OnObjectiveUpdated.Broadcast(ItemDefinition->ItemID, 1);
+		}
+	}
 
 	Destroy();
 }
