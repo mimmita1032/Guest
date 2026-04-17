@@ -36,10 +36,9 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		// 텍스트 데이터만 갱신 (위젯을 끄거나 켜지 않음)
 		if (FocusedActor)
 		{
-			if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+			if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
 			{
-				G_LOG(TEXT("C++ 델리게이트 송출: %s"), *CurrentInteractText.ToString());
-				CurrentInteractText = Interactable->GetInteractText();
+				CurrentInteractText = IGInteractableInterface::Execute_GetInteractText(FocusedActor);
 				OnInteractTextChanged.Broadcast(CurrentInteractText);
 			}
 		}
@@ -96,10 +95,10 @@ void UGInteractionComponent::DoInteract()
 {
 	if (FocusedActor)
 	{
-		if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+		if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
 		{
 			G_LOG(TEXT("상호작용 실행: %s"), *FocusedActor->GetName());
-			Interactable->Interact(GetOwner());
+			IGInteractableInterface::Execute_Interact(FocusedActor, GetOwner());
 		}
 	}
 	else
