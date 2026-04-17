@@ -5,6 +5,8 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
@@ -16,19 +18,36 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	FocusedActor = FindInteractable();
+	AActor* NewFocusedActor = FindInteractable();
 
-	// 상호작용 대상이 갱신되었을 때 텍스트를 화면에 출력 (UI 구현 전 디버그용)
-	if (FocusedActor)
+	//바라보는 대상이 달라졌을 때만 연산허게
+	if (FocusedActor != NewFocusedActor)
 	{
-		if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+		FocusedActor = NewFocusedActor;
+
+		UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>();
+
+		if (FocusedActor)
 		{
-			FText PromptText = Interactable->GetInteractText();
-          
-			if (GEngine && !PromptText.IsEmpty())
+			if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
 			{
-				// Key 값을 1로 주어 텍스트가 여러 줄 안 생기게
-				GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, FString::Printf(TEXT("[E] %s"), *PromptText.ToString()));
+				CurrentInteractText = Interactable->GetInteractText();
+				
+				if (UISubsystem)
+				{
+					UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
+				}
+				
+				OnInteractTextChanged.Broadcast(CurrentInteractText);
+			}
+		}
+		else
+		{
+			CurrentInteractText = FText::GetEmpty();
+			
+			if (UISubsystem)
+			{
+				UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD);
 			}
 		}
 	}
