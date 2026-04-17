@@ -3,12 +3,14 @@
 
 #include "GCharacterGASData.h"
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
+#include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/GuestTypes/GuestGameplayTypes.h"
 
 void UGCharacterGASData::GiveToASC(UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel)
 {
 	checkf(InASCToGive, TEXT("ASC 추출 불가"));
 	
+	InitBaseStatsToASC(InASCToGive, CharacterBaseStatDataTable, ApplyLevel);
 	GiveEffectsToASC(InitialEffects, InASCToGive, ApplyLevel);
 }
 
@@ -17,7 +19,7 @@ void UGCharacterGASData::InitBaseStatsToASC(UGuestAbilitySystemComponent* InASCT
 {	
 	if (!CharacterBaseStatDataTable) return;
 	
-	FGuestCharacterBaseStats* BaseStats = nullptr;
+	const FGuestCharacterBaseStats* BaseStats = nullptr;
 	
 	for (const TPair<FName, uint8*>& DataPair : CharacterBaseStatDataTable->GetRowMap())
 	{
@@ -27,8 +29,14 @@ void UGCharacterGASData::InitBaseStatsToASC(UGuestAbilitySystemComponent* InASCT
 		
 		if (Row->Class == InASCToGive->GetOwner()->GetClass())
 		{
-			
+			BaseStats = Row;
+			break;
 		}
+	}
+	if (BaseStats)
+	{
+		InASCToGive->SetNumericAttributeBase(UGuestAttributeSet::GetMaxHealthAttribute(), BaseStats->Health);
+		InASCToGive->SetNumericAttributeBase(UGuestAttributeSet::GetMaxBatteryAttribute(), BaseStats->Battery);
 	}
 }
 

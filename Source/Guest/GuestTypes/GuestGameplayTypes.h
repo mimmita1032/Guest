@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
+#pragma once
 
+#include "GameplayTagContainer.h"
 #include "GuestGameplayTypes.Generated.h"
 
 USTRUCT( BlueprintType )
@@ -16,4 +18,13 @@ struct FGuestCharacterBaseStats : public FTableRowBase
 	
 	UPROPERTY(EditAnywhere)
 	float Battery;
+};
+
+USTRUCT(BlueprintType)
+struct FGuestAbilitySet
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, meta = (Categories = "Input"))
+	FGameplayTag InputTag;
 };

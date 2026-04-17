@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly,Category = "GASData")
 	TArray<TSubclassOf<UGameplayEffect>> InitialEffects;
 	
+	UPROPERTY(EditDefaultsOnly,Category = "GASData")
+	TArray<TSubclassOf<UGameplayEffect>> AbilitiesByInputTag;
+	
 	void InitBaseStatsToASC(UGuestAbilitySystemComponent* InASCToGive,UDataTable* BaseStatTableToGive, int32 ApplyLevel);
 	
 	void GiveEffectsToASC(const TArray<TSubclassOf<UGameplayEffect>> EffectsToGive, UGuestAbilitySystemComponent* InASC, int32 ApplyLevel = 1);
