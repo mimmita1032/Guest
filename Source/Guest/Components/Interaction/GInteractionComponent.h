@@ -23,6 +23,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	FText GetCurrentInteractText() const { return CurrentInteractText; }
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	AActor* GetFocusedActor() const { return FocusedActor; }
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
