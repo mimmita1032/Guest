@@ -21,12 +21,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractTextChanged OnInteractTextChanged;
 
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	FText GetCurrentInteractText() const { return CurrentInteractText; }
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	AActor* FindInteractable() const;
 
-protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction")
 	float InteractionRange = 300.0f;
 
