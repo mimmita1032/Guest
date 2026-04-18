@@ -22,7 +22,8 @@ public:
 	TObjectPtr<const UGItemDefinition> ItemDefinition;
 	
 	// Pickup 함수 구현
-	virtual void Interact(AActor* Interactor) override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual FText GetInteractText_Implementation() const override;
 
 protected:
 	virtual void BeginPlay() override;

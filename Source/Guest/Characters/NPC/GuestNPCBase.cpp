@@ -38,7 +38,8 @@ void AGuestNPCBase::BeginPlay()
 	}
 }
 
-void AGuestNPCBase::Interact(AActor* Interactor)
+
+void AGuestNPCBase::Interact_Implementation(AActor* Interactor)
 {
 	// NPC 역할에 따라 상호작용 로직 분기
 	if (NPCType == ENPCType::QuestGiver)

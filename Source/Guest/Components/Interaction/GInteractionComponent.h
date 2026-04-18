@@ -6,6 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "GInteractionComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractTextChanged, const FText&, NewText);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GUEST_API UGInteractionComponent : public UActorComponent
 {
@@ -16,15 +18,27 @@ public:
 
 	void DoInteract();
 
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOnInteractTextChanged OnInteractTextChanged;
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	FText GetCurrentInteractText() const { return CurrentInteractText; }
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	AActor* GetFocusedActor() const { return FocusedActor; }
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	AActor* FindInteractable() const;
 
-protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction")
 	float InteractionRange = 300.0f;
 
 	UPROPERTY(VisibleInstanceOnly, Category = "Interaction")
 	TObjectPtr<AActor> FocusedActor;
+
+private:
+	FText CurrentInteractText;
+
+	bool bIsPromptPushed = false;
 };
