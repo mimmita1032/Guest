@@ -38,6 +38,7 @@ protected:
     void ZoomAction(const FInputActionValue& Value);
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
+    void ToggleInventoryAction(const FInputActionValue& Value);
 
     // 기획 데이터 에셋 참조
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
@@ -60,6 +61,9 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_Crouch;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_ToggleInventory;
     
     //카메라
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")

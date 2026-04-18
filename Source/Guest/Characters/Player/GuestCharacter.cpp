@@ -13,6 +13,8 @@
 #include "Guest/Components/GDigicamComponent.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -202,6 +204,10 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
           EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
        }
+       if (IA_ToggleInventory)
+       {
+          EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
+       }
     }
 }
 
@@ -354,5 +360,16 @@ void AGuestCharacter::EndCrouch(const FInputActionValue& Value)
 {
     UnCrouch();
     UE_LOG(LogTemp, Log, TEXT("캐릭터 조작: 앉기 상태 해제"));
+}
+#pragma endregion
+#pragma region Inventory
+void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
+{
+   // 캐릭터에서 UI 서브시스템에 접근하여 인벤토리 띄우기
+   if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+   {
+      UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+      G_LOG(TEXT("캐릭터 입력: 인벤토리 토글 요청"));
+   }
 }
 #pragma endregion
