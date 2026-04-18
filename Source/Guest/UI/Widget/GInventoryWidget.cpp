@@ -6,6 +6,7 @@
 #include "Components/UniformGridPanel.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Utils/GLog.h"
+#include "Components/UniformGridSlot.h"
 
 void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 {
@@ -73,6 +74,20 @@ void UGInventoryWidget::OnRefreshInventory()
 			Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col);
 		}
 	}
-	
+
+	for (int32 i = 0; i < TotalSlots; ++i)
+	{
+		if (UGInventorySlotWidget* NewSlot = CreateWidget<UGInventorySlotWidget>(GetOwningPlayer(), SlotWidgetClass))
+		{
+			int32 Row = i / Columns;
+			int32 Col = i % Columns;
+			
+			if (UUniformGridSlot* GridSlot = Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col))
+			{
+				GridSlot->SetHorizontalAlignment(HAlign_Fill);
+				GridSlot->SetVerticalAlignment(VAlign_Fill);
+			}
+		}
+	}
 	G_LOG(TEXT("인벤토리 그리드 갱신 완료: 총 %d칸 생성"), TotalSlots);
 }
