@@ -111,8 +111,8 @@ bool UGInventoryComponent::AddItemAt(UGItemInstance* ItemInstance, int32 StartX,
 
 	UE_LOG(LogGSystem, Log, TEXT("아이템 추가 성공: 좌표(%d, %d), 크기(%dx%d)"), StartX, StartY, ItemSize.X, ItemSize.Y);
 	
-	// TODO: UI 업데이트를 위한 델리게이트 브로드캐스트 (담 단계에서 추가)
-
+	OnInventoryChanged.Broadcast();
+	
 	return true;
 }
 
@@ -137,7 +137,7 @@ bool UGInventoryComponent::RemoveItem(UGItemInstance* ItemToRemove)
 	if (bRemoved)
 	{
 		UE_LOG(LogGSystem, Log, TEXT("아이템 제거 성공. 가방 공간 확보 완료."));
-		// TODO: UI 갱신을 위한 브로드캐스트 추가 예정
+		OnInventoryChanged.Broadcast();
 		return true;
 	}
 
