@@ -5,6 +5,8 @@
 #include "GameplayTagContainer.h"
 #include "GuestGameplayTypes.Generated.h"
 
+class UGuestGameplayAbility;
+
 USTRUCT( BlueprintType )
 struct FGuestCharacterBaseStats : public FTableRowBase
 {
@@ -27,4 +29,8 @@ struct FGuestAbilitySet
 	
 	UPROPERTY(EditDefaultsOnly, meta = (Categories = "Input"))
 	FGameplayTag InputTag;
+	
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGuestGameplayAbility> AbilityToGrant;
+	
 };

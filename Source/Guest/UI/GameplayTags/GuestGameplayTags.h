@@ -18,5 +18,9 @@ namespace GuestGameplayTags
 
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
+	
+	//Input
+	
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_InputTag_Test);
 }
 
