@@ -7,6 +7,8 @@
 #include "GInventoryWidget.generated.h"
 
 class UGInventoryComponent;
+class UGInventorySlotWidget;
+class UUniformGridPanel;
 
 UCLASS()
 class GUEST_API UGInventoryWidget : public UCommonActivatableWidget
@@ -19,15 +21,19 @@ public:
 
 protected:
 	virtual void NativeOnActivated() override;
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Inventory|UI")
-	void OnRefreshInventory();
-
 	virtual void NativeDestruct() override;
-
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+
+	UFUNCTION()
+	void OnRefreshInventory();
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|UI")
 	TObjectPtr<UGInventoryComponent> InventoryComponent;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UUniformGridPanel> Grid_Inventory;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
+	TSubclassOf<UGInventorySlotWidget> SlotWidgetClass;
 };

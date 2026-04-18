@@ -2,6 +2,8 @@
 
 
 #include "GInventoryWidget.h"
+#include "GInventorySlotWidget.h"
+#include "Components/UniformGridPanel.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Utils/GLog.h"
 
@@ -10,16 +12,25 @@ void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 	if (InComponent)
 	{
 		InventoryComponent = InComponent;
-		
 		InventoryComponent->OnInventoryChanged.AddDynamic(this, &UGInventoryWidget::OnRefreshInventory);
-		
-		UE_LOG(LogGSystem, Log, TEXT("위젯에 인벤토리 컴포넌트 연결 및 델리게이트 바인딩 완료~"));
+		G_LOG(TEXT("인벤토리 위젯: 컴포넌트 연결 및 델리게이트 바인딩 완료"));
 	}
 }
 
 void UGInventoryWidget::NativeOnActivated()
 {
 	Super::NativeOnActivated();
+
+	if (!InventoryComponent)
+	{
+		if (APawn* OwningPawn = GetOwningPlayerPawn())
+		{
+			if (UGInventoryComponent* InvComp = OwningPawn->FindComponentByClass<UGInventoryComponent>())
+			{
+				SetInventoryComponent(InvComp);
+			}
+		}
+	}
 
 	OnRefreshInventory();
 }
@@ -30,13 +41,38 @@ void UGInventoryWidget::NativeDestruct()
 	{
 		InventoryComponent->OnInventoryChanged.RemoveAll(this);
 	}
-
 	Super::NativeDestruct();
 }
 
 TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
 {
-	// ECommonInputMode::All: UI와 게임 입력을 모두 허용
-	// EMouseCaptureMode::NoCapture: 마우스 커서 자유 이동
 	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+}
+
+void UGInventoryWidget::OnRefreshInventory()
+{
+	if (!InventoryComponent || !Grid_Inventory || !SlotWidgetClass)
+	{
+		G_WARN(TEXT("인벤토리 갱신 실패: 컴포넌트, 그리드 패널, 또는 슬롯 클래스가 없습니다."));
+		return;
+	}
+
+	Grid_Inventory->ClearChildren();
+
+	const int32 Columns = InventoryComponent->Columns;
+	const int32 Rows = InventoryComponent->Rows;
+	const int32 TotalSlots = Columns * Rows;
+
+	for (int32 i = 0; i < TotalSlots; ++i)
+	{
+		if (UGInventorySlotWidget* NewSlot = CreateWidget<UGInventorySlotWidget>(GetOwningPlayer(), SlotWidgetClass))
+		{
+			int32 Row = i / Columns;
+			int32 Col = i % Columns;
+			
+			Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col);
+		}
+	}
+	
+	G_LOG(TEXT("인벤토리 그리드 갱신 완료: 총 %d칸 생성"), TotalSlots);
 }
