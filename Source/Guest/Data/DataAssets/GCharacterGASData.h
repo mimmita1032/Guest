@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Guest/GuestTypes/GuestGameplayTypes.h"
 #include "GCharacterGASData.generated.h"
 
 /**
@@ -28,9 +29,11 @@ protected:
 	TArray<TSubclassOf<UGameplayEffect>> InitialEffects;
 	
 	UPROPERTY(EditDefaultsOnly,Category = "GASData")
-	TArray<TSubclassOf<UGameplayEffect>> AbilitiesByInputTag;
+	TArray<FGuestAbilitySet> AbilitiesByInputTag;
 	
-	void InitBaseStatsToASC(UGuestAbilitySystemComponent* InASCToGive,UDataTable* BaseStatTableToGive, int32 ApplyLevel);
+	void InitBaseStatsToASC(const UDataTable* BaseStatTableToGive,UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel);
 	
 	void GiveEffectsToASC(const TArray<TSubclassOf<UGameplayEffect>> EffectsToGive, UGuestAbilitySystemComponent* InASC, int32 ApplyLevel = 1);
+	
+	void GiveAbilitiesToASC(const TArray<FGuestAbilitySet> InAbilitySets, UGuestAbilitySystemComponent* InASC, int32 ApplyLevel);
 };

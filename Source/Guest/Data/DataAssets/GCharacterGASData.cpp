@@ -4,18 +4,18 @@
 #include "GCharacterGASData.h"
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
-#include "Guest/GuestTypes/GuestGameplayTypes.h"
+#include "Guest/Gas/Ability/GuestGameplayAbility.h"
+
 
 void UGCharacterGASData::GiveToASC(UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel)
 {
 	checkf(InASCToGive, TEXT("ASC 추출 불가"));
 	
-	InitBaseStatsToASC(InASCToGive, CharacterBaseStatDataTable, ApplyLevel);
+	InitBaseStatsToASC(CharacterBaseStatDataTable,InASCToGive, ApplyLevel);
 	GiveEffectsToASC(InitialEffects, InASCToGive, ApplyLevel);
 }
 
-void UGCharacterGASData::InitBaseStatsToASC(UGuestAbilitySystemComponent* InASCToGive, UDataTable* BaseStatTableToGive,
-	int32 ApplyLevel)
+void UGCharacterGASData::InitBaseStatsToASC(const UDataTable* BaseStatTableToGive,UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel)
 {	
 	if (!CharacterBaseStatDataTable) return;
 	
@@ -56,6 +56,23 @@ void UGCharacterGASData::GiveEffectsToASC(const TArray<TSubclassOf<UGameplayEffe
 				ApplyLevel,
 				InASC->MakeEffectContext()
 				);
+		}
+	}
+}
+
+void UGCharacterGASData::GiveAbilitiesToASC(const TArray<FGuestAbilitySet> InAbilitySets,
+	UGuestAbilitySystemComponent* InASC, int32 ApplyLevel)
+{
+	if (!InAbilitySets.IsEmpty())
+	{
+		for (const FGuestAbilitySet& AbilitySet : InAbilitySets)
+		{
+			FGameplayAbilitySpec AbilitySpec(AbilitySet.AbilityToGrant);
+			AbilitySpec.SourceObject = InASC->GetAvatarActor();
+			AbilitySpec.Level = ApplyLevel;
+			AbilitySpec.DynamicAbilityTags.AddTag(AbilitySet.InputTag);
+			
+			InASC->GiveAbility(AbilitySpec);
 		}
 	}
 }
