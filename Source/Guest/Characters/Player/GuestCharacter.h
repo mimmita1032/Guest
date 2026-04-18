@@ -143,4 +143,10 @@ protected:
     void StartSprinting();
     void StopSprinting();
 #pragma endregion // Sprint
+
+#pragma region Inventory
+private:
+    // 인벤토리 UI 활성화 상태
+    bool bIsInventoryOpen = false;
+#pragma endregion
 };

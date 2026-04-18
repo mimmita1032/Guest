@@ -365,11 +365,22 @@ void AGuestCharacter::EndCrouch(const FInputActionValue& Value)
 #pragma region Inventory
 void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
 {
-   // 캐릭터에서 UI 서브시스템에 접근하여 인벤토리 띄우기
    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
    {
-      UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
-      G_LOG(TEXT("캐릭터 입력: 인벤토리 토글 요청"));
+      if (bIsInventoryOpen)
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+         bIsInventoryOpen = false;
+            
+         G_LOG(TEXT("캐릭터 입력: 인벤토리 닫기 실행"));
+      }
+      else
+      {
+         UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+         bIsInventoryOpen = true;
+            
+         G_LOG(TEXT("캐릭터 입력: 인벤토리 열기 실행"));
+      }
    }
 }
 #pragma endregion
