@@ -144,3 +144,24 @@ bool UGInventoryComponent::RemoveItem(UGItemInstance* ItemToRemove)
 	UE_LOG(LogGSystem, Warning, TEXT("아이템 제거 실패: 가방에 존재하지 않는 아이템입니다."));
 	return false;
 }
+
+bool UGInventoryComponent::AutoAddItem(UGItemInstance* ItemInstance)
+{
+	if (!ItemInstance) return false;
+
+	// (0,0)부터 모든 칸을 순회하며 들어갈 자리가 있는지 확인
+	for (int32 Y = 0; Y < Rows; ++Y)
+	{
+		for (int32 X = 0; X < Columns; ++X)
+		{
+			// CanAddItemAt이 아이템의 GridSize(1x2, 2x2 등)를 고려해서 여유 공간이 있는지 검사해 줌
+			if (CanAddItemAt(ItemInstance, X, Y))
+			{
+				return AddItemAt(ItemInstance, X, Y);
+			}
+		}
+	}
+
+	UE_LOG(LogGSystem, Warning, TEXT("가방이 가득 차서 아이템을 획득할 수 없습니다!"));
+	return false;
+}

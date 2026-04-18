@@ -3,6 +3,8 @@
 
 #include "GItemPickup.h"
 
+#include "Guest/Characters/Player/GuestCharacter.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentVisuals.h"
 #include "Guest/Utils/GLog.h"
@@ -46,10 +48,24 @@ void AGItemPickup::Interact_Implementation(AActor* Interactor)
 			UE_LOG(LogGSystem, Log, TEXT("아이템 사연: %s"), *NarrativeFrag->Description.ToString());
 		}
 	}
-	
-	// TODO: 인벤토리에 NewInstance 전달
 
-	Destroy();
+	// 인벤토리 컴포넌트를 찾아 자동 추가(AutoAddItem)
+	if (AGuestCharacter* Player = Cast<AGuestCharacter>(Interactor))
+	{
+		if (UGInventoryComponent* InvComp = Player->FindComponentByClass<UGInventoryComponent>())
+		{
+			// 빈 공간을 찾아 성공적으로 넣었다면(true), 월드에서 아이템 액터 삭제
+			if (InvComp->AutoAddItem(NewInstance))
+			{
+				Destroy();
+				return;
+			}
+		}
+	}
+
+	// 인벤토리가 없거나 가방이 꽉 차서 false면 파괴하지 않음
+	G_WARN(TEXT("아이템 획득 실패: 가방이 가득 찼거나 인벤토리를 찾을 수 없습니다."));
+	
 }
 
 FText AGItemPickup::GetInteractText_Implementation() const
