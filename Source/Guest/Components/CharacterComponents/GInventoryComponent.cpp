@@ -3,7 +3,9 @@
 
 #include "GInventoryComponent.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/Instance/GItemInstance.h"
+
 UGInventoryComponent::UGInventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false; 
@@ -48,4 +50,38 @@ bool UGInventoryComponent::IsSlotEmpty(int32 Index) const
 	}
 	// nullptr이면 빈 공간
 	return InventorySlots[Index] == nullptr;
+}
+
+bool UGInventoryComponent::CanAddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY) const
+{
+	if (!ItemInstance)
+	{
+		return false;
+	}
+
+	// 프래그먼트에서 아이템의 (가로, 세로) 크기 추출 (기본값 1x1)
+	FIntPoint ItemSize = FIntPoint(1, 1);
+	if (const UGItemFragmentInventory* InvFrag = ItemInstance->FindFragmentByClass<UGItemFragmentInventory>())
+	{
+		ItemSize = InvFrag->GridSize;
+	}
+
+	// 가로, 세로 크기만큼 반복문을 돌며 차지할 공간이 모두 비어있는지
+	for (int32 X = StartX; X < StartX + ItemSize.X; ++X)
+	{
+		for (int32 Y = StartY; Y < StartY + ItemSize.Y; ++Y)
+		{
+			const int32 Index = GetIndex(X, Y);
+
+			// 칸이 가방 범위를 벗어났거나, 이미 다른 아이템이 들어있다면 실패
+			// 나중에 그 자리를 대체할 수 있게 리팩토링 예정!
+
+			if (!IsValidIndex(Index) || !IsSlotEmpty(Index))
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

@@ -40,6 +40,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Inventory|Grid")
 	bool IsSlotEmpty(int32 Index) const;
 
+	// 아이템을 지정된 자리?에 (X, Y) 배치할 여유 공간이 있는지
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
+	bool CanAddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY) const;
+
 private:
 	// 아이템 인스턴스 보관 배열
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
