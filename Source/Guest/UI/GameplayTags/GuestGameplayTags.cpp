@@ -14,6 +14,9 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
 
+	//인벤토리 위젯 식별 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");
+
 	//상호작용 프롬프트 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_InteractionPrompt, "Guest.Widget.InteractionPrompt");
 

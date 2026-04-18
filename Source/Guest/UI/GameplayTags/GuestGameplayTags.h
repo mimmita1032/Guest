@@ -20,6 +20,9 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
 
+	// 인벤토리 위젯 식별 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Inventory);
+
 	//상호작용 프롬프트 위젯 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_InteractionPrompt);
 
