@@ -33,3 +33,10 @@ void UGInventoryWidget::NativeDestruct()
 
 	Super::NativeDestruct();
 }
+
+TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
+{
+	// ECommonInputMode::All: UI와 게임 입력을 모두 허용
+	// EMouseCaptureMode::NoCapture: 마우스 커서 자유 이동
+	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+}

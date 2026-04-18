@@ -25,6 +25,8 @@ protected:
 
 	virtual void NativeDestruct() override;
 
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|UI")
 	TObjectPtr<UGInventoryComponent> InventoryComponent;
