@@ -48,6 +48,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	bool AddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY);
 
+	// 인벤토리에서 특정 아이템을 완전히 제거하고 해당 공간들을 비움
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
+	bool RemoveItem(UGItemInstance* ItemToRemove);
+
 private:
 	// 아이템 인스턴스 보관 배열
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")

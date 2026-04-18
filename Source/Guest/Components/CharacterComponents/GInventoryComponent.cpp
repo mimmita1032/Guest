@@ -115,3 +115,32 @@ bool UGInventoryComponent::AddItemAt(UGItemInstance* ItemInstance, int32 StartX,
 
 	return true;
 }
+
+bool UGInventoryComponent::RemoveItem(UGItemInstance* ItemToRemove)
+{
+	if (!ItemToRemove)
+	{
+		return false;
+	}
+
+	bool bRemoved = false;
+
+	for (int32 i = 0; i < InventorySlots.Num(); ++i)
+	{
+		if (InventorySlots[i] == ItemToRemove)
+		{
+			InventorySlots[i] = nullptr;
+			bRemoved = true;
+		}
+	}
+
+	if (bRemoved)
+	{
+		UE_LOG(LogGSystem, Log, TEXT("아이템 제거 성공. 가방 공간 확보 완료."));
+		// TODO: UI 갱신을 위한 브로드캐스트 추가 예정
+		return true;
+	}
+
+	UE_LOG(LogGSystem, Warning, TEXT("아이템 제거 실패: 가방에 존재하지 않는 아이템입니다."));
+	return false;
+}
