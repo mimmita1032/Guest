@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	bool CanAddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY) const;
 
+	// 특정 위치에 아이템을 실제로 추가 (성공 하면ㄴ true 반환)
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
+	bool AddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY);
+
 private:
 	// 아이템 인스턴스 보관 배열
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")

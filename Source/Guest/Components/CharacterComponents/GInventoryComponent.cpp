@@ -85,3 +85,33 @@ bool UGInventoryComponent::CanAddItemAt(UGItemInstance* ItemInstance, int32 Star
 
 	return true;
 }
+
+bool UGInventoryComponent::AddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY)
+{
+	if (!CanAddItemAt(ItemInstance, StartX, StartY))
+	{
+		UE_LOG(LogGSystem, Warning, TEXT("아이템 추가 실패: 공간이 부족하거나 범위를 벗어남. 좌표(%d, %d)"), StartX, StartY);
+		return false;
+	}
+
+	FIntPoint ItemSize = FIntPoint(1, 1);
+	if (const UGItemFragmentInventory* InvFrag = ItemInstance->FindFragmentByClass<UGItemFragmentInventory>())
+	{
+		ItemSize = InvFrag->GridSize;
+	}
+
+	for (int32 X = StartX; X < StartX + ItemSize.X; ++X)
+	{
+		for (int32 Y = StartY; Y < StartY + ItemSize.Y; ++Y)
+		{
+			const int32 Index = GetIndex(X, Y);
+			InventorySlots[Index] = ItemInstance; // 빈 공간(nullptr)을 아이템 객체로 덮어씌움
+		}
+	}
+
+	UE_LOG(LogGSystem, Log, TEXT("아이템 추가 성공: 좌표(%d, %d), 크기(%dx%d)"), StartX, StartY, ItemSize.X, ItemSize.Y);
+	
+	// TODO: UI 업데이트를 위한 델리게이트 브로드캐스트 (담 단계에서 추가)
+
+	return true;
+}
