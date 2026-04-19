@@ -259,6 +259,7 @@ bool UGInventoryComponent::DropItem(UGItemInstance* ItemToDrop)
 
 				if (AGItemPickup* DroppedItem = World->SpawnActor<AGItemPickup>(AGItemPickup::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams))
 				{
+					DroppedItem->InitializePickup(ItemToDrop);
 					UE_LOG(LogGSystem, Log, TEXT("아이템 월드 드롭 완료. 데이터 인스턴스 전달 대기"));
 					return true;
 				}
