@@ -269,3 +269,74 @@ bool UGInventoryComponent::DropItem(UGItemInstance* ItemToDrop)
 
 	return false;
 }
+
+int32 UGInventoryComponent::GetItemCountByDefinition(const UGItemDefinition* TargetDef) const
+{
+	if (!TargetDef) return 0;
+
+	int32 Count = 0;
+	// 5x5 사과가 25개로 세어지는 것 방지하려고 추가
+	TSet<UGItemInstance*> FoundInstances;
+
+	for (UGItemInstance* Item : InventorySlots)
+	{
+		if (Item && Item->ItemDef == TargetDef)
+		{
+			// TSet에 추가를 시도 처음 들어온 경우에만 카운트 증가
+			bool bIsAlreadyInSet;
+			FoundInstances.Add(Item, &bIsAlreadyInSet);
+			
+			if (!bIsAlreadyInSet)
+			{
+				Count++;
+			}
+		}
+	}
+
+	return Count;
+}
+
+int32 UGInventoryComponent::ConsumeItemByDefinition(const UGItemDefinition* TargetDef, int32 CountToConsume)
+{
+	if (!TargetDef || CountToConsume <= 0) return 0;
+
+	int32 ConsumedCount = 0;
+	TSet<UGItemInstance*> InstancesToRemove;
+
+	for (UGItemInstance* Item : InventorySlots)
+	{
+		if (Item && Item->ItemDef == TargetDef)
+		{
+			if (!InstancesToRemove.Contains(Item))
+			{
+				InstancesToRemove.Add(Item);
+				ConsumedCount++;
+
+				// 퀘스트가 요구하는 목표 수량을 채우면 탐색 조기 종료
+				if (ConsumedCount >= CountToConsume)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	//수집된 인스턴스들을 가방에서 일괄 제거
+	if (ConsumedCount > 0)
+	{
+		for (int32 i = 0; i < InventorySlots.Num(); ++i)
+		{
+			if (InstancesToRemove.Contains(InventorySlots[i]))
+			{
+				InventorySlots[i] = nullptr; // 해당 아이템이 차지하던 모든 다중 슬롯 칸을 비움
+			}
+		}
+		
+		OnInventoryChanged.Broadcast();
+		
+		UE_LOG(LogGSystem, Log, TEXT("API: 퀘스트/제작 요구로 인해 아이템 %d개 소모 완료"), ConsumedCount);
+	}
+
+    //요구량보다 부족하게 가지고 있었을 경우 대비
+	return ConsumedCount;
+}

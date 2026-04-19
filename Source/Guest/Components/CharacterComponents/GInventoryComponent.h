@@ -79,4 +79,15 @@ private:
 	// 아이템 인스턴스 보관 배열
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
 	TArray<TObjectPtr<UGItemInstance>> InventorySlots;
+
+public:
+	// --- 외부 연동 API (퀘스트, 제작, 상점 등) ---
+
+	//ItemDefinition을 가진 고유 아이템이 가방에 총 몇 개 있는지
+	UFUNCTION(BlueprintCallable, Category = "Inventory|API")
+	int32 GetItemCountByDefinition(const UGItemDefinition* TargetDef) const;
+
+	//지정한 수량만큼 가방에서 소모하고, 실제 소모된 개수 반환
+	UFUNCTION(BlueprintCallable, Category = "Inventory|API")
+	int32 ConsumeItemByDefinition(const UGItemDefinition* TargetDef, int32 CountToConsume);
 };
