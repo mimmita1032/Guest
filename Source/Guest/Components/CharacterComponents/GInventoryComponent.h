@@ -69,6 +69,10 @@ public:
 	// 특정 위치의 아이템을 새로운 좌표로 이동
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	bool MoveItem(UGItemInstance* ItemToMove, int32 TargetX, int32 TargetY);
+
+	// 지정된 아이템을 인벤토리에서 제거하고 월드에 다시 버리기
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
+	bool DropItem(UGItemInstance* ItemToDrop);
 	
 
 private:

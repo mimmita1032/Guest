@@ -5,6 +5,7 @@
 #include "Guest/Utils/GLog.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/Instance/GItemInstance.h"
+#include "Guest/Items/WorldActor/GItemPickup.h"
 
 UGInventoryComponent::UGInventoryComponent()
 {
@@ -225,4 +226,45 @@ bool UGInventoryComponent::MoveItem(UGItemInstance* ItemToMove, int32 TargetX, i
 		UE_LOG(LogGSystem, Warning, TEXT("아이템 이동 실패: 타겟 좌표(%d, %d)에 공간이 부족합니다."), TargetX, TargetY);
 		return false;
 	}
+}
+
+bool UGInventoryComponent::DropItem(UGItemInstance* ItemToDrop)
+{
+	if (!ItemToDrop) return false;
+
+	// 배열 탐색 및 인벤토리 슬롯 초기화
+	bool bRemoved = false;
+	for (int32 i = 0; i < InventorySlots.Num(); ++i)
+	{
+		if (InventorySlots[i] == ItemToDrop)
+		{
+			InventorySlots[i] = nullptr;
+			bRemoved = true;
+		}
+	}
+
+	if (bRemoved)
+	{
+		OnInventoryChanged.Broadcast();
+
+		if (AActor* OwnerActor = GetOwner())
+		{
+			FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
+			FRotator SpawnRotation = FRotator::ZeroRotator;
+
+			if (UWorld* World = GetWorld())
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+				if (AGItemPickup* DroppedItem = World->SpawnActor<AGItemPickup>(AGItemPickup::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams))
+				{
+					UE_LOG(LogGSystem, Log, TEXT("아이템 월드 드롭 완료. 데이터 인스턴스 전달 대기"));
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
 }
