@@ -3,6 +3,7 @@
 #include "GInventorySlotWidget.h"
 #include "GItemDragDropOperation.h"
 #include "Components/Image.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Items/Instance/GItemInstance.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
@@ -47,7 +48,20 @@ bool UGInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDra
 	{
 		if (UGItemInstance* DraggedItem = DragOp->DraggedItem)
 		{
-
+			if (APawn* OwningPawn = GetOwningPlayerPawn())
+			{
+				if (UGInventoryComponent* InvComp = OwningPawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					// 컴포넌트의 실제 이동 함수 호출 예정
+				}
+			}
+			if (APawn* OwningPawn = GetOwningPlayerPawn())
+			{
+				if (UGInventoryComponent* InvComp = OwningPawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					InvComp->MoveItem(DraggedItem, SlotX, SlotY);
+				}
+			}
 			G_LOG(TEXT("아이템 드롭 성공! 이동할 타겟 좌표 - X(열): %d, Y(행): %d"), SlotX, SlotY);
 			
 			return true;

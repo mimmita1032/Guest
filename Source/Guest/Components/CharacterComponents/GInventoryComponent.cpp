@@ -177,3 +177,52 @@ UGItemInstance* UGInventoryComponent::GetItemAt(int32 X, int32 Y) const
     
 	return nullptr;
 }
+
+bool UGInventoryComponent::MoveItem(UGItemInstance* ItemToMove, int32 TargetX, int32 TargetY)
+{
+	if (!ItemToMove) return false;
+
+	TArray<int32> OldIndices;
+	for (int32 i = 0; i < InventorySlots.Num(); ++i)
+	{
+		if (InventorySlots[i] == ItemToMove)
+		{
+			OldIndices.Add(i);
+			InventorySlots[i] = nullptr;
+		}
+	}
+
+	if (CanAddItemAt(ItemToMove, TargetX, TargetY))
+	{
+		FIntPoint ItemSize = FIntPoint(1, 1);
+		if (const UGItemFragmentInventory* InvFrag = ItemToMove->FindFragmentByClass<UGItemFragmentInventory>())
+		{
+			ItemSize = InvFrag->GridSize;
+		}
+
+		for (int32 X = TargetX; X < TargetX + ItemSize.X; ++X)
+		{
+			for (int32 Y = TargetY; Y < TargetY + ItemSize.Y; ++Y)
+			{
+				InventorySlots[GetIndex(X, Y)] = ItemToMove;
+			}
+		}
+
+		OnInventoryChanged.Broadcast();
+		UE_LOG(LogGSystem, Log, TEXT("아이템 이동 성공: 타겟 좌표(%d, %d)"), TargetX, TargetY);
+		return true;
+	}
+	else
+	{
+		//공간이 부족하거나 범위를 벗어나면, 원래 기억해둔 자리로 롤백
+		for (int32 OldIndex : OldIndices)
+		{
+			InventorySlots[OldIndex] = ItemToMove;
+		}
+		
+		// 드래그하다가 실패했을 때 원본의 반투명을 해제
+		OnInventoryChanged.Broadcast(); 
+		UE_LOG(LogGSystem, Warning, TEXT("아이템 이동 실패: 타겟 좌표(%d, %d)에 공간이 부족합니다."), TargetX, TargetY);
+		return false;
+	}
+}

@@ -65,7 +65,10 @@ public:
 	// 특정 좌표(X, Y)의 아이템 데이터를 가져오는 함수
 	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
 	class UGItemInstance* GetItemAt(int32 X, int32 Y) const;
-	
+
+	// 특정 위치의 아이템을 새로운 좌표로 이동
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
+	bool MoveItem(UGItemInstance* ItemToMove, int32 TargetX, int32 TargetY);
 	
 
 private:
