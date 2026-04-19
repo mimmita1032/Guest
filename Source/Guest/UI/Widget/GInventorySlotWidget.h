@@ -26,4 +26,14 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|Slot")
 	TObjectPtr<UGItemInstance> ItemReference;
+
+public:
+	void SetSlotPosition(int32 InX, int32 InY);
+
+protected:
+	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
+private:
+	int32 SlotX = 0;
+	int32 SlotY = 0;
 };

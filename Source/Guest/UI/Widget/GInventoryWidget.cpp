@@ -84,7 +84,9 @@ void UGInventoryWidget::OnRefreshInventory()
 		{
 			int32 Row = i / Columns;
 			int32 Col = i % Columns;
-          
+
+			NewSlot->SetSlotPosition(Col, Row);
+			
 			if (UUniformGridSlot* GridSlot = Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col))
 			{
 				GridSlot->SetHorizontalAlignment(HAlign_Fill);
@@ -94,7 +96,7 @@ void UGInventoryWidget::OnRefreshInventory()
 			NewSlot->SetItemReference(nullptr); 
 		}
 	}
-
+	
 	//캔버스 기반 아이템 배치
 	for (int32 i = 0; i < TotalSlots; ++i)
 	{
