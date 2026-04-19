@@ -7,6 +7,8 @@
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "GItemDragDropOperation.h"
 #include "Components/SizeBox.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "GItemDragDropOperation.h"
 #include "Guest/Utils/GLog.h"
 
 void UGInventoryItemWidget::SetItemData(UGItemInstance* InItem)
@@ -98,9 +100,22 @@ void UGInventoryItemWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDr
 {
 	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
 
-	//드래그가 무효화되거나 가방 바깥에 버려졌을 때 시각적 상태와 클릭 감지 복구
+	//드래그 취소 시 원본 아이템의 시각적 상태 우선 복구
 	SetRenderOpacity(1.0f);
 	SetVisibility(ESlateVisibility::Visible);
 	
-	G_LOG(TEXT("아이템 드래그 취소: 시각적 상태 원상 복구 완료"));
+	if (UGItemDragDropOperation* DragOp = Cast<UGItemDragDropOperation>(InOperation))
+	{
+		if (UGItemInstance* DraggedItem = DragOp->DraggedItem)
+		{
+			if (APawn* OwningPawn = GetOwningPlayerPawn())
+			{
+				if (UGInventoryComponent* InvComp = OwningPawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					InvComp->DropItem(DraggedItem);
+					G_LOG(TEXT("인벤토리 외부 드롭 감지: 아이템 월드 버리기(DropItem) 명령 컴포넌트로 전달 완료"));
+				}
+			}
+		}
+	}
 }
