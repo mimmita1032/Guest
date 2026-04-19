@@ -10,6 +10,7 @@
 class UGuestUISubsystem;
 class UGuestPrimaryLayout;
 class UGuestGameInstance;
+class UInputAction;
 
 /**
  * AGuestPlayerController
@@ -108,5 +109,12 @@ protected:
 	void ShowSaveBoard();
 	void ShowLoadBoard();
 	
+#pragma endregion
+#pragma region Inventory
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_ToggleInventory;
+
+	void OnToggleInventory();
 #pragma endregion
 };

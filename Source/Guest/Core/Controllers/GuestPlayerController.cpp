@@ -15,11 +15,10 @@
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
-#include "Guest/Core/Controllers/GuestPlayerController.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
-#include "Guest/UI/Layout/GuestPrimaryLayout.h"
-#include "Blueprint/UserWidget.h"
+
 
 namespace
 {
@@ -69,6 +68,10 @@ void AGuestPlayerController::SetupInputComponent()
 		if (IA_LoadGame)
 		{
 			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
+		}
+		if (IA_ToggleInventory)
+		{
+			EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestPlayerController::OnToggleInventory);
 		}
 	}
 }
@@ -254,4 +257,14 @@ void AGuestPlayerController::ShowLoadBoard()
 	}
 }
 
+#pragma endregion
+#pragma region Inventory
+void AGuestPlayerController::OnToggleInventory()
+{
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
+	{
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+		G_LOG(TEXT("인벤토리 토글: GameMenu 스택에 위젯 푸시 요청함"));
+	}
+}
 #pragma endregion

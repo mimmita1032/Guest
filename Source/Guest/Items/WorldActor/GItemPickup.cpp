@@ -3,12 +3,14 @@
 
 #include "GItemPickup.h"
 
+#include "Guest/Characters/Player/GuestCharacter.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentVisuals.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Items/Fragments/GItemFragmentNarrative.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
-#include "Guest/Items/Instance//GItemInstance.h"
+#include "Guest/Items/Instance/GItemInstance.h"
 
 
 AGItemPickup::AGItemPickup()
@@ -23,38 +25,37 @@ AGItemPickup::AGItemPickup()
 
 void AGItemPickup::Interact_Implementation(AActor* Interactor)
 {
-	if (!ItemDefinition) return;
-
-	UGItemInstance* NewInstance = NewObject<UGItemInstance>(this);
-	NewInstance->SetItemDefinition(ItemDefinition);
+	UGItemInstance* InstanceToGive = ItemInstance.Get();
 	
-	G_LOG(TEXT("%s 아이템을 획득했습니다!"), *ItemDefinition->ItemName.ToString());
-	G_LOG(TEXT("%s 인스턴스가 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
-
-	if (ItemDefinition)
+	if (!InstanceToGive)
 	{
-		//네이티브 게임플레이 태그 검사
-		if (ItemDefinition->HasTag(GuestGameplayTags::TAG_Item_Era_1995))
-		{
-			UE_LOG(LogGSystem, Log, TEXT("1995년 과거의 물건을 획득했습니다."));
-		}
+		if (!ItemDefinition) return;
+		InstanceToGive = NewObject<UGItemInstance>(this);
+		InstanceToGive->SetItemDefinition(ItemDefinition);
+		G_LOG(TEXT("%s 인스턴스가 새로 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
+	}
+	else
+	{
+		G_LOG(TEXT("기존 데이터(인스턴스)를 간직한 아이템을 다시 줍습니다."));
+	}
 
-		//프래그먼트 데이터 추출
-		if (const UGItemFragmentNarrative* NarrativeFrag = ItemDefinition->FindFragmentByClass<UGItemFragmentNarrative>())
+	if (AGuestCharacter* Player = Cast<AGuestCharacter>(Interactor))
+	{
+		if (UGInventoryComponent* InvComp = Player->FindComponentByClass<UGInventoryComponent>())
 		{
-			UE_LOG(LogGSystem, Log, TEXT("아이템 출신 연도: %d"), NarrativeFrag->OriginYear);
-			UE_LOG(LogGSystem, Log, TEXT("아이템 사연: %s"), *NarrativeFrag->Description.ToString());
+			if (InvComp->AutoAddItem(InstanceToGive))
+			{
+				Destroy();
+				return;
+			}
 		}
 	}
-	
-	// TODO: 인벤토리에 NewInstance 전달
 
-	Destroy();
+	G_WARN(TEXT("아이템 획득 실패: 가방이 가득 찼거나 인벤토리를 찾을 수 없습니다."));
 }
 
 FText AGItemPickup::GetInteractText_Implementation() const
 {
-	// 블루프린트에서 오버라이드하지 않았을 때 출력될 기본값
 	return FText::GetEmpty();
 }
 
@@ -83,4 +84,15 @@ void AGItemPickup::UpdatePickupVisuals() const
 	}
 }
 
+void AGItemPickup::InitializePickup(UGItemInstance* InInstance)
+{
+	if (InInstance)
+	{
+		ItemInstance = InInstance;
+		
+		ItemDefinition = InInstance->ItemDef; 
+		
+		UpdatePickupVisuals(); 
+	}
+}
 
