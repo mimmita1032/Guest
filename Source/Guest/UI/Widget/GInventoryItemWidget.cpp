@@ -5,6 +5,7 @@
 #include "Guest/Items/Instance/GItemInstance.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
+#include "Guest/Utils/GLog.h"
 
 void UGInventoryItemWidget::SetItemData(UGItemInstance* InItem)
 {
@@ -21,4 +22,23 @@ void UGInventoryItemWidget::SetItemData(UGItemInstance* InItem)
 			}
 		}
 	}
+}
+
+FReply UGInventoryItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		return Reply.Handled().DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+	}
+
+	return Reply;
+}
+
+void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+	G_LOG(TEXT("아이템 드래그 감지 성공. 다음 단계에서 DragDropOperation을 연결할 예정입니다."));
 }

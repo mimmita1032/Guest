@@ -18,6 +18,13 @@ public:
 	void SetItemData(UGItemInstance* InItem);
 
 protected:
+	//마우스 클릭 시 드래그 준비
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
+	//드래그가 시작되었을 때
+	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
+
+protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_ItemIcon;
 
