@@ -165,3 +165,15 @@ bool UGInventoryComponent::AutoAddItem(UGItemInstance* ItemInstance)
 	UE_LOG(LogGSystem, Warning, TEXT("가방이 가득 차서 아이템을 획득할 수 없습니다!"));
 	return false;
 }
+
+UGItemInstance* UGInventoryComponent::GetItemAt(int32 X, int32 Y) const
+{
+	int32 Index = Y * Columns + X;
+	
+	if (InventorySlots.IsValidIndex(Index))
+	{
+		return InventorySlots[Index];
+	}
+    
+	return nullptr;
+}

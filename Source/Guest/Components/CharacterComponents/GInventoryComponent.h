@@ -61,6 +61,10 @@ public:
 	// 블루프린트 위젯에서 이벤트를 바인딩하여 UI를 갱신할 수 있도록 노출된 델리게이트 변수
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryChanged OnInventoryChanged;
+
+	// 특정 좌표(X, Y)의 아이템 데이터를 가져오는 함수
+	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
+	class UGItemInstance* GetItemAt(int32 X, int32 Y) const;
 	
 	
 
