@@ -78,6 +78,12 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 		
 		DragOp->Pivot = EDragPivot::MouseDown;
 
+		FVector2D LocalMousePos = InGeometry.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+		DragOp->DragOffset = FIntPoint(
+			FMath::FloorToInt(LocalMousePos.X / SlotSize),
+			FMath::FloorToInt(LocalMousePos.Y / SlotSize)
+		);
+		
 		OutOperation = DragOp;
 
 		//원본 반투명하게
