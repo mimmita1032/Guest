@@ -9,6 +9,8 @@
 class UGInventoryComponent;
 class UGInventorySlotWidget;
 class UUniformGridPanel;
+class UCanvasPanel;
+class UGInventoryItemWidget;
 
 UCLASS()
 class GUEST_API UGInventoryWidget : public UCommonActivatableWidget
@@ -36,4 +38,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
 	TSubclassOf<UGInventorySlotWidget> SlotWidgetClass;
+
+	// 아이템 렌더링용 캔버스 패널
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCanvasPanel> Canvas_Items;
+
+	// 아이템 전용 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
+	TSubclassOf<UGInventoryItemWidget> ItemWidgetClass;
 };
