@@ -19,9 +19,9 @@ void UGInventorySlotWidget::SetItemReference(UGItemInstance* NewItem)
 		{
 			if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
 			{
-				if (InvFrag->ItemIcon.IsValid())
+				if (UTexture2D* IconTexture = InvFrag->ItemIcon.LoadSynchronous())
 				{
-					Img_Icon->SetBrushFromTexture(InvFrag->ItemIcon.LoadSynchronous());
+					Img_Icon->SetBrushFromTexture(IconTexture);
 					Img_Icon->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 					return;
 				}
