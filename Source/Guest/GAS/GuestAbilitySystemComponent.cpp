@@ -4,26 +4,21 @@
 #include "GuestAbilitySystemComponent.h"
 
 
-// Sets default values for this component's properties
-UGuestAbilitySystemComponent::UGuestAbilitySystemComponent()
+void UGuestAbilitySystemComponent::OnAbilityPressed(const FGameplayTag& InputTag)
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
-}
-
-
-// Called when the game starts
-void UGuestAbilitySystemComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// ...
+	if (!InputTag.IsValid()) return;
 	
+	for (const FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
+	{
+		if (!AbilitySpec.GetDynamicSpecSourceTags().HasTagExact(InputTag)) continue;
+		
+		TryActivateAbility(AbilitySpec.Handle);
+	}
 }
 
-
-
-
+void UGuestAbilitySystemComponent::OnAbilityReleased(const FGameplayTag& InputTag)
+{
+	// 키 홀드 ability cancel 처리
+	
+	UE_LOG(LogTemp, Warning, TEXT("어빌리티 인풋키 업"));
+}

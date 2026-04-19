@@ -27,7 +27,7 @@ struct FGuestAbilitySet
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(EditDefaultsOnly, meta = (Categories = "Input"))
+	UPROPERTY(EditDefaultsOnly, meta = (Categories = "Guest.InputTag"))
 	FGameplayTag InputTag;
 	
 	UPROPERTY(EditDefaultsOnly)

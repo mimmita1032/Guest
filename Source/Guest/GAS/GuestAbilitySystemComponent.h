@@ -13,12 +13,6 @@ class GUEST_API UGuestAbilitySystemComponent : public UAbilitySystemComponent
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
-	UGuestAbilitySystemComponent();
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-
+	void OnAbilityPressed(const FGameplayTag& InputTag);
+	void OnAbilityReleased(const FGameplayTag& InputTag);
 };

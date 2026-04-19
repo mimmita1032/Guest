@@ -29,7 +29,7 @@ protected:
 	TArray<TSubclassOf<UGameplayEffect>> InitialEffects;
 	
 	UPROPERTY(EditDefaultsOnly,Category = "GASData")
-	TArray<FGuestAbilitySet> AbilitiesByInputTag;
+	TArray<FGuestAbilitySet> InitialAbilitySets;
 	
 	void InitBaseStatsToASC(const UDataTable* BaseStatTableToGive,UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel);
 	

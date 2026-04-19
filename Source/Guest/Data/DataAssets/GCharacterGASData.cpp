@@ -13,6 +13,7 @@ void UGCharacterGASData::GiveToASC(UGuestAbilitySystemComponent* InASCToGive, in
 	
 	InitBaseStatsToASC(CharacterBaseStatDataTable,InASCToGive, ApplyLevel);
 	GiveEffectsToASC(InitialEffects, InASCToGive, ApplyLevel);
+	GiveAbilitiesToASC(InitialAbilitySets, InASCToGive, ApplyLevel);
 }
 
 void UGCharacterGASData::InitBaseStatsToASC(const UDataTable* BaseStatTableToGive,UGuestAbilitySystemComponent* InASCToGive, int32 ApplyLevel)
