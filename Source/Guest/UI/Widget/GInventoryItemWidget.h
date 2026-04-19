@@ -24,6 +24,8 @@ protected:
 	//드래그가 시작되었을 때
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 
+	virtual void NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Img_ItemIcon;

@@ -88,7 +88,19 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 
 		//원본 반투명하게
 		SetRenderOpacity(0.3f);
+		SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 		
 		G_LOG(TEXT("아이템 드래그 시작: GridSize 데이터 기반 5x5 실제 크기가 반영된 잔상 생성 및 마우스 부착 완료"));
 	}
+}
+
+void UGInventoryItemWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+	Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
+
+	//드래그가 무효화되거나 가방 바깥에 버려졌을 때 시각적 상태와 클릭 감지 복구
+	SetRenderOpacity(1.0f);
+	SetVisibility(ESlateVisibility::Visible);
+	
+	G_LOG(TEXT("아이템 드래그 취소: 시각적 상태 원상 복구 완료"));
 }
