@@ -8,6 +8,7 @@
 #include "GItemPickup.generated.h"
 
 class UGItemDefinition;
+class UGItemInstance;
 
 UCLASS()
 class GUEST_API AGItemPickup : public AActor, public IGInteractableInterface 
@@ -22,7 +23,13 @@ public:
 	TObjectPtr<const UGItemDefinition> ItemDefinition;
 	
 	// Pickup 함수 구현
-	virtual void Interact(AActor* Interactor) override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
+	virtual FText GetInteractText_Implementation() const override;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item")
+	TObjectPtr<UGItemInstance> ItemInstance;
+
+	void InitializePickup(UGItemInstance* InInstance);
 
 protected:
 	virtual void BeginPlay() override;

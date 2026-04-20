@@ -20,9 +20,13 @@ class GUEST_API UGItemFragmentNarrative : public UGItemFragment
 public:
 	//아이템이 속한 현실의 연도
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative")
-	int32 OriginYear;
+	int32 OriginYear = 1995;
 	
-	// 플레이어가 아이템을 관찰할 때 읽을 수 있는 사연
+	// 아이템 사연 텍스트
 	UPROPERTY(EditDefaultsOnly, Category = "Narrative", meta = (MultiLine = true))
 	FText Description;
+
+	// UI 자세히보기용 3D메쉬
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narrative")
+	TObjectPtr<UStaticMesh> InspectMesh;
 };

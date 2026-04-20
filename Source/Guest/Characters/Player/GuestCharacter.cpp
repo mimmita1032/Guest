@@ -13,6 +13,8 @@
 #include "Guest/Components/GDigicamComponent.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 //gas
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
@@ -234,6 +236,10 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
        ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
        
        GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
+       if (IA_ToggleInventory)
+       {
+          GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
+       }
     }
 }
 
@@ -388,6 +394,28 @@ void AGuestCharacter::EndCrouch(const FInputActionValue& Value)
 {
     UnCrouch();
     UE_LOG(LogTemp, Log, TEXT("캐릭터 조작: 앉기 상태 해제"));
+}
+#pragma endregion
+#pragma region Inventory
+void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
+{
+   if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+   {
+      if (bIsInventoryOpen)
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+         bIsInventoryOpen = false;
+            
+         G_LOG(TEXT("캐릭터 입력: 인벤토리 닫기 실행"));
+      }
+      else
+      {
+         UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+         bIsInventoryOpen = true;
+            
+         G_LOG(TEXT("캐릭터 입력: 인벤토리 열기 실행"));
+      }
+   }
 }
 #pragma endregion
 

@@ -18,8 +18,10 @@ class GUEST_API IGInteractableInterface
 
 public:
 	// 상호작용 실행
-	virtual void Interact(AActor* Interactor) = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	void Interact(AActor* Interactor);
 
-	// 출력용 텍스트 (UI 표시용)
-	virtual FText GetInteractText() const { return FText::GetEmpty(); }
+	// UI 표시용 텍스트 반환
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+	FText GetInteractText() const;
 };
