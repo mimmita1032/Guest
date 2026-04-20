@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "GuestCharacter.generated.h"
 
 class USpringArmComponent;
@@ -13,6 +15,8 @@ class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
 class UGCharacterDataAsset;
+class UGCharacterGASData;
+class UGInputConfigData;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter
@@ -24,6 +28,8 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    
+    virtual void PossessedBy(AController* NewController) override;
 
     virtual void Tick(float DeltaTime) override;
 
@@ -45,11 +51,13 @@ protected:
     TObjectPtr<UGCharacterDataAsset> CharacterData;
 
 protected:
-    
+    //입력 구성 데이터
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UGInputConfigData> GAbilityInputConfigData;
     //입력
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputMappingContext> DefaultMappingContext;
-
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_Move;
 
@@ -149,4 +157,24 @@ private:
     // 인벤토리 UI 활성화 상태
     bool bIsInventoryOpen = false;
 #pragma endregion
+    
+    ///     GAS     ///
+
+public:
+    // IAbilitySystemInterface begin
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    // IAbilitySystemInterface end
+private:
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAbilitySystemComponent* GuestAbilitySystemComponent;
+    
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAttributeSet* GuestAttributeSet;
+    
+    void AbilityInputPressed(FGameplayTag InputTag);
+    void AbilityInputReleased(FGameplayTag InputTag);
+    
+    //Gas 데이터 에셋
+    UPROPERTY(EditDefaultsOnly, Category = "Data")
+    TSoftObjectPtr<UGCharacterGASData> CharacterGasData;
 };

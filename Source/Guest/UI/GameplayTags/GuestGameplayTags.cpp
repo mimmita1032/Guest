@@ -13,6 +13,9 @@ namespace GuestGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
+	
+	//Input
+	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Test, "Guest.InputTag.Test");
 
 	//인벤토리 위젯 식별 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");

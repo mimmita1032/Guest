@@ -15,6 +15,14 @@
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+//gas
+#include "Guest/GAS/GuestAbilitySystemComponent.h"
+#include "Guest/GAS/GuestAttributeSet.h"
+//gas DATA
+#include "Guest/DATA/DataAssets/GCharacterGASData.h"
+//인풋 구성
+#include "Guest/Data/Input/GInputConfigData.h"
+#include "Guest/Components/Input/GuestInputComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -54,6 +62,9 @@ AGuestCharacter::AGuestCharacter()
     // 연산용 초기값
     TargetZoomLength = 400.0f;
     ZoomSpeed = 10.0f;
+   
+   GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
+   GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
 }
 
 void AGuestCharacter::BeginPlay()
@@ -104,6 +115,23 @@ void AGuestCharacter::BeginPlay()
     SpringArmComp->TargetArmLength = TargetZoomLength;
 }
 
+void AGuestCharacter::PossessedBy(AController* NewController)
+{
+   Super::PossessedBy(NewController);
+   
+   if (GuestAbilitySystemComponent)
+   {
+      GuestAbilitySystemComponent->InitAbilityActorInfo(this,this);
+   }
+   
+   ensureMsgf(!CharacterGasData.IsNull(), TEXT("캐릭터 GAS 데이터 할당 안됨"));
+   
+   if (UGCharacterGASData* LoadedData = CharacterGasData.LoadSynchronous())
+   {
+      LoadedData->GiveToASC(GuestAbilitySystemComponent);
+   }
+}
+
 void AGuestCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -144,69 +172,73 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    if (UEnhancedInputComponent* EIC = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+    if (UGuestInputComponent* GIC = CastChecked<UGuestInputComponent>(PlayerInputComponent))
     {
        if (UInputAction* RawMove = Cast<UInputAction>(IA_Move.Get()))
        {
-          EIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::MoveAction);
+          GIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::MoveAction);
        }
 
        if (UInputAction* RawLook = Cast<UInputAction>(IA_Look.Get()))
        {
-          EIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::LookAction);
+          GIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::LookAction);
        }
 
        if (UInputAction* RawJump = Cast<UInputAction>(IA_Jump.Get()))
        {
-          EIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
-          EIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
+          GIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
+          GIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
        }
 
        if (InteractAction)
        {
-          EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
+          GIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
        } 
 
        if (IA_DigicamControl)
        {
-          EIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
+          GIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
        }
 
        if (IA_DigicamShutter)
        {
-          EIC->BindAction(IA_DigicamShutter, ETriggerEvent::Started, this, &AGuestCharacter::DigicamShutterAction);
+          GIC->BindAction(IA_DigicamShutter, ETriggerEvent::Started, this, &AGuestCharacter::DigicamShutterAction);
        }
 
        if (IA_DigicamToggle)
        {
-          EIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
+          GIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
        }
 
        if (IA_Zoom)
        {
-          EIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AGuestCharacter::ZoomAction);
+          GIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AGuestCharacter::ZoomAction);
        }
 
        if (IA_FreeLook)
        {
-          EIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
-          EIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
+          GIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
+          GIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
        }
 
        if (IA_Sprint)
        {
-          EIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
-          EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
+          GIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
+          GIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
        }
 
        if (IA_Crouch)
        {
-          EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
-          EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
+          GIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
+          GIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
        }
+       
+       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
+       
+       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
        if (IA_ToggleInventory)
        {
-          EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
+          GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
     }
 }
@@ -347,6 +379,8 @@ void AGuestCharacter::StopSprinting()
        UE_LOG(LogTemp, Warning, TEXT("달리기 중지: 현재 속도 %f"), CharacterData->WalkSpeed);
     }
 }
+
+
 #pragma endregion
 
 #pragma region Crouch
@@ -384,3 +418,18 @@ void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
    }
 }
 #pragma endregion
+
+UAbilitySystemComponent* AGuestCharacter::GetAbilitySystemComponent() const
+{
+   return GuestAbilitySystemComponent;
+}
+
+void AGuestCharacter::AbilityInputPressed(FGameplayTag InputTag)
+{
+   GuestAbilitySystemComponent->OnAbilityPressed(InputTag);
+}
+
+void AGuestCharacter::AbilityInputReleased(FGameplayTag InputTag)
+{
+   GuestAbilitySystemComponent->OnAbilityReleased(InputTag);
+}
