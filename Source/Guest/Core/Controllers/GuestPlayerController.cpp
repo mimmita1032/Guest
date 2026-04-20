@@ -15,11 +15,11 @@
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
-#include "Guest/Core/Controllers/GuestPlayerController.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
-#include "Guest/UI/Layout/GuestPrimaryLayout.h"
-#include "Blueprint/UserWidget.h"
+
 
 namespace
 {
@@ -69,6 +69,10 @@ void AGuestPlayerController::SetupInputComponent()
 		if (IA_LoadGame)
 		{
 			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
+		}
+		if (IA_ToggleInventory)
+		{
+			EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestPlayerController::OnToggleInventory);
 		}
 	}
 }
@@ -159,6 +163,97 @@ void AGuestPlayerController::ToggleDebugUI()
 		}
 	}
 }
+#pragma endregion
+
+#pragma region QuestDebug
+
+// 헬퍼: GQuestSubsystem 조회 (실패 시 로그 출력 후 nullptr 반환)
+static UGQuestSubsystem* GetQuestSys(APlayerController* PC)
+{
+	UGQuestSubsystem* QuestSys = PC->GetGameInstance()->GetSubsystem<UGQuestSubsystem>();
+	if (!QuestSys)
+	{
+		UE_LOG(LogGSystem, Error, TEXT("[디버그] GQuestSubsystem을 찾을 수 없습니다."));
+	}
+	return QuestSys;
+}
+
+/*
+ * 콘솔 명령어: DebugAcceptQuest Q_Main_001
+ * 선행 퀘스트·시간 조건 검증을 포함한 정상 수락 흐름을 그대로 탑니다.
+ * DataTable에 해당 QuestID Row가 없으면 경고 로그가 출력됩니다.
+ */
+void AGuestPlayerController::DebugAcceptQuest(FName QuestID)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	G_LOG(TEXT("[디버그] 퀘스트 강제 수락 시도: %s"), *QuestID.ToString());
+	QuestSys->AcceptQuest(QuestID);
+}
+
+/*
+ * 콘솔 명령어: DebugUpdateObjective Food0 1
+ * 아이템을 직접 줍지 않아도 델리게이트를 강제 Broadcast해 목표 진행도를 올립니다.
+ * TargetID는 DataTable Objectives의 TargetID 값과 정확히 일치해야 합니다.
+ */
+void AGuestPlayerController::DebugUpdateObjective(FName TargetID, int32 Amount)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	G_LOG(TEXT("[디버그] 목표 강제 갱신: TargetID=%s, Amount=%d"), *TargetID.ToString(), Amount);
+	QuestSys->OnObjectiveUpdated.Broadcast(TargetID, Amount);
+}
+
+/*
+ * 콘솔 명령어: DebugQuestStatus
+ * 현재 진행 중인 퀘스트 ID 목록을 로그로 출력합니다.
+ * 진행 중인 퀘스트가 없으면 "없음"을 출력합니다.
+ */
+void AGuestPlayerController::DebugQuestStatus()
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	TArray<FName> ActiveIDs = QuestSys->GetActiveQuestIDs();
+	if (ActiveIDs.IsEmpty())
+	{
+		G_LOG(TEXT("[디버그] 진행 중인 퀘스트: 없음"));
+		return;
+	}
+
+	G_LOG(TEXT("[디버그] 진행 중인 퀘스트 (%d개):"), ActiveIDs.Num());
+	for (const FName& ID : ActiveIDs)
+	{
+		G_LOG(TEXT("[디버그]  - %s"), *ID.ToString());
+	}
+}
+
+/*
+ * 콘솔 명령어: DebugCompletedQuests
+ * 완료된 퀘스트 ID 목록을 로그로 출력합니다.
+ * 완료된 퀘스트가 없으면 "없음"을 출력합니다.
+ */
+void AGuestPlayerController::DebugCompletedQuests()
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	TArray<FName> CompletedIDs = QuestSys->GetCompletedQuestIDs();
+	if (CompletedIDs.IsEmpty())
+	{
+		G_LOG(TEXT("[디버그] 완료된 퀘스트: 없음"));
+		return;
+	}
+
+	G_LOG(TEXT("[디버그] 완료된 퀘스트 (%d개):"), CompletedIDs.Num());
+	for (const FName& ID : CompletedIDs)
+	{
+		G_LOG(TEXT("[디버그]  - %s"), *ID.ToString());
+	}
+}
+
 #pragma endregion
 
 #pragma region SaveGame
@@ -254,4 +349,14 @@ void AGuestPlayerController::ShowLoadBoard()
 	}
 }
 
+#pragma endregion
+#pragma region Inventory
+void AGuestPlayerController::OnToggleInventory()
+{
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
+	{
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+		G_LOG(TEXT("인벤토리 토글: GameMenu 스택에 위젯 푸시 요청함"));
+	}
+}
 #pragma endregion

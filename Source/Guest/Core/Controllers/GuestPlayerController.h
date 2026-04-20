@@ -10,6 +10,7 @@
 class UGuestUISubsystem;
 class UGuestPrimaryLayout;
 class UGuestGameInstance;
+class UInputAction;
 
 /**
  * AGuestPlayerController
@@ -76,6 +77,44 @@ private:
 
 	
 #pragma endregion
+/*===========================================================
+ * [디버그 전용] 퀘스트 시스템 콘솔 테스트 함수
+ *
+ * ※ 사용법: 에디터 실행 중 콘솔(~ 키)을 열고 아래 명령어 입력
+ *
+ *  DebugAcceptQuest Q_Main_001
+ *    → QuestID가 Q_Main_001인 퀘스트를 조건 검증 후 강제 수락
+ *
+ *  DebugUpdateObjective Food0 1
+ *    → TargetID=Food0 목표를 1만큼 강제 진행 (아이템 직접 줍지 않아도 됨)
+ *
+ *  DebugQuestStatus
+ *    → 현재 진행 중인 퀘스트 목록을 로그로 출력
+ *
+ *  DebugCompletedQuests
+ *    → 완료된 퀘스트 목록을 로그로 출력
+ *
+ * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
+ *===========================================================*/
+#pragma region QuestDebug
+public:
+	// [디버그] 퀘스트 강제 수락 — 콘솔 입력: DebugAcceptQuest Q_Main_001
+	UFUNCTION(Exec)
+	void DebugAcceptQuest(FName QuestID);
+
+	// [디버그] 퀘스트 목표 강제 갱신 — 콘솔 입력: DebugUpdateObjective Food0 1
+	UFUNCTION(Exec)
+	void DebugUpdateObjective(FName TargetID, int32 Amount);
+
+	// [디버그] 진행 중인 퀘스트 목록 로그 출력 — 콘솔 입력: DebugQuestStatus
+	UFUNCTION(Exec)
+	void DebugQuestStatus();
+
+	// [디버그] 완료된 퀘스트 목록 로그 출력 — 콘솔 입력: DebugCompletedQuests
+	UFUNCTION(Exec)
+	void DebugCompletedQuests();
+#pragma endregion
+
 #pragma region SaveDebug
 
 public:
@@ -108,5 +147,12 @@ protected:
 	void ShowSaveBoard();
 	void ShowLoadBoard();
 	
+#pragma endregion
+#pragma region Inventory
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<class UInputAction> IA_ToggleInventory;
+
+	void OnToggleInventory();
 #pragma endregion
 };
