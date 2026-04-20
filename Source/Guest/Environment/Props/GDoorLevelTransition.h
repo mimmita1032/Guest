@@ -13,7 +13,7 @@ class GUEST_API AGDoorLevelTransition : public AGDoorBase
 
 public:
 	// 상호작용할 때 호출
-	virtual void Interact(AActor* Interactor) override;
+	virtual void Interact_Implementation(AActor* Interactor) override;
 
 protected:
 	// 이동할 실제 맵 파일의 이름 (예: L_TavernMain)

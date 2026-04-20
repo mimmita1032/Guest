@@ -5,6 +5,8 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
@@ -16,20 +18,35 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	FocusedActor = FindInteractable();
+	AActor* NewFocusedActor = FindInteractable();
 
-	// 상호작용 대상이 갱신되었을 때 텍스트를 화면에 출력 (UI 구현 전 디버그용)
-	if (FocusedActor)
+	if (FocusedActor != NewFocusedActor)
 	{
-		if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+		FocusedActor = NewFocusedActor;
+
+		if (!bIsPromptPushed)
 		{
-			FText PromptText = Interactable->GetInteractText();
-          
-			if (GEngine && !PromptText.IsEmpty())
+			if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
 			{
-				// Key 값을 1로 주어 텍스트가 여러 줄 안 생기게
-				GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Cyan, FString::Printf(TEXT("[E] %s"), *PromptText.ToString()));
+				UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
+				bIsPromptPushed = true;
 			}
+		}
+
+		// 텍스트 데이터만 갱신 (위젯을 끄거나 켜지 않음)
+		if (FocusedActor)
+		{
+			if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
+			{
+				CurrentInteractText = IGInteractableInterface::Execute_GetInteractText(FocusedActor);
+				OnInteractTextChanged.Broadcast(CurrentInteractText);
+			}
+		}
+		else
+		{
+			// 허공을 바라보면 빈 텍스트
+			CurrentInteractText = FText::GetEmpty();
+			OnInteractTextChanged.Broadcast(CurrentInteractText);
 		}
 	}
 }
@@ -78,10 +95,10 @@ void UGInteractionComponent::DoInteract()
 {
 	if (FocusedActor)
 	{
-		if (IGInteractableInterface* Interactable = Cast<IGInteractableInterface>(FocusedActor))
+		if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
 		{
 			G_LOG(TEXT("상호작용 실행: %s"), *FocusedActor->GetName());
-			Interactable->Interact(GetOwner());
+			IGInteractableInterface::Execute_Interact(FocusedActor, GetOwner());
 		}
 	}
 	else

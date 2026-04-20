@@ -57,7 +57,7 @@ void AGDoorBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AGDoorBase::Interact(AActor* Interactor)
+void AGDoorBase::Interact_Implementation(AActor* Interactor)
 {
 	if (bIsLocked)
 	{
@@ -85,7 +85,7 @@ void AGDoorBase::Interact(AActor* Interactor)
 	}
 }
 
-FText AGDoorBase::GetInteractText() const
+FText AGDoorBase::GetInteractText_Implementation() const
 {
 	if (bIsLocked) return FText::FromString(TEXT("잠김"));
 	return bIsOpen ? FText::FromString(TEXT("문 닫기")) : FText::FromString(TEXT("문 열기"));
