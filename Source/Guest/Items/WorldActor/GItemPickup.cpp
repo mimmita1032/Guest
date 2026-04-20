@@ -3,6 +3,7 @@
 
 #include "GItemPickup.h"
 
+#include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
