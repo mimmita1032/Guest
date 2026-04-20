@@ -14,6 +14,18 @@
 									<ObjectRef Name="BGM Bus" ID="{6BA8CEC8-164E-497B-8EC9-EB3D3A929FB3}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
 								</Reference>
 							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="Overture of Hope_Main theme" ID="{650A650D-D152-4DB7-B352-FFF3119991B3}">
+									<Language>SFX</Language>
+									<AudioFile>Overture of Hope_Main theme.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="812294568"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="Overture of Hope_Main theme" ID="{650A650D-D152-4DB7-B352-FFF3119991B3}" Platform="Linked"/>
+							</ActiveSourceList>
 						</Sound>
 					</ChildrenList>
 				</Folder>
