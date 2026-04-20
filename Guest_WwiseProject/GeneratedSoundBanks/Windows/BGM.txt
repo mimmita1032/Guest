@@ -1,0 +1,6 @@
+Event	ID	Name			Wwise Object Path	Notes
+	3214266079	BGM_EX			\Default Work Unit\BGM\BGM_EX	
+
+In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
+	812294568	0_BGM_EX	.cache\D5\{D5F6546C-DF92-D321-7F67-C30CAA4E2C2B}.wem		\Containers\Default Work Unit\BGM\0_BGM_EX		35136096
+

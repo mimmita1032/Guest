@@ -10,12 +10,38 @@
     "Type": "User",
     "GUID": "{A2A3769B-6379-49BF-B384-C56AEDD61A6A}",
     "Language": "SFX",
-    "Hash": "{54550E88-239B-9947-B072-C506CE703002}",
+    "Hash": "{21D10BD3-C13D-A0BF-8052-79E61B411AA6}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\BGM",
     "ShortName": "BGM",
-    "Path": "BGM.bnk"
+    "Path": "BGM.bnk",
+    "Media": [
+     {
+      "Id": "812294568",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Overture of Hope_Main theme.wav",
+      "CachePath": "D5/{D5F6546C-DF92-D321-7F67-C30CAA4E2C2B}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "3214266079",
+      "Name": "BGM_EX",
+      "ObjectPath": "\\Events\\Default Work Unit\\BGM\\BGM_EX",
+      "GUID": "{3A543A5E-2DC3-4897-8C9E-321D4CD0BF4E}",
+      "DurationType": "OneShot",
+      "DurationMin": "183",
+      "DurationMax": "183",
+      "MediaRefs": [
+       {
+        "Id": "812294568"
+       }
+      ]
+     }
+    ]
    }
   ],
-  "FileHash": "{15F9C29B-2446-F931-9F44-D64DD0F5305E}"
+  "FileHash": "{2CAF5FBB-90C8-2C54-46C0-519609D1F847}"
  }
 }
