@@ -6,7 +6,7 @@
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
@@ -103,6 +103,7 @@ void UGInteractionComponent::DoInteract()
 	}
 	else
 	{
+		
 		G_WARN(TEXT("상호작용 대상이 없습니다."));
 	}
 }

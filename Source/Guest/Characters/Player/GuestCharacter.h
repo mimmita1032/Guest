@@ -19,7 +19,7 @@ class UGCharacterGASData;
 class UGInputConfigData;
 
 UCLASS()
-class GUEST_API AGuestCharacter : public ACharacter
+class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -40,7 +40,6 @@ protected:
     void JumpAction(const FInputActionValue& Value);
     void StartCrouch(const FInputActionValue& Value);
     void EndCrouch(const FInputActionValue& Value);
-    void OnInteract(const struct FInputActionValue& Value);
     void ZoomAction(const FInputActionValue& Value);
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
@@ -89,10 +88,7 @@ protected:
     //상호작용
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
     TObjectPtr<class UGInteractionComponent> InteractionComponent;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    TObjectPtr<class UInputAction> InteractAction;
-
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
     TObjectPtr<UGDigicamComponent> DigicamComponent;
 

@@ -4,16 +4,16 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
-#include "Guest/Components/Interaction/GInteractionComponent.h"
 #include "InputMappingContext.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Components/GDigicamComponent.h"
+#include "Guest/Components/Interaction/GInteractionComponent.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 //gas
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
@@ -189,12 +189,7 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
           GIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
        }
-
-       if (InteractAction)
-       {
-          GIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
-       } 
-
+       
        if (IA_DigicamControl)
        {
           GIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
@@ -233,13 +228,13 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
        }
        
-       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
-       
-       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
        if (IA_ToggleInventory)
        {
           GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
+       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
+       
+       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
     }
 }
 
@@ -277,14 +272,6 @@ void AGuestCharacter::JumpAction(const FInputActionValue& Value)
     UE_LOG(LogTemp, Log, TEXT("점프 실행"));
 }
 
-void AGuestCharacter::OnInteract(const FInputActionValue& Value)
-{
-    if (InteractionComponent)
-    {
-       G_LOG(TEXT("상호작용 키 입력됨"));
-       InteractionComponent->DoInteract();
-    }
-}
 
 #pragma region Digicam
 void AGuestCharacter::DigicamControlAction(const FInputActionValue& Value)

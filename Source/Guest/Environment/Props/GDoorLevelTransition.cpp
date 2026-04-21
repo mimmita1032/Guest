@@ -9,7 +9,7 @@ void AGDoorLevelTransition::Interact_Implementation(AActor* Interactor)
 {
 	// 부모의 상호작용 로직(문 열리는 애니메이션, 소리 등 << 아직 안넣음)을 먼저 실행
 	Super::Interact(Interactor);
-
+	
 	// 문 잠긴 상태 방어코드
 	if (bIsLocked) 
 	{
