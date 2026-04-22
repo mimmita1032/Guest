@@ -3,17 +3,24 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Guest/UI/Widget/GuestActivatableBase.h"
+#include "CommonUserWidget.h"
 #include "GuestInteractionPromptWidget.generated.h"
 
 /**
  * 상호작용 프롬프트 (예: [E] 사과 줍기) UI
  */
 UCLASS(Abstract)
-class GUEST_API UGuestInteractionPromptWidget : public UGuestActivatableBase
+class GUEST_API UGuestInteractionPromptWidget : public UCommonUserWidget
 {
 	GENERATED_BODY()
+	
+protected:
+	virtual void NativeOnInitialized() override;
 
+private:
+	UFUNCTION()
+	void OnInteractTextChanged(const FText& NewText);
+	
 public:
 	// 상호작용 컴포넌트(C++)에서 이 함수를 호출하면, 위젯 블루프린트(WBP)에서 텍스트를 갱신합니다.
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Interaction")

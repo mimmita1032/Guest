@@ -40,5 +40,4 @@ protected:
 private:
 	FText CurrentInteractText;
 
-	bool bIsPromptPushed = false;
 };
