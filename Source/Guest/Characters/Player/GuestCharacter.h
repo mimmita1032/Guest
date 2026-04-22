@@ -19,7 +19,7 @@ class UGCharacterGASData;
 class UGInputConfigData;
 
 UCLASS()
-class GUEST_API AGuestCharacter : public ACharacter
+class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
