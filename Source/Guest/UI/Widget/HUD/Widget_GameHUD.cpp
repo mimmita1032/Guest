@@ -11,5 +11,5 @@ void UWidget_GameHUD::NativeOnInitialized()
 
 TOptional<FUIInputConfig> UWidget_GameHUD::GetDesiredInputConfig() const
 {
-	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, false);
+	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, true);
 }
