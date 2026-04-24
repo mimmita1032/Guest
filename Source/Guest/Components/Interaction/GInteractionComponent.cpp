@@ -20,11 +20,28 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (FocusedActor != NewFocusedActor)
 	{
-		FocusedActor = NewFocusedActor;
+		if (FocusedActor)
+		{
+			TArray<UPrimitiveComponent*> VisualComps;
+			FocusedActor->GetComponents<UPrimitiveComponent>(VisualComps);
+			for (UPrimitiveComponent* Comp : VisualComps)
+			{
+				Comp->SetRenderCustomDepth(false);
+			}
+		}
 
+		FocusedActor = NewFocusedActor;
 
 		if (FocusedActor)
 		{
+			TArray<UPrimitiveComponent*> VisualComps;
+			FocusedActor->GetComponents<UPrimitiveComponent>(VisualComps);
+			for (UPrimitiveComponent* Comp : VisualComps)
+			{
+				Comp->SetCustomDepthStencilValue(250);
+				Comp->SetRenderCustomDepth(true);
+			}
+
 			if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
 			{
 				CurrentInteractText = IGInteractableInterface::Execute_GetInteractText(FocusedActor);
