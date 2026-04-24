@@ -282,7 +282,17 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		SaveObject->MapPackageName = GuestMapPackage::StripPIEFromPackagePath(RawPackage);
 	}
 
-	SaveObject->SaveVersion = 2;
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+		{
+			QuestSys->ExportQuestSaveData(
+				SaveObject->SavedActiveQuests,
+				SaveObject->SavedCompletedQuestIDs);
+		}
+	}
+	
+	SaveObject->SaveVersion = 3;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();
