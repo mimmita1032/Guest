@@ -5,8 +5,6 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
-#include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 #include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
@@ -24,16 +22,7 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		FocusedActor = NewFocusedActor;
 
-		if (!bIsPromptPushed)
-		{
-			if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
-			{
-				UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
-				bIsPromptPushed = true;
-			}
-		}
 
-		// 텍스트 데이터만 갱신 (위젯을 끄거나 켜지 않음)
 		if (FocusedActor)
 		{
 			if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
@@ -44,7 +33,6 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 		else
 		{
-			// 허공을 바라보면 빈 텍스트
 			CurrentInteractText = FText::GetEmpty();
 			OnInteractTextChanged.Broadcast(CurrentInteractText);
 		}

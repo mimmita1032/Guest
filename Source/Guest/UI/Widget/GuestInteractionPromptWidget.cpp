@@ -2,5 +2,33 @@
 
 
 #include "GuestInteractionPromptWidget.h"
+#include "Guest/Components/Interaction/GInteractionComponent.h"
+#include "GameFramework/Pawn.h"
 
-// 추후 공통 애니메이션이나 초기화 로직이 생기면 여기에 작성할거
+void UGuestInteractionPromptWidget::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+
+	if (APawn* OwningPawn = GetOwningPlayerPawn())
+	{
+		if (UGInteractionComponent* InteractionComp = OwningPawn->FindComponentByClass<UGInteractionComponent>())
+		{
+			InteractionComp->OnInteractTextChanged.AddDynamic(this, &UGuestInteractionPromptWidget::OnInteractTextChanged);
+		}
+	}
+	
+	SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UGuestInteractionPromptWidget::OnInteractTextChanged(const FText& NewText)
+{
+	if (NewText.IsEmpty())
+	{
+		SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		UpdatePromptText(NewText);
+	}
+}
