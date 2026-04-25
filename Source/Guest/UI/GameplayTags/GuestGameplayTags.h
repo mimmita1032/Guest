@@ -21,8 +21,8 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_GameHUD);
 
-	// 인벤토리 위젯 식별 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Inventory);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Digicam);
 	
 
 	//아이템 태그
