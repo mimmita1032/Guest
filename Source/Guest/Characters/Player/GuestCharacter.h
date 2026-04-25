@@ -154,8 +154,8 @@ protected:
 
 #pragma region Inventory
 private:
-    // 인벤토리 UI 활성화 상태
     bool bIsInventoryOpen = false;
+    bool bIsDigicamOpen = false;
 #pragma endregion
     
     ///     GAS     ///

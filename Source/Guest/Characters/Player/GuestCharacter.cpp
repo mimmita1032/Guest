@@ -309,13 +309,22 @@ void AGuestCharacter::DigicamShutterAction(const FInputActionValue& Value)
 
 void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 {
-    if (DigicamComponent)
+    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
     {
-       static bool bIsActive = false;
-       bIsActive = !bIsActive;
-
-       if (bIsActive) DigicamComponent->ActivateDigicam();
-       else DigicamComponent->DeactivateDigicam();
+        if (bIsDigicamOpen)
+        {
+            UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+            DigicamComponent->DeactivateDigicam();
+            bIsDigicamOpen = false;
+            G_LOG(TEXT("디지캠 닫기"));
+        }
+        else
+        {
+            UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam);
+            DigicamComponent->ActivateDigicam();
+            bIsDigicamOpen = true;
+            G_LOG(TEXT("디지캠 열기"));
+        }
     }
 }
 #pragma endregion

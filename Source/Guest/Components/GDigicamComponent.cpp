@@ -31,12 +31,6 @@ void UGDigicamComponent::ActivateDigicam()
 		G_LOG(TEXT("디카 활성화: 수거 준비"));
 	}
 
-	if (WidgetClass && !DigicamWidget)
-	{
-		DigicamWidget = CreateWidget<UDGDigicamWidget>(GetWorld(), WidgetClass);
-		if (DigicamWidget) DigicamWidget->AddToViewport();
-	}
-
 	UpdateSearch();
 }
 
@@ -137,10 +131,7 @@ void UGDigicamComponent::UpdateSearch()
 			CurrentState = EDigicamState::LocationFocus;
 		}
 
-		if (DigicamWidget)
-		{
-			DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
-		}
+		// TODO: 카메라 탭 위젯에 델리게이트로 데이터 전달 예정 (리팩토링)
 	}
 }
 
