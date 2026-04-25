@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Components/GDigicamComponent.h"
+#include "Guest/Components/GCameraComponent.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
@@ -58,6 +59,7 @@ AGuestCharacter::AGuestCharacter()
 
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
+    CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));
     
     // 연산용 초기값
     TargetZoomLength = 400.0f;

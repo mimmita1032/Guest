@@ -14,6 +14,7 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
+class UGCameraComponent;
 class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
@@ -95,6 +96,9 @@ protected:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
     TObjectPtr<UGDigicamComponent> DigicamComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UGCameraComponent> CameraComponent;
 
 #pragma region Digicam Functions
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
