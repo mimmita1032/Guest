@@ -8,6 +8,7 @@
 
 class UTextureRenderTarget2D;
 class USceneCaptureComponent2D;
+class UKismetRenderingLibrary;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhotoTaken, UTextureRenderTarget2D*, Photo);
 
@@ -32,17 +33,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Camera")
 	FOnPhotoTaken OnPhotoTaken;
 
+	void SetupCapture(USceneCaptureComponent2D* InCapture, UTextureRenderTarget2D* InRenderTarget);
+
 protected:
 	virtual void BeginPlay() override;
 
-	// BP에서 할당할 기본 렌더 타겟 (해상도/포맷 템플릿 역할)
-	UPROPERTY(EditDefaultsOnly, Category = "Camera")
-	TObjectPtr<UTextureRenderTarget2D> RenderTarget;
-
-	UPROPERTY(VisibleAnywhere, Category = "Camera")
+private:
+	UPROPERTY()
 	TObjectPtr<USceneCaptureComponent2D> CaptureComponent;
 
-private:
+	UPROPERTY()
+	TObjectPtr<UTextureRenderTarget2D> RenderTarget;
+
 	UPROPERTY()
 	TArray<TObjectPtr<UTextureRenderTarget2D>> Photos;
 };
