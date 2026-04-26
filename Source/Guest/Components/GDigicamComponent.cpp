@@ -2,11 +2,9 @@
 
 #include "GDigicamComponent.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
-#include "Guest/UI/DGDigicamWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 UGDigicamComponent::UGDigicamComponent()
@@ -32,6 +30,7 @@ void UGDigicamComponent::ActivateDigicam()
 	}
 
 	UpdateSearch();
+	BroadcastSearchState();
 }
 
 void UGDigicamComponent::DeactivateDigicam()
@@ -78,11 +77,13 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 	{
 		CurrentState = EDigicamState::LocationFocus;
 		G_LOG(TEXT("모드 전환: 장소 설정"));
+		BroadcastSearchState();
 	}
 	else if (CurrentState == EDigicamState::LocationFocus && Value < 0)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("모드 전환: 연도 설정"));
+		BroadcastSearchState();
 	}
 }
 
@@ -131,8 +132,13 @@ void UGDigicamComponent::UpdateSearch()
 			CurrentState = EDigicamState::LocationFocus;
 		}
 
-		// TODO: 카메라 탭 위젯에 델리게이트로 데이터 전달 예정 (리팩토링)
+		BroadcastSearchState();
 	}
+}
+
+void UGDigicamComponent::BroadcastSearchState()
+{
+	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState);
 }
 
 bool UGDigicamComponent::IsAtBaseLevel() const

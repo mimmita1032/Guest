@@ -24,6 +24,9 @@ public:
 	void TakePhoto();
 
 	UFUNCTION(BlueprintPure, Category = "Camera")
+	UTextureRenderTarget2D* GetRenderTarget() const { return RenderTarget; }
+
+	UFUNCTION(BlueprintPure, Category = "Camera")
 	const TArray<UTextureRenderTarget2D*>& GetPhotos() const { return Photos; }
 
 	UFUNCTION(BlueprintPure, Category = "Camera")
