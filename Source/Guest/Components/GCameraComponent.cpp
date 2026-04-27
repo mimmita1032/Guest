@@ -24,6 +24,7 @@ void UGCameraComponent::SetupCapture(USceneCaptureComponent2D* InCapture, UTextu
 	if (CaptureComponent && RenderTarget)
 	{
 		CaptureComponent->TextureTarget = RenderTarget;
+		CaptureComponent->bCaptureEveryFrame = true;
 	}
 }
 
