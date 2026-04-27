@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 
 void UGuestGameInstance::Init()
 {
@@ -55,6 +56,13 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		return;
 	}
 
+	if (UGQuestSubsystem* QuestSys = GetSubsystem<UGQuestSubsystem>())
+	{
+		QuestSys->ImportQuestSaveData(
+			SaveObject->SavedActiveQuests,
+			SaveObject->SavedCompletedQuestIDs);
+	}
+	
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
 	const FString SavedPackage = SaveObject->MapPackageName;
 
