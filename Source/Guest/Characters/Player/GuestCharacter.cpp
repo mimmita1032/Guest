@@ -11,6 +11,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Components/GDigicamComponent.h"
+#include "Guest/Components/GCameraComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
@@ -58,6 +61,11 @@ AGuestCharacter::AGuestCharacter()
 
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
+    CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));
+    PhotoCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PhotoCaptureComponent"));
+    PhotoCaptureComponent->SetupAttachment(CameraComp);
+    PhotoCaptureComponent->bCaptureEveryFrame = false;
+    PhotoCaptureComponent->bCaptureOnMovement = false;
     
     // 연산용 초기값
     TargetZoomLength = 400.0f;
@@ -81,6 +89,11 @@ void AGuestCharacter::BeginPlay()
     if (CameraComp)
     {
        CameraComp->SetRelativeLocation(FVector::ZeroVector);
+    }
+
+    if (CameraComponent && PhotoCaptureComponent && PhotoRenderTarget)
+    {
+        CameraComponent->SetupCapture(PhotoCaptureComponent, PhotoRenderTarget);
     }
     
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -309,13 +322,22 @@ void AGuestCharacter::DigicamShutterAction(const FInputActionValue& Value)
 
 void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 {
-    if (DigicamComponent)
+    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
     {
-       static bool bIsActive = false;
-       bIsActive = !bIsActive;
-
-       if (bIsActive) DigicamComponent->ActivateDigicam();
-       else DigicamComponent->DeactivateDigicam();
+        if (bIsDigicamOpen)
+        {
+            UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+            DigicamComponent->DeactivateDigicam();
+            bIsDigicamOpen = false;
+            G_LOG(TEXT("디지캠 닫기"));
+        }
+        else
+        {
+            UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam);
+            DigicamComponent->ActivateDigicam();
+            bIsDigicamOpen = true;
+            G_LOG(TEXT("디지캠 열기"));
+        }
     }
 }
 #pragma endregion

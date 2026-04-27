@@ -18,8 +18,8 @@ namespace GuestGameplayTags
 	//Input
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Test, "Guest.InputTag.Test");
 
-	//인벤토리 위젯 식별 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Digicam, "Guest.Widget.Digicam");
 
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");
