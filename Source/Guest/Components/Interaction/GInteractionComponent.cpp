@@ -5,8 +5,6 @@
 #include "Guest/Interfaces/GInteractableInterface.h"
 #include "Guest/Utils/GLog.h"
 #include "GameFramework/Character.h"
-#include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "DrawDebugHelpers.h"
 
 UGInteractionComponent::UGInteractionComponent()
@@ -22,20 +20,28 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (FocusedActor != NewFocusedActor)
 	{
-		FocusedActor = NewFocusedActor;
-
-		if (!bIsPromptPushed)
+		if (FocusedActor)
 		{
-			if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+			TArray<UPrimitiveComponent*> VisualComps;
+			FocusedActor->GetComponents<UPrimitiveComponent>(VisualComps);
+			for (UPrimitiveComponent* Comp : VisualComps)
 			{
-				UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_InteractionPrompt);
-				bIsPromptPushed = true;
+				Comp->SetRenderCustomDepth(false);
 			}
 		}
 
-		// 텍스트 데이터만 갱신 (위젯을 끄거나 켜지 않음)
+		FocusedActor = NewFocusedActor;
+
 		if (FocusedActor)
 		{
+			TArray<UPrimitiveComponent*> VisualComps;
+			FocusedActor->GetComponents<UPrimitiveComponent>(VisualComps);
+			for (UPrimitiveComponent* Comp : VisualComps)
+			{
+				Comp->SetCustomDepthStencilValue(250);
+				Comp->SetRenderCustomDepth(true);
+			}
+
 			if (FocusedActor->GetClass()->ImplementsInterface(UGInteractableInterface::StaticClass()))
 			{
 				CurrentInteractText = IGInteractableInterface::Execute_GetInteractText(FocusedActor);
@@ -44,7 +50,7 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 		else
 		{
-			// 허공을 바라보면 빈 텍스트
+
 			CurrentInteractText = FText::GetEmpty();
 			OnInteractTextChanged.Broadcast(CurrentInteractText);
 		}
@@ -103,7 +109,6 @@ void UGInteractionComponent::DoInteract()
 	}
 	else
 	{
-		
 		G_WARN(TEXT("상호작용 대상이 없습니다."));
 	}
 }

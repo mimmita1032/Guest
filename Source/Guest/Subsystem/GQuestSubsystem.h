@@ -7,6 +7,10 @@
 #include "Guest/Data/DataTable/GQuestTypes.h"
 #include "GQuestSubsystem.generated.h"
 
+
+class UGuestSaveGame;
+struct FGuestSavedActiveQuestEntry;
+
 // 아이템 획득 / NPC 대화 / 구역 진입 시 Broadcast → 서브시스템이 수신하여 장부 갱신
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestObjectiveUpdated, FName, TargetID, int32, Amount);
 
@@ -71,5 +75,22 @@ private:
 
 	// 헬퍼: DataTable에서 퀘스트 데이터 조회
 	const FQuestData* FindQuestData(FName QuestID) const;
+#pragma endregion
+	
+	
+#pragma region  save
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Quest|Save")
+	void ExportQuestSaveData(
+		TArray<FGuestSavedActiveQuestEntry>& OutActiveQuests,
+		TArray<FName>& OutCompletedQuestIDs) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Quest|Save")
+	void ImportQuestSaveData(
+		const TArray<FGuestSavedActiveQuestEntry>& InActiveQuests,
+		const TArray<FName>& InCompletedQuestIDs);
+
+	
 #pragma endregion
 };

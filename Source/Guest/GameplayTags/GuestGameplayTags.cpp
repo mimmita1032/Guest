@@ -13,12 +13,11 @@ namespace GuestGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_GameHUD, "Guest.Widget.GameHUD");
+	
 
-	//인벤토리 위젯 식별 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");
-
-	//상호작용 프롬프트 위젯 태그
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_InteractionPrompt, "Guest.Widget.InteractionPrompt");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Digicam, "Guest.Widget.Digicam");
 
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");

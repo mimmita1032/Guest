@@ -21,6 +21,7 @@
 #include "Guest/UI/Settings/GuestUISettings.h"
 
 
+
 namespace
 {
 	const FString GGuestTestSaveSlot(TEXT("GuestTestSlot"));
@@ -46,7 +47,12 @@ void AGuestPlayerController::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
+	if (UGuestUISubsystem* UISys = GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+	{
+		UISys->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameHUD, GuestGameplayTags::TAG_Widget_GameHUD);
+		UE_LOG(LogTemp, Log, TEXT("UI 시스템: 메인 화면 로드 요청 완료"));
+	}
+	
 	FInputModeGameOnly InputMode;
 	SetInputMode(InputMode);
 }
@@ -282,7 +288,17 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		SaveObject->MapPackageName = GuestMapPackage::StripPIEFromPackagePath(RawPackage);
 	}
 
-	SaveObject->SaveVersion = 2;
+	if (UGameInstance* GI = GetGameInstance())
+	{
+		if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+		{
+			QuestSys->ExportQuestSaveData(
+				SaveObject->SavedActiveQuests,
+				SaveObject->SavedCompletedQuestIDs);
+		}
+	}
+	
+	SaveObject->SaveVersion = 3;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();

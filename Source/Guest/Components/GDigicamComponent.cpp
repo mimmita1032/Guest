@@ -2,11 +2,9 @@
 
 #include "GDigicamComponent.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
-#include "Guest/UI/DGDigicamWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 UGDigicamComponent::UGDigicamComponent()
@@ -31,13 +29,8 @@ void UGDigicamComponent::ActivateDigicam()
 		G_LOG(TEXT("디카 활성화: 수거 준비"));
 	}
 
-	if (WidgetClass && !DigicamWidget)
-	{
-		DigicamWidget = CreateWidget<UDGDigicamWidget>(GetWorld(), WidgetClass);
-		if (DigicamWidget) DigicamWidget->AddToViewport();
-	}
-
 	UpdateSearch();
+	BroadcastSearchState();
 }
 
 void UGDigicamComponent::DeactivateDigicam()
@@ -84,11 +77,13 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 	{
 		CurrentState = EDigicamState::LocationFocus;
 		G_LOG(TEXT("모드 전환: 장소 설정"));
+		BroadcastSearchState();
 	}
 	else if (CurrentState == EDigicamState::LocationFocus && Value < 0)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("모드 전환: 연도 설정"));
+		BroadcastSearchState();
 	}
 }
 
@@ -137,11 +132,13 @@ void UGDigicamComponent::UpdateSearch()
 			CurrentState = EDigicamState::LocationFocus;
 		}
 
-		if (DigicamWidget)
-		{
-			DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
-		}
+		BroadcastSearchState();
 	}
+}
+
+void UGDigicamComponent::BroadcastSearchState()
+{
+	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState);
 }
 
 bool UGDigicamComponent::IsAtBaseLevel() const
