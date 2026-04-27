@@ -28,6 +28,7 @@ public:
 	// 입력 처리
 	void HandleVerticalInput(float Value);   // 상/하: 숫자 조절
 	void HandleHorizontalInput(float Value); // 좌/우: 항목 이동
+	UFUNCTION(BlueprintCallable, Category = "Digicam")
 	void HandleShutter();                    // 셔터: 수거 실행
 
 	// UI 탭에서 현재 상태 조회용
