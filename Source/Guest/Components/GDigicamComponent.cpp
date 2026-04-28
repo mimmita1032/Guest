@@ -55,7 +55,7 @@ void UGDigicamComponent::HandleVerticalInput(float Value)
 		SelectedYear += (Value > 0) ? 1 : -1;
 		G_LOG(TEXT("연도 조절: %d"), SelectedYear);
 	}
-	else if (CurrentState == EDigicamState::LocationFocus)
+	else if (CurrentState == EDigicamState::LocationFocus || CurrentState == EDigicamState::ReadyToSnap)
 	{
 		SelectedAreaCode += (Value > 0) ? 1 : -1;
 		G_LOG(TEXT("구역 코드 조절: %d"), SelectedAreaCode);
@@ -79,7 +79,7 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 		G_LOG(TEXT("모드 전환: 장소 설정"));
 		BroadcastSearchState();
 	}
-	else if (CurrentState == EDigicamState::LocationFocus && Value < 0)
+	else if ((CurrentState == EDigicamState::LocationFocus || CurrentState == EDigicamState::ReadyToSnap) && Value < 0)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("모드 전환: 연도 설정"));
@@ -89,13 +89,15 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 
 void UGDigicamComponent::HandleShutter()
 {
+	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
+	if (!SpacetimeSS) return;
+
 	if (IsAtBaseLevel())
 	{
-		// CurrentMatchedData가 선언되어야 아래 로직이 컴파일됨
 		if (CurrentState == EDigicamState::ReadyToSnap)
 		{
 			G_LOG(TEXT("'저기'로 수거를 시작합니다: %s"), *CurrentMatchedData.PlaceName.ToString());
-			UGameplayStatics::OpenLevel(GetWorld(), CurrentMatchedData.LevelName);
+			SpacetimeSS->ExecuteTravel(CurrentMatchedData);
 		}
 		else
 		{
@@ -104,11 +106,8 @@ void UGDigicamComponent::HandleShutter()
 	}
 	else
 	{
-		if (!BaseLevelName.IsNone())
-		{
-			G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
-			UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
-		}
+		G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
+		SpacetimeSS->ReturnToBase(BaseLevelName);
 	}
 }
 
