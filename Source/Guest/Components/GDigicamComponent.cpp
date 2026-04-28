@@ -5,7 +5,6 @@
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
-#include "Kismet/GameplayStatics.h"
 
 UGDigicamComponent::UGDigicamComponent()
 {
@@ -89,26 +88,19 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 
 void UGDigicamComponent::HandleShutter()
 {
+	if (CurrentState != EDigicamState::ReadyToSnap)
+	{
+		G_WARN(TEXT("좌표 불일치 — 이동 불가"));
+		return;
+	}
+
+	// TODO: 스토리 연출용 이동 잠금이 필요하면 여기서 조건 추가 (bTravelLocked 등)
+
 	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
 	if (!SpacetimeSS) return;
 
-	if (IsAtBaseLevel())
-	{
-		if (CurrentState == EDigicamState::ReadyToSnap)
-		{
-			G_LOG(TEXT("'저기'로 수거를 시작합니다: %s"), *CurrentMatchedData.PlaceName.ToString());
-			SpacetimeSS->ExecuteTravel(CurrentMatchedData);
-		}
-		else
-		{
-			G_WARN(TEXT("좌표가 일치하지 않아 수거를 시작할 수 없습니다."));
-		}
-	}
-	else
-	{
-		G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
-		SpacetimeSS->ReturnToBase(BaseLevelName);
-	}
+	G_LOG(TEXT("시공간 이동: %s"), *CurrentMatchedData.PlaceName.ToString());
+	SpacetimeSS->ExecuteTravel(CurrentMatchedData);
 }
 
 void UGDigicamComponent::UpdateSearch()
@@ -140,13 +132,3 @@ void UGDigicamComponent::BroadcastSearchState()
 	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState);
 }
 
-bool UGDigicamComponent::IsAtBaseLevel() const
-{
-	if (!GetWorld()) return false;
-
-	// 현재 맵의 이름을 가져옴 (에디터 실행 시 붙는 접두사 제거 포함)
-	FString CurrentMapName = GetWorld()->GetMapName();
-	CurrentMapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-
-	return CurrentMapName == BaseLevelName.ToString();
-}

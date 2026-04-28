@@ -68,12 +68,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Digicam")
 	TObjectPtr<UDataTable> SpacetimeTable;
 
-	// 소낙의 집(주점) 레벨 이름. 에디터에서 직접 입력.
-	UPROPERTY(EditAnywhere, Category = "Digicam|Settings")
-	FName BaseLevelName;
-
-	bool IsAtBaseLevel() const;
-
 	FSpacetimeData CurrentMatchedData;
 
 	UPROPERTY(EditAnywhere, Category = "Digicam|Settings")
