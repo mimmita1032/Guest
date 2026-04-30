@@ -28,6 +28,7 @@ public:
 	// 입력 처리
 	void HandleVerticalInput(float Value);   // 상/하: 숫자 조절
 	void HandleHorizontalInput(float Value); // 좌/우: 항목 이동
+	UFUNCTION(BlueprintCallable, Category = "Digicam")
 	void HandleShutter();                    // 셔터: 수거 실행
 
 	// UI 탭에서 현재 상태 조회용
@@ -66,12 +67,6 @@ protected:
 	// '저기'의 좌표들이 담긴 데이터 테이블
 	UPROPERTY(EditAnywhere, Category = "Digicam")
 	TObjectPtr<UDataTable> SpacetimeTable;
-
-	// 소낙의 집(주점) 레벨 이름. 에디터에서 직접 입력.
-	UPROPERTY(EditAnywhere, Category = "Digicam|Settings")
-	FName BaseLevelName;
-
-	bool IsAtBaseLevel() const;
 
 	FSpacetimeData CurrentMatchedData;
 
