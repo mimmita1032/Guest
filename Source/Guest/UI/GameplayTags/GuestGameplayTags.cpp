@@ -14,6 +14,9 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_GameHUD, "Guest.Widget.GameHUD");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_MainMenu, "Guest.Widget.MainMenu");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Options, "Guest.Widget.Options");
+	
 	
 	//Input
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Test, "Guest.InputTag.Test");
