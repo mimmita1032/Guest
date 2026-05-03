@@ -11,10 +11,21 @@
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Components/GDigicamComponent.h"
+#include "Guest/Components/GCameraComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+//gas
+#include "Guest/GAS/GuestAbilitySystemComponent.h"
+#include "Guest/GAS/GuestAttributeSet.h"
+//gas DATA
+#include "Guest/DATA/DataAssets/GCharacterGASData.h"
+//인풋 구성
+#include "Guest/Data/Input/GInputConfigData.h"
+#include "Guest/Components/Input/GuestInputComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -50,10 +61,18 @@ AGuestCharacter::AGuestCharacter()
 
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
+    CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));
+    PhotoCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PhotoCaptureComponent"));
+    PhotoCaptureComponent->SetupAttachment(CameraComp);
+    PhotoCaptureComponent->bCaptureEveryFrame = false;
+    PhotoCaptureComponent->bCaptureOnMovement = false;
     
     // 연산용 초기값
     TargetZoomLength = 400.0f;
     ZoomSpeed = 10.0f;
+   
+   GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
+   GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
 }
 
 void AGuestCharacter::BeginPlay()
@@ -70,6 +89,11 @@ void AGuestCharacter::BeginPlay()
     if (CameraComp)
     {
        CameraComp->SetRelativeLocation(FVector::ZeroVector);
+    }
+
+    if (CameraComponent && PhotoCaptureComponent && PhotoRenderTarget)
+    {
+        CameraComponent->SetupCapture(PhotoCaptureComponent, PhotoRenderTarget);
     }
     
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -102,6 +126,23 @@ void AGuestCharacter::BeginPlay()
    }
 
     SpringArmComp->TargetArmLength = TargetZoomLength;
+}
+
+void AGuestCharacter::PossessedBy(AController* NewController)
+{
+   Super::PossessedBy(NewController);
+   
+   if (GuestAbilitySystemComponent)
+   {
+      GuestAbilitySystemComponent->InitAbilityActorInfo(this,this);
+   }
+   
+   ensureMsgf(!CharacterGasData.IsNull(), TEXT("캐릭터 GAS 데이터 할당 안됨"));
+   
+   if (UGCharacterGASData* LoadedData = CharacterGasData.LoadSynchronous())
+   {
+      LoadedData->GiveToASC(GuestAbilitySystemComponent);
+   }
 }
 
 void AGuestCharacter::Tick(float DeltaTime)
@@ -144,70 +185,69 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    if (UEnhancedInputComponent* EIC = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+    if (UGuestInputComponent* GIC = CastChecked<UGuestInputComponent>(PlayerInputComponent))
     {
        if (UInputAction* RawMove = Cast<UInputAction>(IA_Move.Get()))
        {
-          EIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::MoveAction);
+          GIC->BindAction(RawMove, ETriggerEvent::Triggered, this, &AGuestCharacter::MoveAction);
        }
 
        if (UInputAction* RawLook = Cast<UInputAction>(IA_Look.Get()))
        {
-          EIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::LookAction);
+          GIC->BindAction(RawLook, ETriggerEvent::Triggered, this, &AGuestCharacter::LookAction);
        }
 
        if (UInputAction* RawJump = Cast<UInputAction>(IA_Jump.Get()))
        {
-          EIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
-          EIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
+          GIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
+          GIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
        }
-
-       if (InteractAction)
-       {
-          EIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
-       } 
-
+       
        if (IA_DigicamControl)
        {
-          EIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
+          GIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
        }
 
        if (IA_DigicamShutter)
        {
-          EIC->BindAction(IA_DigicamShutter, ETriggerEvent::Started, this, &AGuestCharacter::DigicamShutterAction);
+          GIC->BindAction(IA_DigicamShutter, ETriggerEvent::Started, this, &AGuestCharacter::DigicamShutterAction);
        }
 
        if (IA_DigicamToggle)
        {
-          EIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
+          GIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
        }
 
        if (IA_Zoom)
        {
-          EIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AGuestCharacter::ZoomAction);
+          GIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &AGuestCharacter::ZoomAction);
        }
 
        if (IA_FreeLook)
        {
-          EIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
-          EIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
+          GIC->BindAction(IA_FreeLook, ETriggerEvent::Started, this, &AGuestCharacter::FreeLookStart);
+          GIC->BindAction(IA_FreeLook, ETriggerEvent::Completed, this, &AGuestCharacter::FreeLookEnd);
        }
 
        if (IA_Sprint)
        {
-          EIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
-          EIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
+          GIC->BindAction(IA_Sprint, ETriggerEvent::Started, this, &AGuestCharacter::StartSprinting);
+          GIC->BindAction(IA_Sprint, ETriggerEvent::Completed, this, &AGuestCharacter::StopSprinting);
        }
 
        if (IA_Crouch)
        {
-          EIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
-          EIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
+          GIC->BindAction(IA_Crouch, ETriggerEvent::Started, this, &AGuestCharacter::StartCrouch);
+          GIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
        }
+       
        if (IA_ToggleInventory)
        {
-          EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
+          GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
+       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
+       
+       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
     }
 }
 
@@ -245,14 +285,6 @@ void AGuestCharacter::JumpAction(const FInputActionValue& Value)
     UE_LOG(LogTemp, Log, TEXT("점프 실행"));
 }
 
-void AGuestCharacter::OnInteract(const FInputActionValue& Value)
-{
-    if (InteractionComponent)
-    {
-       G_LOG(TEXT("상호작용 키 입력됨"));
-       InteractionComponent->DoInteract();
-    }
-}
 
 #pragma region Digicam
 void AGuestCharacter::DigicamControlAction(const FInputActionValue& Value)
@@ -277,13 +309,22 @@ void AGuestCharacter::DigicamShutterAction(const FInputActionValue& Value)
 
 void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 {
-    if (DigicamComponent)
+    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
     {
-       static bool bIsActive = false;
-       bIsActive = !bIsActive;
-
-       if (bIsActive) DigicamComponent->ActivateDigicam();
-       else DigicamComponent->DeactivateDigicam();
+        if (bIsDigicamOpen)
+        {
+            UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+            DigicamComponent->DeactivateDigicam();
+            bIsDigicamOpen = false;
+            G_LOG(TEXT("디지캠 닫기"));
+        }
+        else
+        {
+            UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam);
+            DigicamComponent->ActivateDigicam();
+            bIsDigicamOpen = true;
+            G_LOG(TEXT("디지캠 열기"));
+        }
     }
 }
 #pragma endregion
@@ -347,6 +388,8 @@ void AGuestCharacter::StopSprinting()
        UE_LOG(LogTemp, Warning, TEXT("달리기 중지: 현재 속도 %f"), CharacterData->WalkSpeed);
     }
 }
+
+
 #pragma endregion
 
 #pragma region Crouch
@@ -384,3 +427,18 @@ void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
    }
 }
 #pragma endregion
+
+UAbilitySystemComponent* AGuestCharacter::GetAbilitySystemComponent() const
+{
+   return GuestAbilitySystemComponent;
+}
+
+void AGuestCharacter::AbilityInputPressed(FGameplayTag InputTag)
+{
+   GuestAbilitySystemComponent->OnAbilityPressed(InputTag);
+}
+
+void AGuestCharacter::AbilityInputReleased(FGameplayTag InputTag)
+{
+   GuestAbilitySystemComponent->OnAbilityReleased(InputTag);
+}

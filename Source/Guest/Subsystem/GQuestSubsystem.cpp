@@ -2,6 +2,7 @@
 
 #include "GQuestSubsystem.h"
 #include "Guest/Utils/GLog.h"
+#include "../Save/GuestSaveGame.h"
 
 void UGQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -157,3 +158,76 @@ const FQuestData* UGQuestSubsystem::FindQuestData(FName QuestID) const
 	return QuestDataTable->FindRow<FQuestData>(QuestID, TEXT("QuestLookup"));
 }
 #pragma endregion
+
+#pragma region Save
+
+void UGQuestSubsystem::ExportQuestSaveData(TArray<FGuestSavedActiveQuestEntry>& OutActiveQuests, TArray<FName>& OutCompletedQuestIDs) const
+{
+	OutActiveQuests.Reset();
+	OutCompletedQuestIDs.Reset();
+	
+	OutActiveQuests.Reserve(ActiveQuests.Num());
+	for (const TPair<FName, FQuestRuntimeData>& pair : ActiveQuests)
+	{
+		FGuestSavedActiveQuestEntry Entry;
+		Entry.QuestID = pair.Key;
+		Entry.CurrentStep = pair.Value.CurrentStep;
+		Entry.ObjectiveCounts = pair.Value.ObjectiveCounts;
+		OutActiveQuests.Add(MoveTemp(Entry));
+	}
+	OutCompletedQuestIDs = CompletedQuests.Array();
+}
+
+void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEntry>& InActiveQuests, const TArray<FName>& InCompletedQuestIDs)
+{
+	ActiveQuests.Reset();
+	CompletedQuests.Reset();
+	
+	//완료 목록 복원
+	for (const FName& QuestID : InCompletedQuestIDs)
+	{
+		if (QuestID.IsNone())
+		{
+			continue;
+		}
+		
+		if (!FindQuestData(QuestID))
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(완료): [%s] DataTable에 없음"), *QuestID.ToString());
+			continue;
+		}
+		
+		CompletedQuests.Add(QuestID);
+	}
+	
+	for (const FGuestSavedActiveQuestEntry& Entry : InActiveQuests)
+	{
+		if (Entry.QuestID.IsNone())
+		{
+			continue;
+		}
+		
+		const FQuestData* Data = FindQuestData(Entry.QuestID);
+		if (!Data)
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] DataTable에 없음"), *Entry.QuestID.ToString());
+			continue;
+		}
+		
+		if (CompletedQuests.Contains(Entry.QuestID))
+		{
+			continue;
+		}
+		
+		FQuestRuntimeData Runtime;
+		const int32 ObjectiveNum = Data -> Objectives.Num();
+		
+		Runtime.CurrentStep = FMath::Clamp(Entry.CurrentStep, 0, FMath::Max(0, ObjectiveNum - 1));
+		
+		Runtime.ObjectiveCounts = Entry.ObjectiveCounts;
+		Runtime.ObjectiveCounts.SetNumZeroed(ObjectiveNum);
+		
+		ActiveQuests.Add(Entry.QuestID, MoveTemp(Runtime));
+	}
+}
+#pragma endregion 

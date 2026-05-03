@@ -9,7 +9,9 @@
 					<GameSyncExclusionList/>
 				</SoundBank>
 				<SoundBank Name="BGM" ID="{A2A3769B-6379-49BF-B384-C56AEDD61A6A}">
-					<ObjectInclusionList/>
+					<ObjectInclusionList>
+						<ObjectRef Name="BGM_EX" ID="{3A543A5E-2DC3-4897-8C9E-321D4CD0BF4E}" WorkUnitID="{CCF2102C-2D21-426B-A928-4F94FF0694F8}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>

@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "GuestCharacter.generated.h"
 
 class USpringArmComponent;
@@ -12,10 +14,15 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
+class UGCameraComponent;
+class USceneCaptureComponent2D;
+class UTextureRenderTarget2D;
 class UGCharacterDataAsset;
+class UGCharacterGASData;
+class UGInputConfigData;
 
 UCLASS()
-class GUEST_API AGuestCharacter : public ACharacter
+class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
 {
     GENERATED_BODY()
 
@@ -24,6 +31,8 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    
+    virtual void PossessedBy(AController* NewController) override;
 
     virtual void Tick(float DeltaTime) override;
 
@@ -34,7 +43,6 @@ protected:
     void JumpAction(const FInputActionValue& Value);
     void StartCrouch(const FInputActionValue& Value);
     void EndCrouch(const FInputActionValue& Value);
-    void OnInteract(const struct FInputActionValue& Value);
     void ZoomAction(const FInputActionValue& Value);
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
@@ -45,11 +53,13 @@ protected:
     TObjectPtr<UGCharacterDataAsset> CharacterData;
 
 protected:
-    
+    //입력 구성 데이터
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UGInputConfigData> GAbilityInputConfigData;
     //입력
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputMappingContext> DefaultMappingContext;
-
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_Move;
 
@@ -81,12 +91,18 @@ protected:
     //상호작용
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
     TObjectPtr<class UGInteractionComponent> InteractionComponent;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    TObjectPtr<class UInputAction> InteractAction;
-
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
     TObjectPtr<UGDigicamComponent> DigicamComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UGCameraComponent> CameraComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<USceneCaptureComponent2D> PhotoCaptureComponent;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UTextureRenderTarget2D> PhotoRenderTarget;
 
 #pragma region Digicam Functions
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -146,7 +162,27 @@ protected:
 
 #pragma region Inventory
 private:
-    // 인벤토리 UI 활성화 상태
     bool bIsInventoryOpen = false;
+    bool bIsDigicamOpen = false;
 #pragma endregion
+    
+    ///     GAS     ///
+
+public:
+    // IAbilitySystemInterface begin
+    virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+    // IAbilitySystemInterface end
+private:
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAbilitySystemComponent* GuestAbilitySystemComponent;
+    
+    UPROPERTY(VisibleAnywhere, Category = "GAS")
+    class UGuestAttributeSet* GuestAttributeSet;
+    
+    void AbilityInputPressed(FGameplayTag InputTag);
+    void AbilityInputReleased(FGameplayTag InputTag);
+    
+    //Gas 데이터 에셋
+    UPROPERTY(EditDefaultsOnly, Category = "Data")
+    TSoftObjectPtr<UGCharacterGASData> CharacterGasData;
 };

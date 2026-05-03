@@ -11,7 +11,7 @@
 #include "Guest/Items/Fragments/GItemFragmentVisuals.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Items/Fragments/GItemFragmentNarrative.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/Items/Instance/GItemInstance.h"
 
 
