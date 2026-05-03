@@ -20,6 +20,9 @@ namespace GuestGameplayTags
 	//상호작용 프롬프트 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_InteractionPrompt, "Guest.Widget.InteractionPrompt");
 
+	// NPC 대화 위젯 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_NPCDialogue, "Guest.Widget.NPCDialogue");
+
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Consumable, "Item.Type.Consumable");
