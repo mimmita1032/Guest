@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Guest/Items/Instance/GItemInstance.h"
 #include "GInventoryComponent.generated.h"
 
-class UGItemInstance;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
@@ -80,4 +80,7 @@ private:
 	// 아이템 인스턴스 보관 배열
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
 	TArray<TObjectPtr<UGItemInstance>> InventorySlots;
+	
+	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
+	TMap<FInventoryItemHandle,TObjectPtr<UGItemInstance>> InventoryMap;
 };

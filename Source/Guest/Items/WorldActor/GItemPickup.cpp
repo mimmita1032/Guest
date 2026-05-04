@@ -30,8 +30,9 @@ void AGItemPickup::Interact_Implementation(AActor* Interactor)
 
 	if (!ItemDefinition) return;
 
-	UGItemInstance* NewInstance = NewObject<UGItemInstance>(this);
-	NewInstance->SetItemDefinition(ItemDefinition);
+	//이거 왜있지
+	// UGItemInstance* NewInstance = NewObject<UGItemInstance>(this);
+	// NewInstance->SetItemDefinition(ItemDefinition);
 
 	G_LOG(TEXT("%s 아이템을 획득했습니다!"), *ItemDefinition->ItemName.ToString());
 	G_LOG(TEXT("%s 인스턴스가 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
@@ -54,18 +55,19 @@ void AGItemPickup::Interact_Implementation(AActor* Interactor)
 
 	UGItemInstance* InstanceToGive = ItemInstance.Get();
 	
-	if (!InstanceToGive)
-	{
-		if (!ItemDefinition) return;
-		InstanceToGive = NewObject<UGItemInstance>(this);
-		InstanceToGive->SetItemDefinition(ItemDefinition);
-		G_LOG(TEXT("%s 인스턴스가 새로 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
-	}
-	else
-	{
-		G_LOG(TEXT("기존 데이터(인스턴스)를 간직한 아이템을 다시 줍습니다."));
-	}
-
+	// TODO : 인벤토리 내에서 인스턴스와 핸들로 관리 하도록 변경
+	// if (!InstanceToGive)
+	// {
+	// 	if (!ItemDefinition) return;
+	// 	InstanceToGive = NewObject<UGItemInstance>(this);
+	// 	InstanceToGive->InitInstance(ItemDefinition);
+	// 	G_LOG(TEXT("%s 인스턴스가 새로 생성되었습니다!"), *ItemDefinition->ItemName.ToString());
+	// }
+	// else
+	// {
+	// 	G_LOG(TEXT("기존 데이터(인스턴스)를 간직한 아이템을 다시 줍습니다."));
+	// }
+	
 	if (AGuestCharacter* Player = Cast<AGuestCharacter>(Interactor))
 	{
 		if (UGInventoryComponent* InvComp = Player->FindComponentByClass<UGInventoryComponent>())
@@ -126,7 +128,7 @@ void AGItemPickup::InitializePickup(UGItemInstance* InInstance)
 	{
 		ItemInstance = InInstance;
 		
-		ItemDefinition = InInstance->ItemDef; 
+		ItemDefinition = InInstance->GetItemDef(); 
 		
 		UpdatePickupVisuals(); 
 	}

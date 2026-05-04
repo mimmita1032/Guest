@@ -17,7 +17,7 @@ void UGInventorySlotWidget::SetItemReference(UGItemInstance* NewItem)
 
     if (ItemReference)
     {
-       if (const UGItemDefinition* ItemData = ItemReference->ItemDef) 
+       if (const UGItemDefinition* ItemData = ItemReference->GetItemDef()) 
        {
           if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
           {

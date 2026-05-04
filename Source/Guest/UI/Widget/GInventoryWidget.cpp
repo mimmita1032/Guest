@@ -116,7 +116,7 @@ void UGInventoryWidget::OnRefreshInventory()
 				{
 					CanvasSlot->SetPosition(FVector2D(Col * SlotSize, Row * SlotSize));
 					
-					if (const UGItemDefinition* ItemData = ItemInst->ItemDef)
+					if (const UGItemDefinition* ItemData = ItemInst->GetItemDef())
 					{
 						if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
 						{

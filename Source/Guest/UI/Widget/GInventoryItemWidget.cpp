@@ -16,7 +16,7 @@ void UGInventoryItemWidget::SetItemData(UGItemInstance* InItem)
 	ItemReference = InItem;
 	if (!Img_ItemIcon || !ItemReference) return;
 
-	if (const UGItemDefinition* ItemData = ItemReference->ItemDef)
+	if (const UGItemDefinition* ItemData = ItemReference->GetItemDef())
 	{
 		if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
 		{
@@ -49,7 +49,7 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 
 	// 프래그먼트에서 GridSize 데이터 미리 추출
 	FIntPoint ItemGridSize = FIntPoint(1, 1); // 기본 크기
-	if (const UGItemDefinition* ItemData = ItemReference->ItemDef)
+	if (const UGItemDefinition* ItemData = ItemReference->GetItemDef())
 	{
 		if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
 		{
