@@ -71,7 +71,7 @@ void UGCharacterGASData::GiveAbilitiesToASC(const TArray<FGuestAbilitySet> InAbi
 			FGameplayAbilitySpec AbilitySpec(AbilitySet.AbilityToGrant);
 			AbilitySpec.SourceObject = InASC->GetAvatarActor();
 			AbilitySpec.Level = ApplyLevel;
-			AbilitySpec.DynamicAbilityTags.AddTag(AbilitySet.InputTag);
+			AbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilitySet.InputTag);
 			
 			InASC->GiveAbility(AbilitySpec);
 		}
