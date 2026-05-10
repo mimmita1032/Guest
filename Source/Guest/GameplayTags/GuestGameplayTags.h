@@ -25,6 +25,9 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Digicam);
 	
 
+	// NPC 대화 위젯 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_NPCDialogue);
+
 	//아이템 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Consumable);

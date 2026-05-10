@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Guest/AI/Controllers/GuestAIController.h"
 #include "Guest/Data/DataAssets/GNPCScheduleDataAsset.h"
+#include "Guest/Data/DataAssets/GNPCDialogueDataAsset.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
@@ -41,15 +43,12 @@ void AGuestNPCBase::BeginPlay()
 
 void AGuestNPCBase::Interact_Implementation(AActor* Interactor)
 {
-	// NPC 역할에 따라 상호작용 로직 분기
-	if (NPCType == ENPCType::QuestGiver)
-	{
-		G_LOG(TEXT("퀘스트 NPC와 대화 시작!"));
-	}
-	else if (NPCType == ENPCType::Ambient)
-	{
-		G_LOG(TEXT("일반 주민 상호작용: 짧은 인사말 ㅇㅇ"));
-	}
+	if (!DialogueDataAsset) return;
+
+	UGuestUISubsystem* UISys = GetGameInstance()->GetSubsystem<UGuestUISubsystem>();
+	if (!UISys) return;
+
+	UISys->OpenNPCDialogue(DialogueDataAsset->DialogueData);
 }
 
 void AGuestNPCBase::HandleTimeChanged(float CurrentHour)
