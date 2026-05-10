@@ -14,7 +14,7 @@ FInventoryItemHandle FInventoryItemHandle::InvalidHandle()
 	return InvalidHandle;
 }
 
-FInventoryItemHandle FInventoryItemHandle::CreateHandele()
+FInventoryItemHandle FInventoryItemHandle::CreateHandle() 
 {
 	return FInventoryItemHandle(GenerateNextId());
 }

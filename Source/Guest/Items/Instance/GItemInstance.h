@@ -12,14 +12,14 @@ class UGItemFragment;
 
 
 //인벤토리 핸들 확장성 안정성 고려되면 훗날 uint32 -> 언리얼 guid
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FInventoryItemHandle
 {
 	GENERATED_BODY()
 public:
 	FInventoryItemHandle();
 	static FInventoryItemHandle InvalidHandle();
-	static FInventoryItemHandle CreateHandele();
+	static FInventoryItemHandle CreateHandle();
 	
 	bool IsValid() const;
 	uint32 GetHandleId() const { return HandleId; }

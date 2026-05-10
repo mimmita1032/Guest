@@ -26,6 +26,7 @@
 //인풋 구성
 #include "Guest/Data/Input/GInputConfigData.h"
 #include "Guest/Components/Input/GuestInputComponent.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -59,6 +60,7 @@ AGuestCharacter::AGuestCharacter()
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
+    InventoryComponent   = CreateDefaultSubobject<UGInventoryComponent>(TEXT("InventoryComponent"));
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
     CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));

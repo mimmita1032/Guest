@@ -20,6 +20,7 @@ class UTextureRenderTarget2D;
 class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
+class UGInventoryComponent;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
@@ -165,9 +166,16 @@ protected:
 #pragma endregion // Sprint
 
 #pragma region Inventory
+public:
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    UGInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
 private:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGInventoryComponent> InventoryComponent;
+
     bool bIsInventoryOpen = false;
-    bool bIsDigicamOpen = false;
+    bool bIsDigicamOpen   = false;
 #pragma endregion
     
     ///     GAS     ///
