@@ -376,12 +376,18 @@ void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 void AGuestPlayerController::ShowSaveBoard()
 {
 	G_LOG(TEXT("Show save"))
-	if (SaveBoardClass)
+	// 로드 보드가 열려있으면 먼저 닫기
+	if (LoadBoardWidget && LoadBoardWidget->IsInViewport())
+	{
+		LoadBoardWidget->RemoveFromParent();
+	}
+	
+	if (!SaveBoardWidget && SaveBoardClass)
 	{
 		SaveBoardWidget = CreateWidget<UGuestSaveBoardWidget>(this, SaveBoardClass);
 	}
-	
-	if (SaveBoardWidget)
+    
+	if (SaveBoardWidget && !SaveBoardWidget->IsInViewport())
 	{
 		SaveBoardWidget->AddToViewport();
 		FInputModeGameAndUI InputMode;
@@ -394,11 +400,16 @@ void AGuestPlayerController::ShowSaveBoard()
 void AGuestPlayerController::ShowLoadBoard()
 {
 	G_LOG(TEXT("Show Load"))
-	if (LoadBoardClass)
+	if (SaveBoardWidget && SaveBoardWidget->IsInViewport())
+	{
+		SaveBoardWidget->RemoveFromParent();
+	}
+	
+	if (!LoadBoardWidget&&LoadBoardClass)
 	{
 		LoadBoardWidget = CreateWidget<UGuestLoadBoardWidget>(this, LoadBoardClass);
 	}
-	if (LoadBoardWidget)
+	if (LoadBoardWidget && !LoadBoardWidget->IsInViewport())
 	{
 		LoadBoardWidget->AddToViewport();
 		FInputModeGameAndUI InputMode;
