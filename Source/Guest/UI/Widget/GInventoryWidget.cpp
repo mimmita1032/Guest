@@ -1,18 +1,14 @@
-﻿// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
-
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "GInventoryWidget.h"
 #include "GInventorySlotWidget.h"
+#include "GInventoryItemWidget.h"
 #include "Components/UniformGridPanel.h"
-#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
-#include "Guest/Utils/GLog.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
-#include "GInventoryItemWidget.h"
-#include "Guest/Items/Instance/GItemInstance.h"
-#include "Guest/Items/Definition/GItemDefinition.h"
-#include "Guest/Items/Fragments/GItemFragmentInventory.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Utils/GLog.h"
 
 void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 {
@@ -56,7 +52,6 @@ TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
 	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
 }
 
-
 void UGInventoryWidget::OnRefreshInventory()
 {
 	if (!InventoryComponent || !Grid_Inventory || !SlotWidgetClass || !Canvas_Items || !ItemWidgetClass)
@@ -68,65 +63,59 @@ void UGInventoryWidget::OnRefreshInventory()
 	Grid_Inventory->ClearChildren();
 	Canvas_Items->ClearChildren();
 
-	const int32 Columns = InventoryComponent->Columns;
-	const int32 Rows = InventoryComponent->Rows;
+	const int32 Columns   = InventoryComponent->Columns;
+	const int32 Rows      = InventoryComponent->Rows;
 	const int32 TotalSlots = Columns * Rows;
-	
-	// 슬롯 단일 픽셀 기준 크기
-	const float SlotSize = 60.0f; 
 
-	TSet<UGItemInstance*> ProcessedItems;
-
-	//빈 배경 격자 생성
+	// 빈 배경 격자 생성
 	for (int32 i = 0; i < TotalSlots; ++i)
 	{
 		if (UGInventorySlotWidget* NewSlot = CreateWidget<UGInventorySlotWidget>(GetOwningPlayer(), SlotWidgetClass))
 		{
-			int32 Row = i / Columns;
-			int32 Col = i % Columns;
+			const int32 Row = i / Columns;
+			const int32 Col = i % Columns;
 
 			NewSlot->SetSlotPosition(Col, Row);
-			
+
 			if (UUniformGridSlot* GridSlot = Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col))
 			{
 				GridSlot->SetHorizontalAlignment(HAlign_Fill);
 				GridSlot->SetVerticalAlignment(VAlign_Fill);
 			}
-
-			NewSlot->SetItemReference(nullptr); 
 		}
 	}
-	
-	//캔버스 기반 아이템 배치
-	for (int32 i = 0; i < TotalSlots; ++i)
+
+	// 핸들 목록 한 번만 조회해 재사용
+	const TArray<FInventoryItemHandle> Handles = InventoryComponent->GetAllHandles();
+
+	for (const FInventoryItemHandle& Handle : Handles)
 	{
-		int32 Row = i / Columns;
-		int32 Col = i % Columns;
+		const FInventoryItemRenderData RenderData = InventoryComponent->GetItemRenderData(Handle);
+		if (!RenderData.bIsValid) continue;
+		if (RenderData.Position.X < 0 || RenderData.Position.Y < 0) continue;
 
-		if (UGItemInstance* ItemInst = InventoryComponent->GetItemAt(Col, Row))
+		if (UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 		{
-			if (ProcessedItems.Contains(ItemInst)) continue;
-			ProcessedItems.Add(ItemInst);
+			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize);
 
-			if (UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass))
+			// OnRefreshInventory 호출마다 위젯을 새로 생성하므로 중복 바인딩 없음
+			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
+
+			if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
 			{
-				ItemWidget->SetItemData(ItemInst);
-
-				if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
-				{
-					CanvasSlot->SetPosition(FVector2D(Col * SlotSize, Row * SlotSize));
-					
-					if (const UGItemDefinition* ItemData = ItemInst->ItemDef)
-					{
-						if (const UGItemFragmentInventory* InvFrag = ItemData->FindFragmentByClass<UGItemFragmentInventory>())
-						{
-							CanvasSlot->SetAutoSize(false);
-							CanvasSlot->SetSize(FVector2D(InvFrag->GridSize.X * SlotSize, InvFrag->GridSize.Y * SlotSize));
-						}
-					}
-				}
+				CanvasSlot->SetAutoSize(false);
+				CanvasSlot->SetPosition(FVector2D(RenderData.Position.X * SlotSize, RenderData.Position.Y * SlotSize));
+				CanvasSlot->SetSize(FVector2D(RenderData.GridSize.X * SlotSize, RenderData.GridSize.Y * SlotSize));
 			}
 		}
 	}
-	G_LOG(TEXT("인벤토리 갱신 완료: 총 %d칸, 아이템 %d개 배치"), TotalSlots, ProcessedItems.Num());
+
+	G_LOG(TEXT("인벤토리 갱신 완료: 총 %d칸, 아이템 %d개 배치"), TotalSlots, Handles.Num());
+}
+
+void UGInventoryWidget::HandleItemDroppedOutside(FInventoryItemHandle Handle)
+{
+	if (!Handle.IsValid()) return;
+	if (!InventoryComponent) return;
+	InventoryComponent->DropItem(Handle);
 }
