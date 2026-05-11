@@ -74,6 +74,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Action")
 	bool DropItem(UGItemInstance* ItemToDrop);
 	
+	
 
 private:
 	// 아이템 인스턴스 보관 배열
