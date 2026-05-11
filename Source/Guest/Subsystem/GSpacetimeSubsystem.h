@@ -34,7 +34,7 @@ public:
 	FOnTravelStarted OnTravelStarted;
 
 	// 페이드 아웃 후 실제 OpenLevel까지의 지연 시간 (초)
-	UPROPERTY(EditAnywhere, Category = "Spacetime")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spacetime")
 	float TravelFadeDelay = 1.0f;
 
 private:
