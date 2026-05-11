@@ -24,4 +24,11 @@ protected:
 	
 	bool bPendingApplyPlayerWorld = false;
 	FGuestPlayerWorldState PendingPlayerWorld;
+	
+private:
+	// GAS 어트리뷰트(체력/배터리)를 세이브 데이터에서 복원
+	static void RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject);
+	// 맵 전환 시 GAS 복원에 쓸 세이브 오브젝트 임시 보관
+	UPROPERTY()
+	TObjectPtr<UGuestSaveGame> PendingSaveObject;
 };
