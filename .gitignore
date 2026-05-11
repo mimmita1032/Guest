@@ -29,6 +29,10 @@ Saved/
 # Cursor
 .cursor/
 
+# Claude Code
+.claude/
+CLAUDE.md
+
 # Xcode
 *.xcodeproj
 *.xcworkspace

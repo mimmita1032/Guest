@@ -15,7 +15,7 @@
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Settings/GuestUISettings.h"

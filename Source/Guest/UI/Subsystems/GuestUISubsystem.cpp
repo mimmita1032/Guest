@@ -1,4 +1,5 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -66,6 +67,13 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
             }
         }
     );
+}
+
+void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
+{
+    if (Data.Lines.IsEmpty()) return;
+    PendingDialogueData = Data;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
 }
 
 void UGuestUISubsystem::PopWidget(FGameplayTag StackTag)

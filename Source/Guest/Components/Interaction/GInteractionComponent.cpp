@@ -50,6 +50,7 @@ void UGInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		}
 		else
 		{
+
 			CurrentInteractText = FText::GetEmpty();
 			OnInteractTextChanged.Broadcast(CurrentInteractText);
 		}

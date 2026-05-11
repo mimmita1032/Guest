@@ -12,6 +12,29 @@
  * 별도 파일로 분리하여 순환 참조 없이 어느 UI 클래스에서나 포함 가능.
  */
 
+/** NPC 대화 한 줄. */
+USTRUCT(BlueprintType)
+struct FNPCDialogueLine
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FText SpeakerName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FText DialogueText;
+};
+
+/** NPC 한 명의 전체 대화 데이터. */
+USTRUCT(BlueprintType)
+struct FNPCDialogueData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FNPCDialogueLine> Lines;
+};
+
 /** 확인 모달 버튼 결과. */
 UENUM(BlueprintType)
 enum class EGuestConfirmResult : uint8
