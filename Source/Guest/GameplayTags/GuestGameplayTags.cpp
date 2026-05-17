@@ -34,8 +34,16 @@ namespace GuestGameplayTags
 	
 	//인풋
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Interact, "Guest.InputTag.Interact");
-	
+	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Attack,   "Guest.InputTag.Attack");
+
 	//Ability
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Interact, "Guest.Ability.Interact");
-	
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Melee,    "Guest.Ability.Melee");
+
+	//State
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "Guest.State.Dead");
+
+	//GE SetByCaller 데이터
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Damage, "Guest.Data.Damage");
+
 }
