@@ -21,6 +21,7 @@ class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
 class UGInventoryComponent;
+class UGuestPawnUIComponent;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
@@ -172,6 +173,24 @@ private:
 
     bool bIsInventoryOpen = false;
     bool bIsDigicamOpen   = false;
+#pragma endregion
+
+#pragma region PawnUI
+public:
+    UFUNCTION(BlueprintPure, Category = "UI")
+    UGuestPawnUIComponent* GetPawnUIComponent() const { return PawnUIComponent; }
+
+private:
+    UPROPERTY(VisibleAnywhere, Category = "UI")
+    TObjectPtr<UGuestPawnUIComponent> PawnUIComponent;
+#pragma endregion
+
+#pragma region Death
+private:
+    UFUNCTION()
+    void OnDeadTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+    void HandleDeath();
 #pragma endregion
     
     ///     GAS     ///

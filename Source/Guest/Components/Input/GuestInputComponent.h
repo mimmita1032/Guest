@@ -24,7 +24,7 @@ public:
 			if (!AbilityInputConfig.InputAction || !AbilityInputConfig.InputTag.IsValid()) continue;
 			
 			BindAction(AbilityInputConfig.InputAction, ETriggerEvent::Started, ContextObject, PressedFunc, AbilityInputConfig.InputTag);
-			BindAction(AbilityInputConfig.InputAction, ETriggerEvent::Started, ContextObject, ReleasedFunc, AbilityInputConfig.InputTag);
+			BindAction(AbilityInputConfig.InputAction, ETriggerEvent::Completed, ContextObject, ReleasedFunc, AbilityInputConfig.InputTag);
 		}
 	}
 };
