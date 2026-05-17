@@ -28,7 +28,7 @@ void UGCameraComponent::SetupCapture(USceneCaptureComponent2D* InCapture, UTextu
 	}
 }
 
-void UGCameraComponent::TakePhoto()
+void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 {
 	if (!CaptureComponent || !RenderTarget)
 	{
@@ -47,8 +47,12 @@ void UGCameraComponent::TakePhoto()
 
 	if (PhotoRT)
 	{
-		Photos.Add(PhotoRT);
-		OnPhotoTaken.Broadcast(PhotoRT);
+		FPhotoData NewPhoto = Metadata;
+		NewPhoto.RenderTarget = PhotoRT;
+		NewPhoto.RealWorldTime = FDateTime::Now();
+
+		Photos.Add(NewPhoto);
+		OnPhotoTaken.Broadcast(NewPhoto);
 		G_LOG(TEXT("사진 촬영 완료: 총 %d장"), Photos.Num());
 	}
 }

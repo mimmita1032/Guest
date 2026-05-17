@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "GSpacetimeTypes.generated.h"
 
 // 디카 작동 상태
@@ -41,4 +42,39 @@ struct FSpacetimeData : public FTableRowBase
 	// LCD 표시용 미리보기 텍스처 (저기의 풍경)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
 	TSoftObjectPtr<UTexture2D> PreviewTexture;
+
+	// 스토리상 날짜 (예: "1998년 3월 15일") — 기획 확정 전 임시값
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
+	FText StoryDate;
+};
+
+// 촬영된 사진 한 장의 데이터
+USTRUCT(BlueprintType)
+struct FPhotoData
+{
+	GENERATED_BODY()
+
+	// 촬영된 이미지
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	TObjectPtr<UTextureRenderTarget2D> RenderTarget = nullptr;
+
+	// 이동한 in-game 연도
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	int32 InGameYear = 0;
+
+	// 장소명
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	FText PlaceName;
+
+	// 구역 코드
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	int32 AreaCode = 0;
+
+	// 스토리상 날짜 (DataTable StoryDate에서 복사)
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	FText StoryDate;
+
+	// 현실 촬영 시각
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	FDateTime RealWorldTime;
 };
