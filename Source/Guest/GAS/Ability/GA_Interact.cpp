@@ -8,7 +8,9 @@
 
 UGA_Interact::UGA_Interact()
 {
-	AbilityTags.AddTag(GuestGameplayTags::TAG_Ability_Interact);
+	FGameplayTagContainer Tags;
+	Tags.AddTag(GuestGameplayTags::TAG_Ability_Interact);
+	SetAssetTags(Tags);
 	BlockAbilitiesWithTag.AddTag(GuestGameplayTags::TAG_Ability_Interact); // GA 활성화중 중복 사용 방지
 }
 

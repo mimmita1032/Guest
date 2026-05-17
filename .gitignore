@@ -52,6 +52,14 @@ Saved/
 CLAUDE.md
 
 # =====================================
+# Cesium
+# =====================================
+
+cesium-request-cache.sqlite
+cesium-request-cache.sqlite-shm
+cesium-request-cache.sqlite-wal
+
+# =====================================
 # OS 기본
 # =====================================
 
