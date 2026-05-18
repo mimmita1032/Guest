@@ -29,10 +29,20 @@ public:
 	// 귀가 명령
 	void ReturnToBase(FName BaseLevelName);
 
-	// 이동 시작 시 발생하는 이벤트
+	// 이동 시작 시 발생하는 이벤트 (페이드 연출용 — OpenLevel보다 TravelFadeDelay초 먼저 발생)
 	UPROPERTY(BlueprintAssignable, Category = "Spacetime")
 	FOnTravelStarted OnTravelStarted;
-#pragma endregion 
+
+	// 페이드 아웃 후 실제 OpenLevel까지의 지연 시간 (초)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spacetime")
+	float TravelFadeDelay = 1.0f;
+
+private:
+	void DoTravel();
+
+	FSpacetimeData PendingTravelData;
+	FTimerHandle TravelTimerHandle;
+#pragma endregion
 
 #pragma region Time
 public:
