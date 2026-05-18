@@ -32,6 +32,25 @@ struct FGuestSavedActiveQuestEntry
 	TArray<int32> ObjectiveCounts;
 };
 
+USTRUCT(BlueprintType)
+struct FGuestSavedInventoryEntry
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FName ItemID = NAME_None;
+	
+	//아이템 위치
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FIntPoint TopLeft = FIntPoint::ZeroValue;
+	
+	//아이템 사이즈
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FIntPoint Size = FIntPoint(1, 1);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	int32 Quantity = 1;
+};
 
 UCLASS()
 class GUEST_API UGuestSaveGame : public USaveGame
@@ -65,4 +84,8 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|GAS")
 	float SavedCurrentBattery = -1.f;
+	
+	//인벤토리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	TArray<FGuestSavedInventoryEntry> SavedInventory;
 };
