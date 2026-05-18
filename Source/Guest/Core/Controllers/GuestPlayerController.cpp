@@ -421,12 +421,12 @@ void AGuestPlayerController::ShowLoadBoard()
 
 
 #pragma region Inventory
-void AGuestPlayerController::OnToggleInventory()
+/* void AGuestPlayerController::OnToggleInventory()
 {
 	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
 		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
 		G_LOG(TEXT("인벤토리 토글: GameMenu 스택에 위젯 푸시 요청함"));
 	}
-}
+} */
 #pragma endregion
