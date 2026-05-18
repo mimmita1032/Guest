@@ -2,6 +2,9 @@
 
 
 #include "Guest/Core/Controllers/GuestPlayerController.h"
+
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
@@ -16,6 +19,7 @@
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
@@ -259,6 +263,36 @@ void AGuestPlayerController::DebugCompletedQuests()
 
 #pragma endregion
 
+#pragma region  SaveDebug
+void AGuestPlayerController::DebugSetHealth(float NewHealth)
+{
+	if (APawn* P = GetPawn())
+	{
+		if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(P))
+		{
+			if (UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent())
+			{
+				ASC->SetNumericAttributeBase(UGuestAttributeSet::GetCurrentHealthAttribute(), NewHealth);
+				G_LOG(TEXT("[디버그] Health → %.1f"), NewHealth);
+			}
+		}
+	}
+}
+void AGuestPlayerController::DebugSetBattery(float NewBattery)
+{
+	if (APawn* P = GetPawn())
+	{
+		if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(P))
+		{
+			if (UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent())
+			{
+				ASC->SetNumericAttributeBase(UGuestAttributeSet::GetCurrentBatteryAttribute(), NewBattery);
+				G_LOG(TEXT("[디버그] Battery → %.1f"), NewBattery);
+			}
+		}
+	}
+}
+#pragma endregion
 #pragma region SaveGame
 
 bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex)
@@ -295,7 +329,16 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		}
 	}
 	
-	SaveObject->SaveVersion = 3;
+	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(ControllerPawn))
+	{
+		if (UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent())
+		{
+			SaveObject->SavedCurrentHealth  = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentHealthAttribute());
+			SaveObject->SavedCurrentBattery = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentBatteryAttribute());
+		}
+	}
+	
+	SaveObject->SaveVersion = 4;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();
@@ -330,12 +373,18 @@ void AGuestPlayerController::OnLoadGamePressed(const FInputActionValue& Value)
 void AGuestPlayerController::ShowSaveBoard()
 {
 	G_LOG(TEXT("Show save"))
-	if (SaveBoardClass)
+	// 로드 보드가 열려있으면 먼저 닫기
+	if (LoadBoardWidget && LoadBoardWidget->IsInViewport())
+	{
+		LoadBoardWidget->RemoveFromParent();
+	}
+	
+	if (!SaveBoardWidget && SaveBoardClass)
 	{
 		SaveBoardWidget = CreateWidget<UGuestSaveBoardWidget>(this, SaveBoardClass);
 	}
-	
-	if (SaveBoardWidget)
+    
+	if (SaveBoardWidget && !SaveBoardWidget->IsInViewport())
 	{
 		SaveBoardWidget->AddToViewport();
 		FInputModeGameAndUI InputMode;
@@ -348,11 +397,16 @@ void AGuestPlayerController::ShowSaveBoard()
 void AGuestPlayerController::ShowLoadBoard()
 {
 	G_LOG(TEXT("Show Load"))
-	if (LoadBoardClass)
+	if (SaveBoardWidget && SaveBoardWidget->IsInViewport())
+	{
+		SaveBoardWidget->RemoveFromParent();
+	}
+	
+	if (!LoadBoardWidget&&LoadBoardClass)
 	{
 		LoadBoardWidget = CreateWidget<UGuestLoadBoardWidget>(this, LoadBoardClass);
 	}
-	if (LoadBoardWidget)
+	if (LoadBoardWidget && !LoadBoardWidget->IsInViewport())
 	{
 		LoadBoardWidget->AddToViewport();
 		FInputModeGameAndUI InputMode;
@@ -362,4 +416,17 @@ void AGuestPlayerController::ShowLoadBoard()
 	}
 }
 
+#pragma endregion
+
+
+
+#pragma region Inventory
+void AGuestPlayerController::OnToggleInventory()
+{
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
+	{
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
+		G_LOG(TEXT("인벤토리 토글: GameMenu 스택에 위젯 푸시 요청함"));
+	}
+}
 #pragma endregion
