@@ -80,10 +80,7 @@ void AGuestPlayerController::SetupInputComponent()
 		{
 			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
 		}
-		if (IA_ToggleInventory)
-		{
-			EIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestPlayerController::OnToggleInventory);
-		}
+		// IA_ToggleInventory는 AGuestCharacter::SetupPlayerInputComponent에서 바인딩
 	}
 }
 
@@ -420,6 +417,7 @@ void AGuestPlayerController::ShowLoadBoard()
 }
 
 #pragma endregion
+
 
 
 #pragma region Inventory

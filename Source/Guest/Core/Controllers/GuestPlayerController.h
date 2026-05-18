@@ -157,11 +157,5 @@ protected:
 	void ShowLoadBoard();
 	
 #pragma endregion
-#pragma region Inventory
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<class UInputAction> IA_ToggleInventory;
-
-	void OnToggleInventory();
-#pragma endregion
+// Inventory Toggle은 AGuestCharacter::ToggleInventoryAction에서 처리
 };

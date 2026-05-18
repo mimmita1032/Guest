@@ -1,271 +1,284 @@
-﻿// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
-
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "GInventoryComponent.h"
-#include "Guest/Utils/GLog.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
-#include "Guest/Items/Instance/GItemInstance.h"
 #include "Guest/Items/WorldActor/GItemPickup.h"
+#include "Guest/Utils/GLog.h"
 
 UGInventoryComponent::UGInventoryComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false; 
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UGInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// 총 슬롯 개수 계산
-	const int32 TotalSlots = Columns * Rows;
-
-	// 배열 초기화 
-	InventorySlots.Init(nullptr, TotalSlots);
-
-	// 초기화 결과
-	UE_LOG(LogGSystem, Log, TEXT("인벤토리 컴포넌트 초기화 완료. 크기: %d x %d (총 %d 슬롯)"), Columns, Rows, TotalSlots);
+	UE_LOG(LogGSystem, Log, TEXT("인벤토리 초기화: %d x %d (%d 슬롯)"), Columns, Rows, Columns * Rows);
 }
 
-int32 UGInventoryComponent::GetIndex(int32 X, int32 Y) const
-{
-	// 그리드 범위를 벗어나면 유효하지 않은 인덱스(-1) 반환
-	if (X < 0 || X >= Columns || Y < 0 || Y >= Rows)
-	{
-		return -1;
-	}
-	// 2D 좌표를 1D 인덱스로 변환
-	return (Y * Columns) + X;
-}
+// ─── 공개 API ────────────────────────────────────────────────────────────────
 
-bool UGInventoryComponent::IsValidIndex(int32 Index) const
+FInventoryItemHandle UGInventoryComponent::GrantItem(const UGItemDefinition* ItemDef)
 {
-	return InventorySlots.IsValidIndex(Index);
-}
+	if (!ItemDef) return FInventoryItemHandle();
 
-bool UGInventoryComponent::IsSlotEmpty(int32 Index) const
-{
-	// 인덱스가 범위를 벗어났다면 사용 불가
-	if (!IsValidIndex(Index))
-	{
-		return false;
-	}
-	// nullptr이면 빈 공간
-	return InventorySlots[Index] == nullptr;
-}
+	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
+	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
+	Instance->InitInstance(Handle, ItemDef);
 
-bool UGInventoryComponent::CanAddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY) const
-{
-	if (!ItemInstance)
-	{
-		return false;
-	}
-
-	// 프래그먼트에서 아이템의 (가로, 세로) 크기 추출 (기본값 1x1)
-	FIntPoint ItemSize = FIntPoint(1, 1);
-	if (const UGItemFragmentInventory* InvFrag = ItemInstance->FindFragmentByClass<UGItemFragmentInventory>())
+	FIntPoint ItemSize(1, 1);
+	if (const UGItemFragmentInventory* InvFrag = Instance->FindFragmentByClass<UGItemFragmentInventory>())
 	{
 		ItemSize = InvFrag->GridSize;
 	}
 
-	// 가로, 세로 크기만큼 반복문을 돌며 차지할 공간이 모두 비어있는지
-	for (int32 X = StartX; X < StartX + ItemSize.X; ++X)
+	if (!AutoPlace(Handle, ItemSize))
 	{
-		for (int32 Y = StartY; Y < StartY + ItemSize.Y; ++Y)
+		UE_LOG(LogGSystem, Warning, TEXT("GrantItem 실패: 공간 없음 [%s]"), *ItemDef->GetName());
+		return FInventoryItemHandle();
+	}
+
+	InventoryMap.Add(Handle, Instance);
+	NotifyInventoryChanged();
+	UE_LOG(LogGSystem, Log, TEXT("GrantItem 성공: 핸들 %u, 크기 %dx%d"), Handle.GetHandleId(), ItemSize.X, ItemSize.Y);
+	return Handle;
+}
+
+UGItemInstance* UGInventoryComponent::GetItemByHandle(FInventoryItemHandle Handle) const
+{
+	if (!Handle.IsValid()) return nullptr;
+	const TObjectPtr<UGItemInstance>* Found = InventoryMap.Find(Handle);
+	return Found ? Found->Get() : nullptr;
+}
+
+FInventoryItemHandle UGInventoryComponent::GetHandleAt(int32 X, int32 Y) const
+{
+	const FInventoryItemHandle* Found = OccupiedSlots.Find(FIntPoint(X, Y));
+	return Found ? *Found : FInventoryItemHandle();
+}
+
+UGItemInstance* UGInventoryComponent::GetItemAt(int32 X, int32 Y) const
+{
+	return GetItemByHandle(GetHandleAt(X, Y));
+}
+
+FIntPoint UGInventoryComponent::GetItemPosition(FInventoryItemHandle Handle) const
+{
+	const FInventoryGridEntry* Entry = GridEntries.Find(Handle);
+	return Entry ? Entry->TopLeft : FIntPoint(-1, -1);
+}
+
+bool UGInventoryComponent::CanMoveItemTo(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY) const
+{
+	if (!InventoryMap.Contains(Handle)) return false;
+	return CanPlaceAt(GetItemSize(Handle), TargetX, TargetY, Handle);
+}
+
+bool UGInventoryComponent::CanPlaceNewItemAt(FIntPoint ItemSize, int32 StartX, int32 StartY) const
+{
+	return CanPlaceAt(ItemSize, StartX, StartY, FInventoryItemHandle());
+}
+
+bool UGInventoryComponent::MoveItem(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY)
+{
+	if (!InventoryMap.Contains(Handle)) return false;
+
+	const FIntPoint ItemSize = GetItemSize(Handle);
+	if (!CanPlaceAt(ItemSize, TargetX, TargetY, Handle))
+	{
+		UE_LOG(LogGSystem, Warning, TEXT("MoveItem 실패: 핸들 %u → (%d, %d) 공간 없음"), Handle.GetHandleId(), TargetX, TargetY);
+		return false;
+	}
+
+	ClearSlotsForHandle(Handle);
+	OccupySlots(Handle, ItemSize, TargetX, TargetY);
+
+	NotifyInventoryChanged();
+	UE_LOG(LogGSystem, Log, TEXT("MoveItem 성공: 핸들 %u → (%d, %d)"), Handle.GetHandleId(), TargetX, TargetY);
+	return true;
+}
+
+bool UGInventoryComponent::RemoveItem(FInventoryItemHandle Handle)
+{
+	if (!InventoryMap.Contains(Handle)) return false;
+
+	ClearSlotsForHandle(Handle);
+	InventoryMap.Remove(Handle);
+
+	NotifyInventoryChanged();
+	UE_LOG(LogGSystem, Log, TEXT("RemoveItem 성공: 핸들 %u"), Handle.GetHandleId());
+	return true;
+}
+
+bool UGInventoryComponent::DropItem(FInventoryItemHandle Handle)
+{
+	TObjectPtr<UGItemInstance>* InstancePtr = InventoryMap.Find(Handle);
+	if (!InstancePtr)
+	{
+		UE_LOG(LogGSystem, Warning, TEXT("DropItem 실패: 핸들 %u 인스턴스 없음"), Handle.GetHandleId());
+		return false;
+	}
+
+	const UGItemDefinition* Definition = (*InstancePtr)->GetItemDef();
+	if (!Definition)
+	{
+		UE_LOG(LogGSystem, Warning, TEXT("DropItem 실패: 핸들 %u 아이템 정의 없음"), Handle.GetHandleId());
+		return false;
+	}
+
+	AActor* Owner = GetOwner();
+	UWorld* World = GetWorld();
+	if (!Owner || !World)
+	{
+		UE_LOG(LogGSystem, Warning, TEXT("DropItem 실패: Owner 또는 World 없음, 핸들 %u"), Handle.GetHandleId());
+		return false;
+	}
+
+	// DropPickupClass 미설정 시 기본 AGItemPickup 사용
+	TSubclassOf<AGItemPickup> SpawnClass = DropPickupClass;
+
+	if (!SpawnClass)
+	{
+		SpawnClass = AGItemPickup::StaticClass();
+	}
+
+	const FVector SpawnLoc = Owner->GetActorLocation() + Owner->GetActorForwardVector() * 100.f;
+	const FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLoc);
+
+	// SpawnActorDeferred: InitializePickup이 BeginPlay보다 먼저 실행되도록 보장
+	AGItemPickup* Pickup = World->SpawnActorDeferred<AGItemPickup>(
+		SpawnClass,
+		SpawnTransform,
+		Owner,
+		Cast<APawn>(Owner),
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+
+	if (!Pickup)
+	{
+		UE_LOG(LogGSystem, Error, TEXT("DropItem: SpawnActorDeferred 실패, 핸들 %u"), Handle.GetHandleId());
+		return false;
+	}
+
+	// TODO: 추후 스택 아이템 대응 시 Quantity 전달 구조 필요
+	Pickup->InitializePickup(Definition, 1);
+	Pickup->FinishSpawning(SpawnTransform);
+
+	// 스폰 성공 후에만 인벤토리에서 제거
+	ClearSlotsForHandle(Handle);
+	InventoryMap.Remove(Handle);
+	NotifyInventoryChanged();
+
+	UE_LOG(LogGSystem, Log, TEXT("DropItem 성공: 핸들 %u 스폰 위치 %s"), Handle.GetHandleId(), *SpawnLoc.ToString());
+	return true;
+}
+
+TArray<FInventoryItemHandle> UGInventoryComponent::GetAllHandles() const
+{
+	TArray<FInventoryItemHandle> Handles;
+	InventoryMap.GetKeys(Handles);
+	return Handles;
+}
+
+FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemHandle Handle) const
+{
+	FInventoryItemRenderData RenderData;
+
+	const FInventoryGridEntry* Entry = GridEntries.Find(Handle);
+	if (!Entry) return RenderData;  // bIsValid = false
+
+	// GridEntry는 있는데 Instance가 없으면 데이터 불일치 → 렌더링 안 함
+	const TObjectPtr<UGItemInstance>* Found = InventoryMap.Find(Handle);
+	if (!Found) return RenderData;  // bIsValid = false
+
+	RenderData.GridSize = Entry->Size;
+	RenderData.Position = Entry->TopLeft;
+
+	if (const UGItemFragmentInventory* InvFrag = (*Found)->FindFragmentByClass<UGItemFragmentInventory>())
+		RenderData.Icon = InvFrag->ItemIcon;
+	else
+		RenderData.Icon = TSoftObjectPtr<UTexture2D>();
+
+	RenderData.bIsValid = true;
+	return RenderData;
+}
+
+// ─── 비공개 헬퍼 ──────────────────────────────────────────────────────────────
+
+bool UGInventoryComponent::CanPlaceAt(FIntPoint ItemSize, int32 StartX, int32 StartY, FInventoryItemHandle ExcludeHandle) const
+{
+	for (int32 DY = 0; DY < ItemSize.Y; ++DY)
+	{
+		for (int32 DX = 0; DX < ItemSize.X; ++DX)
 		{
-			const int32 Index = GetIndex(X, Y);
+			const int32 CX = StartX + DX;
+			const int32 CY = StartY + DY;
 
-			// 칸이 가방 범위를 벗어났거나, 이미 다른 아이템이 들어있다면 실패
-			// 나중에 그 자리를 대체할 수 있게 리팩토링 예정!
+			if (CX < 0 || CX >= Columns || CY < 0 || CY >= Rows) return false;
 
-			if (!IsValidIndex(Index) || !IsSlotEmpty(Index))
+			const FInventoryItemHandle* CellHandle = OccupiedSlots.Find(FIntPoint(CX, CY));
+			if (CellHandle && CellHandle->IsValid() && !(*CellHandle == ExcludeHandle))
 			{
 				return false;
 			}
 		}
 	}
-
 	return true;
 }
 
-bool UGInventoryComponent::AddItemAt(UGItemInstance* ItemInstance, int32 StartX, int32 StartY)
+void UGInventoryComponent::OccupySlots(FInventoryItemHandle Handle, FIntPoint ItemSize, int32 StartX, int32 StartY)
 {
-	if (!CanAddItemAt(ItemInstance, StartX, StartY))
+	for (int32 DY = 0; DY < ItemSize.Y; ++DY)
 	{
-		UE_LOG(LogGSystem, Warning, TEXT("아이템 추가 실패: 공간이 부족하거나 범위를 벗어남. 좌표(%d, %d)"), StartX, StartY);
-		return false;
-	}
-
-	FIntPoint ItemSize = FIntPoint(1, 1);
-	if (const UGItemFragmentInventory* InvFrag = ItemInstance->FindFragmentByClass<UGItemFragmentInventory>())
-	{
-		ItemSize = InvFrag->GridSize;
-	}
-
-	for (int32 X = StartX; X < StartX + ItemSize.X; ++X)
-	{
-		for (int32 Y = StartY; Y < StartY + ItemSize.Y; ++Y)
+		for (int32 DX = 0; DX < ItemSize.X; ++DX)
 		{
-			const int32 Index = GetIndex(X, Y);
-			InventorySlots[Index] = ItemInstance; // 빈 공간(nullptr)을 아이템 객체로 덮어씌움
+			OccupiedSlots.Add(FIntPoint(StartX + DX, StartY + DY), Handle);
 		}
 	}
 
-	UE_LOG(LogGSystem, Log, TEXT("아이템 추가 성공: 좌표(%d, %d), 크기(%dx%d)"), StartX, StartY, ItemSize.X, ItemSize.Y);
-	
-	OnInventoryChanged.Broadcast();
-	
-	return true;
+	FInventoryGridEntry Entry;
+	Entry.TopLeft = FIntPoint(StartX, StartY);
+	Entry.Size    = ItemSize;
+	GridEntries.Add(Handle, Entry);
 }
 
-bool UGInventoryComponent::RemoveItem(UGItemInstance* ItemToRemove)
+void UGInventoryComponent::ClearSlotsForHandle(FInventoryItemHandle Handle)
 {
-	if (!ItemToRemove)
-	{
-		return false;
-	}
+	const FInventoryGridEntry* Entry = GridEntries.Find(Handle);
+	if (!Entry) return;
 
-	bool bRemoved = false;
-
-	for (int32 i = 0; i < InventorySlots.Num(); ++i)
+	for (int32 DY = 0; DY < Entry->Size.Y; ++DY)
 	{
-		if (InventorySlots[i] == ItemToRemove)
+		for (int32 DX = 0; DX < Entry->Size.X; ++DX)
 		{
-			InventorySlots[i] = nullptr;
-			bRemoved = true;
+			OccupiedSlots.Remove(FIntPoint(Entry->TopLeft.X + DX, Entry->TopLeft.Y + DY));
 		}
 	}
-
-	if (bRemoved)
-	{
-		UE_LOG(LogGSystem, Log, TEXT("아이템 제거 성공. 가방 공간 확보 완료."));
-		OnInventoryChanged.Broadcast();
-		return true;
-	}
-
-	UE_LOG(LogGSystem, Warning, TEXT("아이템 제거 실패: 가방에 존재하지 않는 아이템입니다."));
-	return false;
+	GridEntries.Remove(Handle);
 }
 
-bool UGInventoryComponent::AutoAddItem(UGItemInstance* ItemInstance)
+bool UGInventoryComponent::AutoPlace(FInventoryItemHandle Handle, FIntPoint ItemSize)
 {
-	if (!ItemInstance) return false;
-
-	// (0,0)부터 모든 칸을 순회하며 들어갈 자리가 있는지 확인
 	for (int32 Y = 0; Y < Rows; ++Y)
 	{
 		for (int32 X = 0; X < Columns; ++X)
 		{
-			// CanAddItemAt이 아이템의 GridSize(1x2, 2x2 등)를 고려해서 여유 공간이 있는지 검사해 줌
-			if (CanAddItemAt(ItemInstance, X, Y))
+			if (CanPlaceAt(ItemSize, X, Y, FInventoryItemHandle()))
 			{
-				return AddItemAt(ItemInstance, X, Y);
+				OccupySlots(Handle, ItemSize, X, Y);
+				return true;
 			}
 		}
 	}
-
-	UE_LOG(LogGSystem, Warning, TEXT("가방이 가득 차서 아이템을 획득할 수 없습니다!"));
 	return false;
 }
 
-UGItemInstance* UGInventoryComponent::GetItemAt(int32 X, int32 Y) const
+FIntPoint UGInventoryComponent::GetItemSize(FInventoryItemHandle Handle) const
 {
-	int32 Index = Y * Columns + X;
-	
-	if (InventorySlots.IsValidIndex(Index))
-	{
-		return InventorySlots[Index];
-	}
-    
-	return nullptr;
+	const FInventoryGridEntry* Entry = GridEntries.Find(Handle);
+	return Entry ? Entry->Size : FIntPoint(1, 1);
 }
 
-bool UGInventoryComponent::MoveItem(UGItemInstance* ItemToMove, int32 TargetX, int32 TargetY)
+void UGInventoryComponent::NotifyInventoryChanged()
 {
-	if (!ItemToMove) return false;
-
-	TArray<int32> OldIndices;
-	for (int32 i = 0; i < InventorySlots.Num(); ++i)
-	{
-		if (InventorySlots[i] == ItemToMove)
-		{
-			OldIndices.Add(i);
-			InventorySlots[i] = nullptr;
-		}
-	}
-
-	if (CanAddItemAt(ItemToMove, TargetX, TargetY))
-	{
-		FIntPoint ItemSize = FIntPoint(1, 1);
-		if (const UGItemFragmentInventory* InvFrag = ItemToMove->FindFragmentByClass<UGItemFragmentInventory>())
-		{
-			ItemSize = InvFrag->GridSize;
-		}
-
-		for (int32 X = TargetX; X < TargetX + ItemSize.X; ++X)
-		{
-			for (int32 Y = TargetY; Y < TargetY + ItemSize.Y; ++Y)
-			{
-				InventorySlots[GetIndex(X, Y)] = ItemToMove;
-			}
-		}
-
-		OnInventoryChanged.Broadcast();
-		UE_LOG(LogGSystem, Log, TEXT("아이템 이동 성공: 타겟 좌표(%d, %d)"), TargetX, TargetY);
-		return true;
-	}
-	else
-	{
-		//공간이 부족하거나 범위를 벗어나면, 원래 기억해둔 자리로 롤백
-		for (int32 OldIndex : OldIndices)
-		{
-			InventorySlots[OldIndex] = ItemToMove;
-		}
-		
-		// 드래그하다가 실패했을 때 원본의 반투명을 해제
-		OnInventoryChanged.Broadcast(); 
-		UE_LOG(LogGSystem, Warning, TEXT("아이템 이동 실패: 타겟 좌표(%d, %d)에 공간이 부족합니다."), TargetX, TargetY);
-		return false;
-	}
-}
-
-bool UGInventoryComponent::DropItem(UGItemInstance* ItemToDrop)
-{
-	if (!ItemToDrop) return false;
-
-	// 배열 탐색 및 인벤토리 슬롯 초기화
-	bool bRemoved = false;
-	for (int32 i = 0; i < InventorySlots.Num(); ++i)
-	{
-		if (InventorySlots[i] == ItemToDrop)
-		{
-			InventorySlots[i] = nullptr;
-			bRemoved = true;
-		}
-	}
-
-	if (bRemoved)
-	{
-		OnInventoryChanged.Broadcast();
-
-		if (AActor* OwnerActor = GetOwner())
-		{
-			FVector SpawnLocation = OwnerActor->GetActorLocation() + (OwnerActor->GetActorForwardVector() * 100.0f);
-			FRotator SpawnRotation = FRotator::ZeroRotator;
-
-			if (UWorld* World = GetWorld())
-			{
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-				if (AGItemPickup* DroppedItem = World->SpawnActor<AGItemPickup>(AGItemPickup::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams))
-				{
-					DroppedItem->InitializePickup(ItemToDrop);
-					UE_LOG(LogGSystem, Log, TEXT("아이템 월드 드롭 완료. 데이터 인스턴스 전달 대기"));
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
+	OnInventoryChanged.Broadcast();
 }
