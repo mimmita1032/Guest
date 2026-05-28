@@ -29,15 +29,9 @@ Saved/
 # Cursor
 .cursor/
 
-# Claude Code
-.claude/
-CLAUDE.md
-
 # Xcode
 *.xcodeproj
 *.xcworkspace
-
-CLAUDE.md
 
 # =====================================
 # 컴파일 결과물
@@ -55,6 +49,7 @@ CLAUDE.md
 # =====================================
 
 .claude/
+CLAUDE.md
 
 # =====================================
 # OS 기본
@@ -78,7 +73,6 @@ Plugins/*/Intermediate/
 
 Plugins/Developer/RiderLink/Binaries/
 Plugins/Developer/RiderLink/Intermediate/
-
 
 # =====================================
 # Wwise (혼자 사용 · 로컬 전용 관리)
