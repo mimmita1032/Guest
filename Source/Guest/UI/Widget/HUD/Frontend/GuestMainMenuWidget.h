@@ -6,7 +6,7 @@
 #include "Guest/UI/Widget/GuestActivatableBase.h"
 #include "GuestMainMenuWidget.generated.h"
 
-class UCommonButtonBase;
+class UGuestCommonButton;
 class UTextBlock;
 
 /**
@@ -17,18 +17,7 @@ class UTextBlock;
  *
  * [사운드 처리 방식]
  * - 화면 Open / Close : GuestActivatableBase 에서 자동 처리
- *                       WBP 에디터에서 AudioData 슬롯에 DA_GuestSound 지정만 하면 됨.
- * - 버튼 클릭 사운드  : 각 핸들러에서 직접 호출
- *                       버튼마다 다른 사운드를 줄 수 있음.
- *
- * [WBP 제작 가이드]
- * Parent Class: GuestMainMenuWidget
- * BindWidget 이름 목록:
- *   Text_Title        - 타이틀 텍스트
- *   Button_Continue   - 계속 버튼
- *   Button_NewGame    - 새로운 게임 버튼
- *   Button_Settings   - 설정 버튼
- *   Button_Quit       - 종료 버튼
+ * - 버튼 클릭 사운드  : UGuestCommonButton 내부에서 자동 처리되므로 메뉴 위젯 단에서 호출 불필요
  */
 UCLASS(Abstract, BlueprintType, meta = (DisableNativeTick))
 class GUEST_API UGuestMainMenuWidget : public UGuestActivatableBase
@@ -38,16 +27,10 @@ class GUEST_API UGuestMainMenuWidget : public UGuestActivatableBase
 protected:
 
     //~ Begin UUserWidget Interface
-    /** 버튼 델리게이트 바인딩 수행. */
     virtual void NativeOnInitialized() override;
     //~ End UUserWidget Interface
 
     //~ Begin UCommonActivatableWidget Interface
-    /**
-     * 활성화 시 세이브 데이터 유무 확인하여
-     * 계속하기 버튼 활성/비활성 처리.
-     * Open 사운드는 Super::NativeOnActivated() 에서 자동 처리됨.
-     */
     virtual void NativeOnActivated() override;
     //~ End UCommonActivatableWidget Interface
 
@@ -58,23 +41,19 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> Text_Title;
 
-    // ── 메뉴 버튼 ──
+    // ── 메뉴 버튼 (커스텀 사운드 버튼 적용) ──
 
-    /** 계속하기. 세이브 데이터가 없으면 비활성화. */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UCommonButtonBase> Button_Continue;
+    TObjectPtr<UGuestCommonButton> Button_Continue;
 
-    /** 새로운 게임 시작. */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UCommonButtonBase> Button_NewGame;
+    TObjectPtr<UGuestCommonButton> Button_NewGame;
 
-    /** 설정 화면으로 이동. */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UCommonButtonBase> Button_Settings;
+    TObjectPtr<UGuestCommonButton> Button_Settings;
 
-    /** 게임 종료. */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UCommonButtonBase> Button_Quit;
+    TObjectPtr<UGuestCommonButton> Button_Quit;
 
     // ── 버튼 핸들러 ──
 
@@ -91,9 +70,6 @@ private:
     void OnQuitClicked();
 
     // ── 내부 헬퍼 ──
-
-    /** 버튼 클릭 사운드 재생. AudioData 없으면 스킵. */
-    void PlayButtonClickSound();
 
     /** 세이브 데이터 존재 여부 확인. TODO: 실제 세이브 시스템 연동 필요. */
     bool HasSaveData() const;
