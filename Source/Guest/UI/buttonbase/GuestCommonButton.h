@@ -14,8 +14,7 @@ class UGuestAudioDataAsset;
  *
  * Wwise 사운드 시스템이 연동된 CommonUI 기본 버튼 클래스.
  * NativeOnHovered → Hover 사운드 재생.
- * OnClicked 델리게이트 → Click 사운드 재생.
- *
+ * NativeOnClicked → Click 사운드 재생.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class GUEST_API UGuestCommonButton : public UCommonButtonBase
@@ -28,13 +27,12 @@ public:
 
 protected:
 
-	//~ Begin UUserWidget Interface
-	virtual void NativeConstruct() override;  // NativeOnInitialized 대신
-	//~ End UUserWidget Interface
-
 	//~ Begin UCommonButtonBase Interface
 	/** Hover 사운드 재생. */
 	virtual void NativeOnHovered() override;
+    
+	/** Click 사운드 재생. */
+	virtual void NativeOnClicked() override;
 	//~ End UCommonButtonBase Interface
 
 protected:
@@ -52,10 +50,6 @@ protected:
 	FGameplayTag ClickSoundTag;
 
 private:
-
-	/** OnClicked 델리게이트 콜백. 클릭 사운드 재생. */
-	UFUNCTION()
-	void HandleClickSound();
 
 	/** 공통 사운드 재생 헬퍼. */
 	void PlaySound(const FGameplayTag& SoundTag);
