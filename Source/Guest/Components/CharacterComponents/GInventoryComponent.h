@@ -11,6 +11,8 @@ class UGItemDefinition;
 class AGItemPickup;
 class UTexture2D;
 
+struct FGuestSavedInventoryEntry;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
 // UI 렌더링에 필요한 데이터를 한 번에 반환 (C++ 전용, USTRUCT 아님)
@@ -113,6 +115,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryChanged OnInventoryChanged;
 
+	//save 용
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void ExportInventorySaveData(TArray<FGuestSavedInventoryEntry>& OutEntries) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void ImportInventorySaveData(TArray<FGuestSavedInventoryEntry>& InEntries);
+	
 private:
 	// 점유된 셀만 기록 (빈 셀은 항목 없음)
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
@@ -140,4 +149,7 @@ private:
 	bool AutoPlace(FInventoryItemHandle Handle, FIntPoint ItemSize);
 
 	void NotifyInventoryChanged();
+	
+	void ClearInventory();
+	bool PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size);
 };

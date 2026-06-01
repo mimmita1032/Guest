@@ -7,6 +7,7 @@
 #include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
@@ -82,6 +83,13 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				if (SaveObject->SaveVersion >= 4)
+				{
+					if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+					{
+						Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+					}
+				}
 			}
 		}
 		return;
@@ -102,6 +110,13 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				if (SaveObject->SaveVersion >= 4)
+				{
+					if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+					{
+						Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+					}
+				}
 			}
 		}
 		return;
@@ -150,6 +165,13 @@ void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 		
 			// ── 맵 전환 후 GAS 어트리뷰트 복원 ──
 			RestoreGASAttributes(Pawn, PendingSaveObject);
+			if (PendingSaveObject && PendingSaveObject->SaveVersion >= 4)
+			{
+				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					Inv->ImportInventorySaveData(PendingSaveObject->SavedInventory);
+				}
+			}
 			PendingSaveObject = nullptr;
 		
 			bPendingApplyPlayerWorld = false;

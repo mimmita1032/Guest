@@ -13,10 +13,13 @@ UGuestAssetManager& UGuestAssetManager::Get()
 	{
 		return *Singleton;
 	}
-	
-	UE_LOG(LogLoad, Fatal, TEXT("게스트 에셋 매니저 필요"));
-	
-	return(*NewObject<UGuestAssetManager>());
+
+	UE_LOG(LogLoad, Error,
+		TEXT("UGuestAssetManager가 아닙니다. DefaultEngine.ini [/Script/Engine.Engine] AssetManagerClassName=/Script/Guest.GuestAssetManager 확인 후 에디터 재시작."));
+
+	// Import 등은 Asset Registry fallback 사용. 여기 도달 시 비상용 인스턴스 반환 (Fatal 금지).
+	static TObjectPtr<UGuestAssetManager> EmergencyFallback = NewObject<UGuestAssetManager>();
+	return *EmergencyFallback.Get();
 }
 
 void UGuestAssetManager::LoadGuestItems(const FStreamableDelegate& LoadFinishedDelegate)
@@ -24,7 +27,7 @@ void UGuestAssetManager::LoadGuestItems(const FStreamableDelegate& LoadFinishedD
 	LoadPrimaryAssetsWithType(UGItemDefinition::GetGuestItemAssetType(), TArray<FName>(), FStreamableDelegate::CreateUObject(this, &UGuestAssetManager::GuestItemLoadFinished, LoadFinishedDelegate));
 }
 
-bool UGuestAssetManager::GetLoadedItems(TArray<const UGItemDefinition*>& OutItems)
+bool UGuestAssetManager::GetLoadedItems(TArray<const UGItemDefinition*>& OutItems) const
 {
 	TArray<UObject*> LoadedObjects;
 	bool bLoaded = GetPrimaryAssetObjectList(UGItemDefinition::GetGuestItemAssetType(), LoadedObjects);

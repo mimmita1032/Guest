@@ -9,6 +9,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/UI/Layout/GuestPrimaryLayout.h"
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
@@ -336,6 +337,11 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 			SaveObject->SavedCurrentHealth  = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentHealthAttribute());
 			SaveObject->SavedCurrentBattery = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentBatteryAttribute());
 		}
+	}
+	
+	if (UGInventoryComponent* Inv = ControllerPawn->FindComponentByClass<UGInventoryComponent>())
+	{
+		Inv->ExportInventorySaveData(SaveObject->SavedInventory);
 	}
 	
 	SaveObject->SaveVersion = 4;

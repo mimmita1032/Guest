@@ -4,6 +4,60 @@
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/WorldActor/GItemPickup.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Save/GuestSaveGame.h"
+#include "Guest/FrameWork/GuestAssetManager.h"
+#include "Guest/Items/Definition/GItemDefinition.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Engine/AssetManager.h"
+
+
+namespace
+{
+	const UGItemDefinition* FindItemDefinitionByItemID(FName ItemID)
+	{
+		if (ItemID.IsNone())
+		{
+			return nullptr;
+		}
+
+		// GuestAssetManager가 등록된 경우 Primary Asset 목록 우선 사용
+		if (GEngine && GEngine->AssetManager)
+		{
+			if (const UGuestAssetManager* GuestAM = Cast<UGuestAssetManager>(GEngine->AssetManager.Get()))
+			{
+				TArray<const UGItemDefinition*> LoadedItems;
+				if (GuestAM->GetLoadedItems(LoadedItems))
+				{
+					for (const UGItemDefinition* Def : LoadedItems)
+					{
+						if (Def && Def->ItemID == ItemID)
+						{
+							return Def;
+						}
+					}
+				}
+			}
+		}
+
+		// Fallback: Asset Registry (Fatal 없이 ItemID 검색)
+		const FAssetRegistryModule& AssetRegistryModule =
+			FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		TArray<FAssetData> AssetDatas;
+		AssetRegistryModule.Get().GetAssetsByClass(
+			UGItemDefinition::StaticClass()->GetClassPathName(), AssetDatas, true);
+
+		for (const FAssetData& AssetData : AssetDatas)
+		{
+			const UGItemDefinition* Def = Cast<UGItemDefinition>(AssetData.GetAsset());
+			if (Def && Def->ItemID == ItemID)
+			{
+				return Def;
+			}
+		}
+
+		return nullptr;
+	}
+}
 
 UGInventoryComponent::UGInventoryComponent()
 {
@@ -281,4 +335,106 @@ FIntPoint UGInventoryComponent::GetItemSize(FInventoryItemHandle Handle) const
 void UGInventoryComponent::NotifyInventoryChanged()
 {
 	OnInventoryChanged.Broadcast();
+}
+
+void UGInventoryComponent::ExportInventorySaveData(TArray<FGuestSavedInventoryEntry>& OutEntries) const
+{
+	OutEntries.Reset();
+	
+	const TArray<FInventoryItemHandle> Handles = GetAllHandles();
+	OutEntries.Reserve(Handles.Num());
+	
+	for (const FInventoryItemHandle& Handle : Handles)
+	{
+		if (!Handle.IsValid())
+		{
+			continue;
+		}
+		
+		const UGItemInstance* Instance = GetItemByHandle(Handle);
+		if (!Instance)
+		{
+			continue;
+		}
+		
+		const UGItemDefinition* ItemDef = Instance->GetItemDef();
+		if (!ItemDef || ItemDef->ItemID.IsNone())
+		{
+			continue;
+		}
+		
+		const FIntPoint TopLeft = GetItemPosition(Handle);
+		if (TopLeft.X < 0 || TopLeft.Y < 0)
+		{
+			continue;
+		}
+		
+		FGuestSavedInventoryEntry Entry;
+		Entry.ItemID   = ItemDef->ItemID;
+		Entry.TopLeft  = TopLeft;
+		Entry.Size     = GetItemSize(Handle);
+		Entry.Quantity = 1;  // 스택 없으면 항상 1
+		
+		OutEntries.Add(MoveTemp(Entry));
+	}
+	// UE_LOG(LogGSystem, Log, TEXT("ExportInventory: %d items"), OutEntries.Num());
+}
+
+void UGInventoryComponent::ClearInventory()
+{
+	OccupiedSlots.Empty();
+	GridEntries.Empty();
+	InventoryMap.Empty();
+}
+
+//그리드 좌표에 아이템을 배치하는 함수.
+bool UGInventoryComponent::PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size)
+{
+	if (!ItemDef)
+	{
+		return false;
+	}
+	if (Size.X <= 0 || Size.Y <= 0)
+	{
+		return false;
+	}
+	if (!CanPlaceAt(Size, TopLeft.X, TopLeft.Y, FInventoryItemHandle()))
+	{
+		return false;
+	}
+	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
+	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
+	Instance->InitInstance(Handle, ItemDef);
+	
+	OccupySlots(Handle, Size, TopLeft.X, TopLeft.Y);
+	InventoryMap.Add(Handle, Instance);
+	
+	return true;
+}
+
+void UGInventoryComponent::ImportInventorySaveData(TArray<FGuestSavedInventoryEntry>& InEntries)
+{
+	ClearInventory();
+	
+	for (const FGuestSavedInventoryEntry& Entry : InEntries)
+	{
+		if (Entry.ItemID.IsNone()) continue;
+		if (Entry.TopLeft.X < 0 || Entry.TopLeft.Y < 0) continue;
+		if (Entry.Size.X <= 0 || Entry.Size.Y <= 0) continue;
+		
+		const UGItemDefinition* ItemDef = FindItemDefinitionByItemID(Entry.ItemID);
+		if (!ItemDef)
+		{
+			G_WARN(TEXT("ImportInventory 스킵: ItemID [%s] 없음"), *Entry.ItemID.ToString());
+			continue;
+		}
+		if (!PlaceItemAt(ItemDef, Entry.TopLeft, Entry.Size))
+		{
+			G_WARN(TEXT("ImportInventory 스킵: [%s] (%d,%d) 배치 실패"),
+				*Entry.ItemID.ToString(), Entry.TopLeft.X, Entry.TopLeft.Y);
+			continue;
+		}
+		
+	}
+	NotifyInventoryChanged();
 }
