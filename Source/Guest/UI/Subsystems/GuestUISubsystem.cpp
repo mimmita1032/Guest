@@ -3,7 +3,6 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
