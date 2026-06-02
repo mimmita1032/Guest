@@ -3,6 +3,9 @@
 #include "Guest/UI/Widget/GuestActivatableBase.h"
 #include "Guest/Core/Controllers/GuestPlayerController.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/Sound/GuestSoundSubsystem.h"
+#include "Guest/Sound/GuestSoundTags.h"
+#include "Guest/Sound/GuestAudioDataAsset.h"
 
 // ─────────────────────────────────────────────────────────
 // UCommonActivatableWidget 인터페이스
@@ -12,9 +15,21 @@ void UGuestActivatableBase::NativeOnActivated()
 {
     Super::NativeOnActivated();
 
-    // Verbose 레벨 로그로 출력하여 일반 플레이 중 콘솔 오염 최소화.
-    // 디버깅 시 log LogTemp Verbose 명령으로 확인 가능.
     UE_LOG(LogTemp, Verbose, TEXT("[GuestUI] 위젯 활성화: %s"), *GetName());
+
+    // 1. [Open 사운드 자동 재생]
+    // AudioData 가 설정된 위젯만 사운드 재생. 비어있으면 스킵.
+    // DA_GuestSound AudioMap 에 TAG_Sound_Event_UI_ScreenOpen 이 등록되어 있어야 함.
+    if (IsValid(AudioData))
+    {
+        if (UGuestSoundSubsystem* SndSys = GetSoundSubsystem())
+        {
+            SndSys->PlayGlobalSound(
+                GuestSoundTags::TAG_Sound_Event_UI_ScreenOpen,
+                AudioData
+            );
+        }
+    }
 }
 
 void UGuestActivatableBase::NativeOnDeactivated()
@@ -22,6 +37,20 @@ void UGuestActivatableBase::NativeOnDeactivated()
     Super::NativeOnDeactivated();
 
     UE_LOG(LogTemp, Verbose, TEXT("[GuestUI] 위젯 비활성화: %s"), *GetName());
+
+    // 2. [Close 사운드 자동 재생]
+    // AudioData 가 설정된 위젯만 사운드 재생. 비어있으면 스킵.
+    // DA_GuestSound AudioMap 에 TAG_Sound_Event_UI_ScreenClose 가 등록되어 있어야 함.
+    if (IsValid(AudioData))
+    {
+        if (UGuestSoundSubsystem* SndSys = GetSoundSubsystem())
+        {
+            SndSys->PlayGlobalSound(
+                GuestSoundTags::TAG_Sound_Event_UI_ScreenClose,
+                AudioData
+            );
+        }
+    }
 }
 
 // ─────────────────────────────────────────────────────────
@@ -31,7 +60,6 @@ void UGuestActivatableBase::NativeOnDeactivated()
 AGuestPlayerController* UGuestActivatableBase::GetGuestPlayerController() const
 {
     // 유효한 캐시가 있으면 반환하여 Cast 반복 수행 방지.
-    // 캐시가 없거나 무효화된 경우에만 새로 Cast 하여 캐싱.
     if (!CachedController.IsValid())
     {
         CachedController = Cast<AGuestPlayerController>(GetOwningPlayer());
@@ -41,11 +69,22 @@ AGuestPlayerController* UGuestActivatableBase::GetGuestPlayerController() const
 
 UGuestUISubsystem* UGuestActivatableBase::GetUISubsystem() const
 {
-    // PlayerController 를 통해 GameInstance Subsystem 에 접근.
-    // PlayerController 가 없으면 nullptr 반환.
     if (const AGuestPlayerController* PC = GetGuestPlayerController())
     {
         return PC->GetUISubsystem();
+    }
+    return nullptr;
+}
+
+UGuestSoundSubsystem* UGuestActivatableBase::GetSoundSubsystem() const
+{
+    // PlayerController 를 통해 GameInstance 에 접근하여 SoundSubsystem 반환.
+    if (const AGuestPlayerController* PC = GetGuestPlayerController())
+    {
+        if (UGameInstance* GI = PC->GetGameInstance())
+        {
+            return GI->GetSubsystem<UGuestSoundSubsystem>();
+        }
     }
     return nullptr;
 }
