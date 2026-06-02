@@ -25,7 +25,11 @@ namespace GuestGameplayTags
 
 	// 인벤토리 위젯 식별 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Inventory);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Digicam);
 	
+
+	// NPC 대화 위젯 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_NPCDialogue);
 
 	//아이템 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
@@ -34,9 +38,13 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_1995);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_2026);
 	
-	//Input
-	
+	//테스트 인풋
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_InputTag_Test);
 	
+	//인풋
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_InputTag_Interact);
+
+	//Ability
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Interact);
 }
 

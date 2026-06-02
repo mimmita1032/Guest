@@ -11,9 +11,12 @@
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
 #include "Guest/Components/GDigicamComponent.h"
+#include "Guest/Components/GCameraComponent.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 // 데이터 에셋 헤더 추가
 #include "Guest/Data/DataAssets/GCharacterDataAsset.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 //gas
 #include "Guest/GAS/GuestAbilitySystemComponent.h"
@@ -23,6 +26,7 @@
 //인풋 구성
 #include "Guest/Data/Input/GInputConfigData.h"
 #include "Guest/Components/Input/GuestInputComponent.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -56,8 +60,14 @@ AGuestCharacter::AGuestCharacter()
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
+    InventoryComponent   = CreateDefaultSubobject<UGInventoryComponent>(TEXT("InventoryComponent"));
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
+    CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));
+    PhotoCaptureComponent = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("PhotoCaptureComponent"));
+    PhotoCaptureComponent->SetupAttachment(CameraComp);
+    PhotoCaptureComponent->bCaptureEveryFrame = false;
+    PhotoCaptureComponent->bCaptureOnMovement = false;
     
     // 연산용 초기값
     TargetZoomLength = 400.0f;
@@ -81,6 +91,11 @@ void AGuestCharacter::BeginPlay()
     if (CameraComp)
     {
        CameraComp->SetRelativeLocation(FVector::ZeroVector);
+    }
+
+    if (CameraComponent && PhotoCaptureComponent && PhotoRenderTarget)
+    {
+        CameraComponent->SetupCapture(PhotoCaptureComponent, PhotoRenderTarget);
     }
     
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -189,12 +204,7 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(RawJump, ETriggerEvent::Started, this, &AGuestCharacter::JumpAction);
           GIC->BindAction(RawJump, ETriggerEvent::Completed, this, &ACharacter::StopJumping); 
        }
-
-       if (InteractAction)
-       {
-          GIC->BindAction(InteractAction, ETriggerEvent::Started, this, &AGuestCharacter::OnInteract);
-       } 
-
+       
        if (IA_DigicamControl)
        {
           GIC->BindAction(IA_DigicamControl, ETriggerEvent::Triggered, this, &AGuestCharacter::DigicamControlAction);
@@ -233,13 +243,13 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &AGuestCharacter::EndCrouch);
        }
        
-       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
-       
-       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
        if (IA_ToggleInventory)
        {
           GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
+       ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
+       
+       GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
     }
 }
 
@@ -277,14 +287,6 @@ void AGuestCharacter::JumpAction(const FInputActionValue& Value)
     UE_LOG(LogTemp, Log, TEXT("점프 실행"));
 }
 
-void AGuestCharacter::OnInteract(const FInputActionValue& Value)
-{
-    if (InteractionComponent)
-    {
-       G_LOG(TEXT("상호작용 키 입력됨"));
-       InteractionComponent->DoInteract();
-    }
-}
 
 #pragma region Digicam
 void AGuestCharacter::DigicamControlAction(const FInputActionValue& Value)
@@ -309,13 +311,22 @@ void AGuestCharacter::DigicamShutterAction(const FInputActionValue& Value)
 
 void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 {
-    if (DigicamComponent)
+    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
     {
-       static bool bIsActive = false;
-       bIsActive = !bIsActive;
-
-       if (bIsActive) DigicamComponent->ActivateDigicam();
-       else DigicamComponent->DeactivateDigicam();
+        if (bIsDigicamOpen)
+        {
+            UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+            DigicamComponent->DeactivateDigicam();
+            bIsDigicamOpen = false;
+            G_LOG(TEXT("디지캠 닫기"));
+        }
+        else
+        {
+            UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam);
+            DigicamComponent->ActivateDigicam();
+            bIsDigicamOpen = true;
+            G_LOG(TEXT("디지캠 열기"));
+        }
     }
 }
 #pragma endregion

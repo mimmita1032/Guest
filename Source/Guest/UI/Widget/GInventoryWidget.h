@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "Guest/Items/Instance/GItemInstance.h"
 #include "GInventoryWidget.generated.h"
 
 class UGInventoryComponent;
@@ -29,6 +30,10 @@ protected:
 	UFUNCTION()
 	void OnRefreshInventory();
 
+	// ItemWidget의 OnItemDroppedOutside 델리게이트 수신 → DropItem 처리
+	UFUNCTION()
+	void HandleItemDroppedOutside(FInventoryItemHandle Handle);
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|UI")
 	TObjectPtr<UGInventoryComponent> InventoryComponent;
@@ -46,4 +51,8 @@ protected:
 	// 아이템 전용 위젯 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
 	TSubclassOf<UGInventoryItemWidget> ItemWidgetClass;
+
+	// SlotSize는 여기서만 관리 — ItemWidget에 InitItem으로 전달
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
+	float SlotSize = 60.0f;
 };

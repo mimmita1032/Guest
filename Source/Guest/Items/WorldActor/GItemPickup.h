@@ -8,36 +8,33 @@
 #include "GItemPickup.generated.h"
 
 class UGItemDefinition;
-class UGItemInstance;
 
 UCLASS()
-class GUEST_API AGItemPickup : public AActor, public IGInteractableInterface 
+class GUEST_API AGItemPickup : public AActor, public IGInteractableInterface
 {
 	GENERATED_BODY()
 
 public:
 	AGItemPickup();
-	
-	//데이터 에셋 결정
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
 	TObjectPtr<const UGItemDefinition> ItemDefinition;
-	
-	// Pickup 함수 구현
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+	int32 Quantity = 1;
+
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual FText GetInteractText_Implementation() const override;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Item")
-	TObjectPtr<UGItemInstance> ItemInstance;
-
-	void InitializePickup(UGItemInstance* InInstance);
+	// 드롭 스폰 시 Definition + 수량으로 초기화
+	void InitializePickup(const UGItemDefinition* InDefinition, int32 InQuantity = 1);
 
 protected:
 	virtual void BeginPlay() override;
-	
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 	void UpdatePickupVisuals() const;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> MeshComp;
 };

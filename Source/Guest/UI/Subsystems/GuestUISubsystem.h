@@ -1,5 +1,4 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GuestUIInputConfig.h"
 #include "Guest/UI/Subsystems/GuestUIInputConfig.h"
+#include "Guest/UI/Types/GuestUITypes.h"
 #include "GuestUISubsystem.generated.h"
 
 class UCommonActivatableWidget;
@@ -14,6 +14,7 @@ class UCommonActivatableWidgetContainerBase;
 class UInputMappingContext;
 class APlayerController;
 
+/**  스타일: 위젯이 푸시되었을 때 알림을 주는 델리게이트 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableWidget*, Widget);
 
 /**
@@ -46,6 +47,15 @@ public:
     void PopWidget(FGameplayTag StackTag);
 
     UPROPERTY(BlueprintAssignable, Category = "Guest|UI")
+    /** NPC 대화 위젯을 GameMenu 스택에 열고 데이터를 전달한다. */
+    UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
+    void OpenNPCDialogue(const FNPCDialogueData& Data);
+
+    /** 위젯이 활성화된 직후 대화 데이터를 가져갈 때 사용. */
+    const FNPCDialogueData& GetPendingDialogueData() const { return PendingDialogueData; }
+
+    /** 전역 알림용 델리게이트 */
+    UPROPERTY(BlueprintAssignable, Category = "UI")
     FOnWidgetPushed OnWidgetPushed;
 
     UFUNCTION(BlueprintPure, Category = "Guest|UI")
@@ -78,4 +88,6 @@ private:
     void ApplyInputMode(EGuestInputMode InputMode, APlayerController* PC);
     void SwapIMC(UInputMappingContext* NewIMC, int32 Priority, APlayerController* PC);
     APlayerController* GetLocalPlayerController() const;
+
+    FNPCDialogueData PendingDialogueData;
 };

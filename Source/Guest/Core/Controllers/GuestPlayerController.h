@@ -114,8 +114,17 @@ public:
 	UFUNCTION(Exec)
 	void DebugCompletedQuests();
 #pragma endregion
-
 #pragma region SaveDebug
+	
+public:
+	UFUNCTION(Exec)
+	void DebugSetHealth(float NewHealth);
+	UFUNCTION(Exec)
+	void DebugSetBattery(float NewBattery);
+	
+#pragma endregion
+	
+#pragma region Save
 
 public:
 	/** 현재 맵·폰 위치/회전을 주어진 슬롯에 저장 */
@@ -148,11 +157,5 @@ protected:
 	void ShowLoadBoard();
 	
 #pragma endregion
-#pragma region Inventory
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<class UInputAction> IA_ToggleInventory;
-
-	void OnToggleInventory();
-#pragma endregion
+// Inventory Toggle은 AGuestCharacter::ToggleInventoryAction에서 처리
 };

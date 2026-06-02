@@ -10,6 +10,7 @@
 #include "GuestNPCBase.generated.h"
 
 class UGNPCScheduleDataAsset;
+class UGNPCDialogueDataAsset;
 
 // NPC의 역할 구분용
 UENUM(BlueprintType)
@@ -40,6 +41,10 @@ public:
 	// 시간대별 이동 스케줄 데이터 에셋
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Schedule")
 	TObjectPtr<UGNPCScheduleDataAsset> ScheduleDataAsset;
+
+	// 대화 데이터 에셋 — 없으면 상호작용 시 대화 건너뜀
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Dialogue")
+	TObjectPtr<UGNPCDialogueDataAsset> DialogueDataAsset;
 
 private:
 	// GSpacetimeSubsystem::OnTimeChanged 델리게이트 핸들러
