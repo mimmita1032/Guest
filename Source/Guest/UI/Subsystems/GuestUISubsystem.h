@@ -45,8 +45,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Guest|UI")
     void PopWidget(FGameplayTag StackTag);
-
-    UPROPERTY(BlueprintAssignable, Category = "Guest|UI")
+    
     /** NPC 대화 위젯을 GameMenu 스택에 열고 데이터를 전달한다. */
     UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
     void OpenNPCDialogue(const FNPCDialogueData& Data);

@@ -2,7 +2,7 @@
 
 #include "Guest/UI/Widget/HUD/Frontend/GuestMainMenuWidget.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/buttonbase/GuestCommonButton.h" // 커스텀 사운드 버튼 클래스 포함
 #include "Components/TextBlock.h"
 #include "Kismet/KismetSystemLibrary.h"
