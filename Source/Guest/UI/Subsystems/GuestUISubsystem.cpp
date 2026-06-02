@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/UI/GameplayTags/GuestGameplayTags.h"
 
@@ -105,6 +106,13 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
             }
         }
     );
+}
+
+void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
+{
+    if (Data.Lines.IsEmpty()) return;
+    PendingDialogueData = Data;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
 }
 
 void UGuestUISubsystem::PopWidget(FGameplayTag StackTag)

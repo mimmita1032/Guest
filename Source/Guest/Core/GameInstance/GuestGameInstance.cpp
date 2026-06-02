@@ -1,11 +1,15 @@
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
+
+#include "AbilitySystemInterface.h"
 #include "Engine/World.h"
 #include "Engine/Level.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 
 void UGuestGameInstance::Init()
 {
@@ -54,7 +58,15 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 	{
 		return;
 	}
-
+	
+	// ── 퀘스트 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 유지) ──
+	if (UGQuestSubsystem* QuestSys = GetSubsystem<UGQuestSubsystem>())
+	{
+		QuestSys->ImportQuestSaveData(
+			SaveObject->SavedActiveQuests,
+			SaveObject->SavedCompletedQuestIDs);
+	}
+	
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
 	const FString SavedPackage = SaveObject->MapPackageName;
 
@@ -67,6 +79,9 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 			{
 				Pawn->SetActorLocation(SaveObject->PlayerWorld.Location);
 				Pawn->SetActorRotation(SaveObject->PlayerWorld.Rotation);
+				
+				// ── GAS 어트리뷰트 복원 ──
+				RestoreGASAttributes(Pawn, SaveObject);
 			}
 		}
 		return;
@@ -84,12 +99,17 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 			{
 				Pawn->SetActorLocation(SaveObject->PlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
 				Pawn->SetActorRotation(SaveObject->PlayerWorld.Rotation, ETeleportType::TeleportPhysics);
+				
+				// ── GAS 어트리뷰트 복원 ──
+				RestoreGASAttributes(Pawn, SaveObject);
 			}
 		}
 		return;
 	}
 
+	// ── 다른 맵 로드: 위치/GAS 복원은 OnPostLoadMapWithWorld에서 처리 ──
 	PendingPlayerWorld = SaveObject->PlayerWorld;
+	PendingSaveObject = SaveObject;  // GAS 복원용으로 SaveObject 보관
 	bPendingApplyPlayerWorld = true;
 
 	const FString ShortMapName = FPackageName::GetShortName(SavedNorm);
@@ -128,7 +148,31 @@ void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 			Pawn->SetActorLocation(PendingPlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
 			Pawn->SetActorRotation(PendingPlayerWorld.Rotation, ETeleportType::TeleportPhysics);
 		
+			// ── 맵 전환 후 GAS 어트리뷰트 복원 ──
+			RestoreGASAttributes(Pawn, PendingSaveObject);
+			PendingSaveObject = nullptr;
+		
 			bPendingApplyPlayerWorld = false;
 		},
 		0.05f, false);
+}
+
+void UGuestGameInstance::RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject)
+{
+	if (!Pawn || !SaveObject) return;
+	if (SaveObject->SavedCurrentHealth < 0.f) return;
+	
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Pawn);
+	if (!ASCInterface) return;
+	
+	UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent();
+	if (!ASC) return;
+	
+	ASC->SetNumericAttributeBase(
+		UGuestAttributeSet::GetCurrentHealthAttribute(),
+		SaveObject->SavedCurrentHealth);
+	
+	ASC->SetNumericAttributeBase(
+		UGuestAttributeSet::GetCurrentBatteryAttribute(),
+		SaveObject->SavedCurrentBattery);
 }

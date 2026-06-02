@@ -41,12 +41,25 @@ void UGSpacetimeSubsystem::ExecuteTravel(const FSpacetimeData& TargetData)
 {
 	if (TargetData.LevelName.IsNone()) return;
 
-	G_LOG(TEXT("시공간 이동 실행: %s"), *TargetData.PlaceName.ToString());
-	
-	// 이동 전 이벤트 전파 (화면 페이드, 사운드 등 연출용)
+	G_LOG(TEXT("시공간 이동 시작: %s (%.1f초 후 전환)"), *TargetData.PlaceName.ToString(), TravelFadeDelay);
+
+	PendingTravelData = TargetData;
+
+	// 페이드 연출 시작 신호 — Blueprint에서 이 시점에 페이드 아웃 재생
 	OnTravelStarted.Broadcast(TargetData);
 
-	UGameplayStatics::OpenLevel(GetWorld(), TargetData.LevelName);
+	GetWorld()->GetTimerManager().SetTimer(
+		TravelTimerHandle,
+		this,
+		&UGSpacetimeSubsystem::DoTravel,
+		TravelFadeDelay,
+		false
+	);
+}
+
+void UGSpacetimeSubsystem::DoTravel()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), PendingTravelData.LevelName);
 }
 
 void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)

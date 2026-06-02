@@ -2,12 +2,9 @@
 
 #include "GDigicamComponent.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
-#include "Guest/UI/DGDigicamWidget.h"
-#include "Kismet/GameplayStatics.h"
 
 UGDigicamComponent::UGDigicamComponent()
 {
@@ -31,13 +28,8 @@ void UGDigicamComponent::ActivateDigicam()
 		G_LOG(TEXT("디카 활성화: 수거 준비"));
 	}
 
-	if (WidgetClass && !DigicamWidget)
-	{
-		DigicamWidget = CreateWidget<UDGDigicamWidget>(GetWorld(), WidgetClass);
-		if (DigicamWidget) DigicamWidget->AddToViewport();
-	}
-
 	UpdateSearch();
+	BroadcastSearchState();
 }
 
 void UGDigicamComponent::DeactivateDigicam()
@@ -62,7 +54,7 @@ void UGDigicamComponent::HandleVerticalInput(float Value)
 		SelectedYear += (Value > 0) ? 1 : -1;
 		G_LOG(TEXT("연도 조절: %d"), SelectedYear);
 	}
-	else if (CurrentState == EDigicamState::LocationFocus)
+	else if (CurrentState == EDigicamState::LocationFocus || CurrentState == EDigicamState::ReadyToSnap)
 	{
 		SelectedAreaCode += (Value > 0) ? 1 : -1;
 		G_LOG(TEXT("구역 코드 조절: %d"), SelectedAreaCode);
@@ -84,37 +76,31 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 	{
 		CurrentState = EDigicamState::LocationFocus;
 		G_LOG(TEXT("모드 전환: 장소 설정"));
+		BroadcastSearchState();
 	}
-	else if (CurrentState == EDigicamState::LocationFocus && Value < 0)
+	else if ((CurrentState == EDigicamState::LocationFocus || CurrentState == EDigicamState::ReadyToSnap) && Value < 0)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("모드 전환: 연도 설정"));
+		BroadcastSearchState();
 	}
 }
 
 void UGDigicamComponent::HandleShutter()
 {
-	if (IsAtBaseLevel())
+	if (CurrentState != EDigicamState::ReadyToSnap)
 	{
-		// CurrentMatchedData가 선언되어야 아래 로직이 컴파일됨
-		if (CurrentState == EDigicamState::ReadyToSnap)
-		{
-			G_LOG(TEXT("'저기'로 수거를 시작합니다: %s"), *CurrentMatchedData.PlaceName.ToString());
-			UGameplayStatics::OpenLevel(GetWorld(), CurrentMatchedData.LevelName);
-		}
-		else
-		{
-			G_WARN(TEXT("좌표가 일치하지 않아 수거를 시작할 수 없습니다."));
-		}
+		G_WARN(TEXT("좌표 불일치 — 이동 불가"));
+		return;
 	}
-	else
-	{
-		if (!BaseLevelName.IsNone())
-		{
-			G_LOG(TEXT("수거를 마치고 '여기'로 귀가합니다."));
-			UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
-		}
-	}
+
+	// TODO: 스토리 연출용 이동 잠금이 필요하면 여기서 조건 추가 (bTravelLocked 등)
+
+	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
+	if (!SpacetimeSS) return;
+
+	G_LOG(TEXT("시공간 이동: %s"), *CurrentMatchedData.PlaceName.ToString());
+	SpacetimeSS->ExecuteTravel(CurrentMatchedData);
 }
 
 void UGDigicamComponent::UpdateSearch()
@@ -137,20 +123,12 @@ void UGDigicamComponent::UpdateSearch()
 			CurrentState = EDigicamState::LocationFocus;
 		}
 
-		if (DigicamWidget)
-		{
-			DigicamWidget->UpdateLCD(CurrentState, SelectedYear, SelectedAreaCode, CurrentMatchedData);
-		}
+		BroadcastSearchState();
 	}
 }
 
-bool UGDigicamComponent::IsAtBaseLevel() const
+void UGDigicamComponent::BroadcastSearchState()
 {
-	if (!GetWorld()) return false;
-
-	// 현재 맵의 이름을 가져옴 (에디터 실행 시 붙는 접두사 제거 포함)
-	FString CurrentMapName = GetWorld()->GetMapName();
-	CurrentMapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
-
-	return CurrentMapName == BaseLevelName.ToString();
+	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState);
 }
+

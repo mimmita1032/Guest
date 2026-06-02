@@ -2,3 +2,40 @@
 
 
 #include "GItemInstance.h"
+
+FInventoryItemHandle::FInventoryItemHandle()
+	:HandleId{GetInvalidId()}
+{
+}
+
+FInventoryItemHandle FInventoryItemHandle::InvalidHandle()
+{
+	static FInventoryItemHandle InvalidHandle = FInventoryItemHandle();
+	return InvalidHandle;
+}
+
+FInventoryItemHandle FInventoryItemHandle::CreateHandle() 
+{
+	return FInventoryItemHandle(GenerateNextId());
+}
+
+bool FInventoryItemHandle::IsValid() const
+{
+	return HandleId != GetInvalidId();
+}
+
+FInventoryItemHandle::FInventoryItemHandle(uint32 Id)
+	:HandleId(Id)
+{
+}
+
+uint32 FInventoryItemHandle::GenerateNextId()
+{
+	static uint32 StaticId = 1;
+	return StaticId++;
+}
+
+uint32 FInventoryItemHandle::GetInvalidId()
+{
+	return 0;
+}

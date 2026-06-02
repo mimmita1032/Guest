@@ -14,9 +14,13 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 class UGDigicamComponent;
+class UGCameraComponent;
+class USceneCaptureComponent2D;
+class UTextureRenderTarget2D;
 class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
+class UGInventoryComponent;
 
 UCLASS()
 class GUEST_API AGuestCharacter : public ACharacter, public IAbilitySystemInterface
@@ -40,7 +44,6 @@ protected:
     void JumpAction(const FInputActionValue& Value);
     void StartCrouch(const FInputActionValue& Value);
     void EndCrouch(const FInputActionValue& Value);
-    void OnInteract(const struct FInputActionValue& Value);
     void ZoomAction(const FInputActionValue& Value);
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
@@ -89,12 +92,18 @@ protected:
     //상호작용
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
     TObjectPtr<class UGInteractionComponent> InteractionComponent;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    TObjectPtr<class UInputAction> InteractAction;
-
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
     TObjectPtr<UGDigicamComponent> DigicamComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UGCameraComponent> CameraComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<USceneCaptureComponent2D> PhotoCaptureComponent;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Digicam")
+    TObjectPtr<UTextureRenderTarget2D> PhotoRenderTarget;
 
 #pragma region Digicam Functions
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -153,9 +162,16 @@ protected:
 #pragma endregion // Sprint
 
 #pragma region Inventory
+public:
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    UGInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
 private:
-    // 인벤토리 UI 활성화 상태
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGInventoryComponent> InventoryComponent;
+
     bool bIsInventoryOpen = false;
+    bool bIsDigicamOpen   = false;
 #pragma endregion
     
     ///     GAS     ///

@@ -26,6 +26,9 @@ class GUEST_API UGItemDefinition : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
+	static FPrimaryAssetType GetGuestItemAssetType();
+	
 	//아이템 이름
 	UPROPERTY(EditDefaultsOnly, Category = "Default")
 	FText ItemName;

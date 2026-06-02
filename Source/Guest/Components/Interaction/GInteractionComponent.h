@@ -40,4 +40,6 @@ protected:
 private:
 	FText CurrentInteractText;
 
+
+
 };

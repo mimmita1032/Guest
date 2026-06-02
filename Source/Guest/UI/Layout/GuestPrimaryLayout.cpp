@@ -2,7 +2,7 @@
 
 #include "GuestPrimaryLayout.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
-#include "Guest/UI/GameplayTags/GuestGameplayTags.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 void UGuestPrimaryLayout::NativeOnInitialized()
