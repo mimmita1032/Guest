@@ -10,12 +10,38 @@
     "Type": "User",
     "GUID": "{75A6BF86-A283-4833-8860-762AF134863F}",
     "Language": "SFX",
-    "Hash": "{1D274AC9-C4E5-57C1-670D-0E88BA083489}",
+    "Hash": "{A8C234AF-5CF9-AB05-8705-13CFF343F879}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\UI",
     "ShortName": "UI",
-    "Path": "UI.bnk"
+    "Path": "UI.bnk",
+    "Media": [
+     {
+      "Id": "792062620",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Press_button.wav",
+      "CachePath": "34/{34F317AC-EE20-1418-ED13-43E3890775D6}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "3824618851",
+      "Name": "UI_PressButton",
+      "ObjectPath": "\\Events\\Default Work Unit\\UI\\UI_PressButton",
+      "GUID": "{9D7971A6-03C1-4730-A3C3-150B6F02141F}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.24686459",
+      "DurationMax": "0.24686459",
+      "MediaRefs": [
+       {
+        "Id": "792062620"
+       }
+      ]
+     }
+    ]
    }
   ],
-  "FileHash": "{DF809453-E9C3-66F1-36F8-DF11D07F56EB}"
+  "FileHash": "{F2A1A04B-CEFE-80B4-D3AA-E237C83D5BC2}"
  }
 }
