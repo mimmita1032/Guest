@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Guest/UI/Widget/GuestActivatableBase.h"
+#include "Guest/UI/Base/GuestActivatableBase.h"
 #include "Guest/UI/Types/GuestUITypes.h"
 #include "GuestNPCDialogueWidget.generated.h"
 

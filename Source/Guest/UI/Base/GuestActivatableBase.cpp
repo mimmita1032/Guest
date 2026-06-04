@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
-#include "Guest/UI/Widget/GuestActivatableBase.h"
+#include "Guest/UI/Base/GuestActivatableBase.h"
 #include "Guest/Core/Controllers/GuestPlayerController.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Sound/GuestSoundSubsystem.h"
