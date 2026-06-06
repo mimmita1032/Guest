@@ -14,9 +14,9 @@ void UGDigicamPhotoEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObjec
 
 	const FPhotoData& Photo = CachedEntryObj->PhotoData;
 
-	if (Photo.RenderTarget)
+	if (Photo.Snapshot)
 	{
-		IMG_Thumbnail->SetBrushResourceObject(Photo.RenderTarget);
+		IMG_Thumbnail->SetBrushFromTexture(Photo.Snapshot);
 	}
 
 	TXT_Year->SetText(FText::AsNumber(Photo.InGameYear));

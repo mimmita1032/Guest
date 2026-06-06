@@ -66,9 +66,9 @@ void UGDigicamGalleryWidget::ShowPhotoDetail(const FPhotoData& Photo)
 	TXT_SelectedPlaceName->SetVisibility(ESlateVisibility::HitTestInvisible);
 	TXT_SelectedDate->SetVisibility(ESlateVisibility::HitTestInvisible);
 
-	if (Photo.RenderTarget)
+	if (Photo.Snapshot)
 	{
-		IMG_SelectedPhoto->SetBrushResourceObject(Photo.RenderTarget);
+		IMG_SelectedPhoto->SetBrushFromTexture(Photo.Snapshot);
 	}
 
 	TXT_SelectedYear->SetText(FText::AsNumber(Photo.InGameYear));

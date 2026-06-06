@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Engine/TextureRenderTarget2D.h"
+#include "Engine/Texture2D.h"
 #include "GSpacetimeTypes.generated.h"
 
 // 디카 작동 상태
@@ -54,9 +54,9 @@ struct FPhotoData
 {
 	GENERATED_BODY()
 
-	// 촬영된 이미지
+	// 촬영된 이미지 스냅샷 (GameInstance outer — 레벨 전환 후에도 유지)
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")
-	TObjectPtr<UTextureRenderTarget2D> RenderTarget = nullptr;
+	TObjectPtr<UTexture2D> Snapshot = nullptr;
 
 	// 이동한 in-game 연도
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")
