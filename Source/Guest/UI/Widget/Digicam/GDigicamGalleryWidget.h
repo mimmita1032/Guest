@@ -11,7 +11,7 @@ class UListView;
 class UImage;
 class UTextBlock;
 class UWidget;
-class UGCameraComponent;
+class UGPhotoLibrarySubsystem;
 
 // 디지캠 갤러리 탭 — 촬영된 사진 목록과 상세 정보 표시
 UCLASS(Abstract)
@@ -51,7 +51,7 @@ private:
 	void RefreshPhotoList();
 	void ShowPhotoDetail(const FPhotoData& Photo);
 	void ShowEmptyState();
-	UGCameraComponent* GetCameraComponent() const;
+	UGPhotoLibrarySubsystem* GetPhotoLibrary() const;
 
 	UFUNCTION()
 	void OnPhotoTaken(const FPhotoData& Photo);

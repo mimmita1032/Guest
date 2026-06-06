@@ -6,26 +6,21 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/Widget.h"
-#include "Guest/Components/GCameraComponent.h"
-#include "GameFramework/Pawn.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 
 void UGDigicamGalleryWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-	// 선택 이벤트는 UGPhotoEntryObject::OnSelected 델리게이트로 처리 (RefreshPhotoList에서 구독)
+
+	// 서브시스템 구독 (최초 1회)
+	if (UGPhotoLibrarySubsystem* PhotoLib = GetPhotoLibrary())
+	{
+		PhotoLib->OnPhotoAdded.AddDynamic(this, &UGDigicamGalleryWidget::OnPhotoTaken);
+	}
 }
 
 void UGDigicamGalleryWidget::OnTabActivated_Implementation()
 {
-	// 카메라 구독 (최초 1회 — 이미 바인딩돼 있으면 스킵)
-	if (UGCameraComponent* CamComp = GetCameraComponent())
-	{
-		if (!CamComp->OnPhotoTaken.IsAlreadyBound(this, &UGDigicamGalleryWidget::OnPhotoTaken))
-		{
-			CamComp->OnPhotoTaken.AddDynamic(this, &UGDigicamGalleryWidget::OnPhotoTaken);
-		}
-	}
-
 	RefreshPhotoList();
 }
 
@@ -33,14 +28,14 @@ void UGDigicamGalleryWidget::RefreshPhotoList()
 {
 	LV_Photos->ClearListItems();
 
-	UGCameraComponent* CamComp = GetCameraComponent();
-	if (!CamComp)
+	UGPhotoLibrarySubsystem* PhotoLib = GetPhotoLibrary();
+	if (!PhotoLib)
 	{
 		ShowEmptyState();
 		return;
 	}
 
-	const TArray<FPhotoData>& Photos = CamComp->GetPhotos();
+	const TArray<FPhotoData>& Photos = PhotoLib->GetPhotos();
 	if (Photos.IsEmpty())
 	{
 		ShowEmptyState();
@@ -94,15 +89,12 @@ void UGDigicamGalleryWidget::ShowEmptyState()
 	}
 }
 
-UGCameraComponent* UGDigicamGalleryWidget::GetCameraComponent() const
+UGPhotoLibrarySubsystem* UGDigicamGalleryWidget::GetPhotoLibrary() const
 {
-	const APlayerController* PC = GetOwningPlayer();
-	if (!PC) return nullptr;
+	const UGameInstance* GI = GetGameInstance();
+	if (!GI) return nullptr;
 
-	const APawn* Pawn = PC->GetPawn();
-	if (!Pawn) return nullptr;
-
-	return Pawn->FindComponentByClass<UGCameraComponent>();
+	return GI->GetSubsystem<UGPhotoLibrarySubsystem>();
 }
 
 void UGDigicamGalleryWidget::OnPhotoTaken(const FPhotoData& Photo)

@@ -11,7 +11,6 @@ class UTextureRenderTarget2D;
 class USceneCaptureComponent2D;
 class UKismetRenderingLibrary;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhotoTaken, const FPhotoData&, Photo);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUEST_API UGCameraComponent : public UActorComponent

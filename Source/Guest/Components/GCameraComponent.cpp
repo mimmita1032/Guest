@@ -4,6 +4,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 UGCameraComponent::UGCameraComponent()
@@ -38,21 +39,25 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 
 	CaptureComponent->CaptureScene();
 
-	UTextureRenderTarget2D* PhotoRT = UKismetRenderingLibrary::CreateRenderTarget2D(
-		GetWorld(),
-		RenderTarget->SizeX,
-		RenderTarget->SizeY,
-		RenderTarget->RenderTargetFormat
-	);
+	UGameInstance* GI = GetWorld()->GetGameInstance();
 
-	if (PhotoRT)
+	// GameInstance를 outer로 지정해야 레벨 전환 후에도 RT가 GC되지 않음
+	UTextureRenderTarget2D* PhotoRT = NewObject<UTextureRenderTarget2D>(GI);
+	PhotoRT->RenderTargetFormat = RenderTarget->RenderTargetFormat;
+	PhotoRT->InitAutoFormat(RenderTarget->SizeX, RenderTarget->SizeY);
+	PhotoRT->bAutoGenerateMips = false;
+	PhotoRT->UpdateResource();
+
+	FPhotoData NewPhoto = Metadata;
+	NewPhoto.RenderTarget = PhotoRT;
+	NewPhoto.RealWorldTime = FDateTime::Now();
+
+	// 서브시스템에 저장 — 레벨 전환 후에도 유지됨
+	if (UGPhotoLibrarySubsystem* PhotoLib = GI->GetSubsystem<UGPhotoLibrarySubsystem>())
 	{
-		FPhotoData NewPhoto = Metadata;
-		NewPhoto.RenderTarget = PhotoRT;
-		NewPhoto.RealWorldTime = FDateTime::Now();
-
-		Photos.Add(NewPhoto);
-		OnPhotoTaken.Broadcast(NewPhoto);
-		G_LOG(TEXT("사진 촬영 완료: 총 %d장"), Photos.Num());
+		PhotoLib->AddPhoto(NewPhoto);
 	}
+
+	OnPhotoTaken.Broadcast(NewPhoto);
+	G_LOG(TEXT("사진 촬영 완료: %d년 %s"), NewPhoto.InGameYear, *NewPhoto.PlaceName.ToString());
 }

@@ -78,3 +78,5 @@ struct FPhotoData
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")
 	FDateTime RealWorldTime;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhotoTaken, const FPhotoData&, Photo);
