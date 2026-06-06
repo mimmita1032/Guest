@@ -94,3 +94,8 @@ Guest_WwiseProject/Originals/
 # 사운드뱅크 추적 유지
 !Guest_WwiseProject/GeneratedSoundBanks/
 !Guest_WwiseProject/GeneratedSoundBanks/**
+
+# Cesium cache
+cesium-request-cache.sqlite
+cesium-request-cache.sqlite-shm
+cesium-request-cache.sqlite-wal

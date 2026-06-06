@@ -4,6 +4,7 @@
 
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/Components/GCameraComponent.h"
 #include "Guest/Utils/GLog.h"
 
 UGDigicamComponent::UGDigicamComponent()
@@ -95,6 +96,20 @@ void UGDigicamComponent::HandleShutter()
 	}
 
 	// TODO: 스토리 연출용 이동 잠금이 필요하면 여기서 조건 추가 (bTravelLocked 등)
+
+	// 이동 전 현재 장면 촬영
+	if (AActor* Owner = GetOwner())
+	{
+		if (UGCameraComponent* CamComp = Owner->FindComponentByClass<UGCameraComponent>())
+		{
+			FPhotoData Meta;
+			Meta.InGameYear  = CurrentMatchedData.TargetYear;
+			Meta.PlaceName   = CurrentMatchedData.PlaceName;
+			Meta.AreaCode    = CurrentMatchedData.AreaCode;
+			Meta.StoryDate   = CurrentMatchedData.StoryDate;
+			CamComp->TakePhoto(Meta);
+		}
+	}
 
 	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
 	if (!SpacetimeSS) return;
