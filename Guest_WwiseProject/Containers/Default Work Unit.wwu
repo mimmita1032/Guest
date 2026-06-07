@@ -79,9 +79,21 @@
 									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{55CABBA8-20A8-4106-817D-58640B780CCE}"/>
 								</Reference>
 								<Reference Name="OutputBus">
-									<ObjectRef Name="UI_Bus" ID="{35F4501E-0F15-4825-96E6-478431737E2B}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
+									<ObjectRef Name="SFX_Bus" ID="{87D36340-9D71-4A13-8405-11BC9FA2EDBF}" WorkUnitID="{A8F87844-FEA5-4CDA-A0E7-7FCF67F59E2B}"/>
 								</Reference>
 							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="Press_button" ID="{E515E4E0-F79E-4CD0-9636-4D42C2027CE4}">
+									<Language>SFX</Language>
+									<AudioFile>Press_button.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="1041608359"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="Press_button" ID="{E515E4E0-F79E-4CD0-9636-4D42C2027CE4}" Platform="Linked"/>
+							</ActiveSourceList>
 						</Sound>
 					</ChildrenList>
 				</Folder>

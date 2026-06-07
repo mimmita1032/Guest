@@ -21,7 +21,21 @@
 				<Folder Name="Ambience" ID="{12E8A222-D691-4ED9-9AF4-8CFE14A0980A}" ShortID="421106538"/>
 				<Folder Name="SFX" ID="{98A2075C-10C5-4A00-AA4C-F4C5AAF7E55C}" ShortID="30708705"/>
 				<Folder Name="Voice" ID="{5943A56D-275D-465B-B0DC-ADACE8C695F1}" ShortID="914352766"/>
-				<Folder Name="UI" ID="{A765C4A3-4825-4FA2-834B-921CAF709F13}" ShortID="119758367"/>
+				<Folder Name="UI" ID="{A765C4A3-4825-4FA2-834B-921CAF709F13}" ShortID="119758367">
+					<ChildrenList>
+						<Event Name="UI_EX" ID="{20C56DE7-051C-4095-A891-3E8A14EEE2E5}">
+							<ChildrenList>
+								<Action Name="" ID="{B8002AE3-E5DA-4677-9C5E-C5AD1ABCA9D0}" ShortID="19376157">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="0_UI_EX" ID="{585B0225-E231-45DA-AF50-A6910393E5FF}" WorkUnitID="{4B217B06-3F17-40B5-90BA-2BC1A1721205}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+					</ChildrenList>
+				</Folder>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

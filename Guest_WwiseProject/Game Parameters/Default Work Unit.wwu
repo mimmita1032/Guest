@@ -3,7 +3,14 @@
 	<GameParameters>
 		<WorkUnit Name="Default Work Unit" ID="{D702059A-C7DA-4782-8E98-E3653EE7E52D}" PersistMode="Standalone">
 			<ChildrenList>
-				<Folder Name="Volume" ID="{699A3771-850B-4824-957C-5AA3B001845C}" ShortID="687291470"/>
+				<Folder Name="Volume" ID="{699A3771-850B-4824-957C-5AA3B001845C}" ShortID="687291470">
+					<ChildrenList>
+						<GameParameter Name="MainVolume" ID="{EC4EA801-901E-4E82-BAD0-6807351DE9E8}"/>
+						<GameParameter Name="BGMVolume" ID="{C84B0325-87C6-4FE3-A8F5-E1E13FB74D06}"/>
+						<GameParameter Name="SFXVolume" ID="{ABD6FFFC-496C-46BE-87DF-2FE224E8193A}"/>
+						<GameParameter Name="AmbienceVolume" ID="{AF32BA05-253A-4948-A9C7-5BC6F58F42B3}"/>
+					</ChildrenList>
+				</Folder>
 			</ChildrenList>
 		</WorkUnit>
 	</GameParameters>
