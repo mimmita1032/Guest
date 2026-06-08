@@ -6,7 +6,6 @@ on:
 
 jobs:
   notify-and-summarize:
-    # 실제 머지된 PR만 실행 (Close만 된 PR 제외)
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
@@ -21,218 +20,227 @@ jobs:
           echo "머지 시각: ${{ github.event.pull_request.merged_at }}"
 
       # ────────────────────────────────────────
-      # STEP 1. Claude API로 PR 내용 요약
+      # STEP 1. Claude API로 PR 내용 요약 + Notion 기록 (Python으로 통합 처리)
       # ────────────────────────────────────────
-      - name: Claude로 PR 요약 생성
-        id: claude_summary
+      - name: Claude 요약 생성 및 Notion 기록
+        id: claude_and_notion
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          MERGED_BY: ${{ github.event.pull_request.merged_by.login }}
+          MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ', ') }}
+          MILESTONE: ${{ github.event.pull_request.milestone.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-          PR_BASE="${{ github.event.pull_request.base.ref }}"
-          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
-          MERGED_AT="${{ github.event.pull_request.merged_at }}"
-          LABELS="${{ join(github.event.pull_request.labels.*.name, ', ') }}"
-          MILESTONE="${{ github.event.pull_request.milestone.title }}"
-          REPO="${{ github.repository }}"
-          PR_URL="${{ github.event.pull_request.html_url }}"
+          python3 << 'PYTHON_EOF'
+          import os, json, urllib.request, urllib.error
 
-          # Claude API 호출
-          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
-            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
-            -H "anthropic-version: 2023-06-01" \
-            -H "content-type: application/json" \
-            -d "{
-              \"model\": \"claude-sonnet-4-20250514\",
-              \"max_tokens\": 1024,
-              \"messages\": [{
-                \"role\": \"user\",
-                \"content\": \"아래 GitHub PR 정보를 한국어로 간결하게 요약해줘. 반드시 JSON 형식으로만 응답하고 다른 텍스트는 절대 포함하지 마.\n\n형식:\n{\\\"summary\\\": \\\"3줄 이내 작업 요약\\\", \\\"type\\\": \\\"feat|fix|refactor|docs|chore 중 하나\\\", \\\"impact\\\": \\\"영향 범위 한 줄\\\"}\n\nPR 제목: ${PR_TITLE}\nPR 본문: ${PR_BODY}\n브랜치: ${PR_BASE}\n라벨: ${LABELS}\"
+          # 환경변수로 안전하게 읽기
+          anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+          notion_key    = os.environ.get("NOTION_API_KEY", "")
+          notion_db_id  = os.environ.get("NOTION_DATABASE_ID", "")
+          pr_title      = os.environ.get("PR_TITLE", "")
+          pr_body       = os.environ.get("PR_BODY", "")
+          pr_number     = os.environ.get("PR_NUMBER", "")
+          pr_author     = os.environ.get("PR_AUTHOR", "")
+          pr_base       = os.environ.get("PR_BASE", "")
+          merged_by     = os.environ.get("MERGED_BY", "")
+          merged_at     = os.environ.get("MERGED_AT", "")
+          labels        = os.environ.get("LABELS", "")
+          milestone     = os.environ.get("MILESTONE", "")
+          pr_url        = os.environ.get("PR_URL", "")
+
+          # ── Claude API 호출 ──
+          print("Claude API 호출 중...")
+          claude_payload = {
+              "model": "claude-sonnet-4-20250514",
+              "max_tokens": 1024,
+              "messages": [{
+                  "role": "user",
+                  "content": (
+                      "아래 GitHub PR 정보를 한국어로 간결하게 요약해줘. "
+                      "반드시 JSON 형식으로만 응답하고 다른 텍스트는 절대 포함하지 마.\n\n"
+                      "형식:\n"
+                      '{"summary": "3줄 이내 작업 요약", "type": "feat|fix|refactor|docs|chore 중 하나", "impact": "영향 범위 한 줄"}\n\n'
+                      f"PR 제목: {pr_title}\n"
+                      f"PR 본문: {pr_body}\n"
+                      f"브랜치: {pr_base}\n"
+                      f"라벨: {labels}"
+                  )
               }]
-            }")
+          }
 
-          # 응답에서 JSON 파싱
-          SUMMARY=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          text = data['content'][0]['text']
-          # 마크다운 코드블록 제거
-          text = text.replace('\`\`\`json', '').replace('\`\`\`', '').strip()
-          parsed = json.loads(text)
-          print(parsed['summary'])
-          " 2>/dev/null || echo "요약 생성 실패")
+          summary = "요약 생성 실패"
+          pr_type = "chore"
+          impact  = "-"
 
-          TYPE=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          text = data['content'][0]['text'].replace('\`\`\`json','').replace('\`\`\`','').strip()
-          parsed = json.loads(text)
-          print(parsed['type'])
-          " 2>/dev/null || echo "chore")
+          try:
+              req = urllib.request.Request(
+                  "https://api.anthropic.com/v1/messages",
+                  data=json.dumps(claude_payload).encode(),
+                  headers={
+                      "x-api-key": anthropic_key,
+                      "anthropic-version": "2023-06-01",
+                      "content-type": "application/json"
+                  }
+              )
+              with urllib.request.urlopen(req) as resp:
+                  claude_data = json.loads(resp.read())
+              text = claude_data["content"][0]["text"]
+              text = text.replace("```json", "").replace("```", "").strip()
+              parsed = json.loads(text)
+              summary = parsed.get("summary", summary)
+              pr_type = parsed.get("type", pr_type)
+              impact  = parsed.get("impact", impact)
+              print(f"Claude 요약 완료: {summary}")
+          except Exception as e:
+              print(f"Claude API 오류: {e}")
 
-          IMPACT=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          text = data['content'][0]['text'].replace('\`\`\`json','').replace('\`\`\`','').strip()
-          parsed = json.loads(text)
-          print(parsed['impact'])
-          " 2>/dev/null || echo "-")
+          # ── 타입별 이모지 ──
+          emoji_map = {"feat": "✨", "fix": "🐛", "refactor": "♻️", "docs": "📝", "chore": "🔧"}
+          emoji = emoji_map.get(pr_type, "🔀")
 
-          # 이후 step에서 사용할 수 있도록 output 저장
-          echo "summary=${SUMMARY}" >> $GITHUB_OUTPUT
-          echo "type=${TYPE}" >> $GITHUB_OUTPUT
-          echo "impact=${IMPACT}" >> $GITHUB_OUTPUT
-          echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
-          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "pr_author=${PR_AUTHOR}" >> $GITHUB_OUTPUT
-          echo "merged_by=${MERGED_BY}" >> $GITHUB_OUTPUT
-          echo "merged_at=${MERGED_AT}" >> $GITHUB_OUTPUT
-          echo "labels=${LABELS}" >> $GITHUB_OUTPUT
-          echo "milestone=${MILESTONE}" >> $GITHUB_OUTPUT
-          echo "pr_url=${PR_URL}" >> $GITHUB_OUTPUT
-
-      # ────────────────────────────────────────
-      # STEP 2. Notion DB에 페이지 생성
-      # ────────────────────────────────────────
-      - name: Notion에 PR 기록 추가
-        run: |
-          SUMMARY="${{ steps.claude_summary.outputs.summary }}"
-          TYPE="${{ steps.claude_summary.outputs.type }}"
-          IMPACT="${{ steps.claude_summary.outputs.impact }}"
-          PR_TITLE="${{ steps.claude_summary.outputs.pr_title }}"
-          PR_NUMBER="${{ steps.claude_summary.outputs.pr_number }}"
-          PR_AUTHOR="${{ steps.claude_summary.outputs.pr_author }}"
-          MERGED_BY="${{ steps.claude_summary.outputs.merged_by }}"
-          MERGED_AT="${{ steps.claude_summary.outputs.merged_at }}"
-          LABELS="${{ steps.claude_summary.outputs.labels }}"
-          MILESTONE="${{ steps.claude_summary.outputs.milestone }}"
-          PR_URL="${{ steps.claude_summary.outputs.pr_url }}"
-
-          # 타입별 이모지 매핑
-          case "$TYPE" in
-            feat)     EMOJI="✨" ;;
-            fix)      EMOJI="🐛" ;;
-            refactor) EMOJI="♻️" ;;
-            docs)     EMOJI="📝" ;;
-            chore)    EMOJI="🔧" ;;
-            *)        EMOJI="🔀" ;;
-          esac
-
-          curl -s -X POST https://api.notion.com/v1/pages \
-            -H "Authorization: Bearer ${{ secrets.NOTION_API_KEY }}" \
-            -H "Notion-Version: 2022-06-28" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"parent\": { \"database_id\": \"${{ secrets.NOTION_DATABASE_ID }}\" },
-              \"icon\": { \"emoji\": \"${EMOJI}\" },
-              \"properties\": {
-                \"이름\": {
-                  \"title\": [{ \"text\": { \"content\": \"[#${PR_NUMBER}] ${PR_TITLE}\" } }]
-                },
-                \"타입\": {
-                  \"select\": { \"name\": \"${TYPE}\" }
-                },
-                \"마일스톤\": {
-                  \"rich_text\": [{ \"text\": { \"content\": \"${MILESTONE}\" } }]
-                },
-                \"작성자\": {
-                  \"rich_text\": [{ \"text\": { \"content\": \"${PR_AUTHOR}\" } }]
-                },
-                \"머지한 사람\": {
-                  \"rich_text\": [{ \"text\": { \"content\": \"${MERGED_BY}\" } }]
-                },
-                \"머지 일시\": {
-                  \"date\": { \"start\": \"${MERGED_AT}\" }
-                },
-                \"라벨\": {
-                  \"rich_text\": [{ \"text\": { \"content\": \"${LABELS}\" } }]
-                },
-                \"PR 링크\": {
-                  \"url\": \"${PR_URL}\"
-                },
-                \"상태\": {
-                  \"select\": { \"name\": \"머지 완료\" }
-                }
+          # ── Notion API 호출 ──
+          print("Notion 페이지 생성 중...")
+          notion_payload = {
+              "parent": {"database_id": notion_db_id},
+              "icon": {"emoji": emoji},
+              "properties": {
+                  "이름":      {"title":     [{"text": {"content": f"[#{pr_number}] {pr_title}"}}]},
+                  "타입":      {"select":    {"name": pr_type}},
+                  "마일스톤":  {"rich_text": [{"text": {"content": milestone}}]},
+                  "작성자":    {"rich_text": [{"text": {"content": pr_author}}]},
+                  "머지한 사람": {"rich_text": [{"text": {"content": merged_by}}]},
+                  "머지 일시": {"date":      {"start": merged_at}},
+                  "라벨":      {"rich_text": [{"text": {"content": labels}}]},
+                  "PR 링크":   {"url":       pr_url},
+                  "상태":      {"select":    {"name": "머지 완료"}}
               },
-              \"children\": [
-                {
-                  \"object\": \"block\",
-                  \"type\": \"heading_2\",
-                  \"heading_2\": {
-                    \"rich_text\": [{ \"text\": { \"content\": \"📋 Claude 요약\" } }]
+              "children": [
+                  {
+                      "object": "block", "type": "heading_2",
+                      "heading_2": {"rich_text": [{"text": {"content": "📋 Claude 요약"}}]}
+                  },
+                  {
+                      "object": "block", "type": "paragraph",
+                      "paragraph": {"rich_text": [{"text": {"content": summary}}]}
+                  },
+                  {
+                      "object": "block", "type": "heading_2",
+                      "heading_2": {"rich_text": [{"text": {"content": "🎯 영향 범위"}}]}
+                  },
+                  {
+                      "object": "block", "type": "paragraph",
+                      "paragraph": {"rich_text": [{"text": {"content": impact}}]}
                   }
-                },
-                {
-                  \"object\": \"block\",
-                  \"type\": \"paragraph\",
-                  \"paragraph\": {
-                    \"rich_text\": [{ \"text\": { \"content\": \"${SUMMARY}\" } }]
-                  }
-                },
-                {
-                  \"object\": \"block\",
-                  \"type\": \"heading_2\",
-                  \"heading_2\": {
-                    \"rich_text\": [{ \"text\": { \"content\": \"🎯 영향 범위\" } }]
-                  }
-                },
-                {
-                  \"object\": \"block\",
-                  \"type\": \"paragraph\",
-                  \"paragraph\": {
-                    \"rich_text\": [{ \"text\": { \"content\": \"${IMPACT}\" } }]
-                  }
-                }
               ]
-            }"
+          }
+
+          try:
+              req = urllib.request.Request(
+                  "https://api.notion.com/v1/pages",
+                  data=json.dumps(notion_payload).encode(),
+                  headers={
+                      "Authorization": f"Bearer {notion_key}",
+                      "Notion-Version": "2022-06-28",
+                      "Content-Type": "application/json"
+                  }
+              )
+              with urllib.request.urlopen(req) as resp:
+                  notion_data = json.loads(resp.read())
+              print(f"✅ Notion 페이지 생성 완료: {notion_data.get('url', '')}")
+          except urllib.error.HTTPError as e:
+              print(f"Notion API 오류 ({e.code}): {e.read().decode()}")
+          except Exception as e:
+              print(f"Notion 오류: {e}")
+
+          # GITHUB_OUTPUT에 저장
+          with open(os.environ.get("GITHUB_OUTPUT", "/dev/null"), "a") as f:
+              f.write(f"pr_number={pr_number}\n")
+
+          PYTHON_EOF
 
       # ────────────────────────────────────────
-      # STEP 3. 마일스톤 진행률 확인 및 코멘트
+      # STEP 2. 마일스톤 진행률 확인 및 코멘트
       # ────────────────────────────────────────
       - name: 마일스톤 진행률 업데이트
         if: github.event.pull_request.milestone != null
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MILESTONE_NUMBER: ${{ github.event.pull_request.milestone.number }}
+          MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          MILESTONE_NUMBER="${{ github.event.pull_request.milestone.number }}"
-          MILESTONE_TITLE="${{ github.event.pull_request.milestone.title }}"
-          REPO="${{ github.repository }}"
+          python3 << 'PYTHON_EOF'
+          import os, json, urllib.request, urllib.error
 
-          # 마일스톤 상세 정보 가져오기 (open/closed 이슈 수)
-          MILESTONE_DATA=$(curl -s \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${REPO}/milestones/${MILESTONE_NUMBER}")
+          token            = os.environ.get("GITHUB_TOKEN", "")
+          milestone_number = os.environ.get("MILESTONE_NUMBER", "")
+          milestone_title  = os.environ.get("MILESTONE_TITLE", "")
+          repo             = os.environ.get("REPO", "")
+          pr_number        = os.environ.get("PR_NUMBER", "")
 
-          OPEN_ISSUES=$(echo "$MILESTONE_DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['open_issues'])")
-          CLOSED_ISSUES=$(echo "$MILESTONE_DATA" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['closed_issues'])")
-          TOTAL=$((OPEN_ISSUES + CLOSED_ISSUES))
+          headers = {
+              "Authorization": f"token {token}",
+              "Accept": "application/vnd.github.v3+json"
+          }
 
-          if [ "$TOTAL" -gt 0 ]; then
-            PROGRESS=$((CLOSED_ISSUES * 100 / TOTAL))
-          else
-            PROGRESS=0
-          fi
+          # 마일스톤 정보 가져오기
+          try:
+              req = urllib.request.Request(
+                  f"https://api.github.com/repos/{repo}/milestones/{milestone_number}",
+                  headers=headers
+              )
+              with urllib.request.urlopen(req) as resp:
+                  data = json.loads(resp.read())
 
-          # 진행률 바 생성
-          FILLED=$((PROGRESS / 10))
-          EMPTY=$((10 - FILLED))
-          BAR=$(python3 -c "print('█' * ${FILLED} + '░' * ${EMPTY})")
+              open_issues   = data["open_issues"]
+              closed_issues = data["closed_issues"]
+              total         = open_issues + closed_issues
+              progress      = (closed_issues * 100 // total) if total > 0 else 0
 
-          # PR에 마일스톤 진행률 코멘트 작성
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${REPO}/issues/${{ github.event.pull_request.number }}/comments" \
-            -d "{
-              \"body\": \"## 🎯 마일스톤 진행률 업데이트\n\n**${MILESTONE_TITLE}**\n\n\`${BAR}\` **${PROGRESS}%**\n\n- ✅ 완료: ${CLOSED_ISSUES}개\n- 🔄 진행중: ${OPEN_ISSUES}개\n- 📊 전체: ${TOTAL}개\n\n---\n*이 코멘트는 자동으로 생성되었습니다.*\"
-            }"
+              filled = progress // 10
+              bar    = "█" * filled + "░" * (10 - filled)
 
-          # 마일스톤 100% 완료 시 자동 Close
-          if [ "$PROGRESS" -eq 100 ]; then
-            curl -s -X PATCH \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${REPO}/milestones/${MILESTONE_NUMBER}" \
-              -d "{\"state\": \"closed\"}"
-            echo "✅ 마일스톤 '${MILESTONE_TITLE}' 100% 완료 → 자동 Close"
-          fi
+              comment_body = (
+                  f"## 🎯 마일스톤 진행률 업데이트\n\n"
+                  f"**{milestone_title}**\n\n"
+                  f"`{bar}` **{progress}%**\n\n"
+                  f"- ✅ 완료: {closed_issues}개\n"
+                  f"- 🔄 진행중: {open_issues}개\n"
+                  f"- 📊 전체: {total}개\n\n"
+                  f"---\n*이 코멘트는 자동으로 생성되었습니다.*"
+              )
+
+              # PR에 코멘트 작성
+              req = urllib.request.Request(
+                  f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments",
+                  data=json.dumps({"body": comment_body}).encode(),
+                  headers={**headers, "Content-Type": "application/json"}
+              )
+              with urllib.request.urlopen(req) as resp:
+                  print(f"✅ 마일스톤 코멘트 작성 완료 ({progress}%)")
+
+              # 100% 완료 시 마일스톤 Close
+              if progress == 100:
+                  req = urllib.request.Request(
+                      f"https://api.github.com/repos/{repo}/milestones/{milestone_number}",
+                      data=json.dumps({"state": "closed"}).encode(),
+                      method="PATCH",
+                      headers={**headers, "Content-Type": "application/json"}
+                  )
+                  with urllib.request.urlopen(req):
+                      print(f"✅ 마일스톤 '{milestone_title}' 100% 완료 → 자동 Close")
+
+          except Exception as e:
+              print(f"마일스톤 오류: {e}")
+
+          PYTHON_EOF
