@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 // test: PR Actions 연동 테스트 2
 
+
 #include "GInventoryComponent.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/WorldActor/GItemPickup.h"
