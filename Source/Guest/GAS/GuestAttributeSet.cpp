@@ -9,17 +9,28 @@ void UGuestAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
+	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+	{
+		const float IncomingDamage = GetDamage();
+		SetDamage(0.f);
+
+		if (IncomingDamage > 0.f)
+		{
+			SetCurrentHealth(FMath::Clamp(GetCurrentHealth() - IncomingDamage, 0.f, GetMaxHealth()));
+
+			if (GetCurrentHealth() <= 0.f)
+			{
+				ApplyDeath();
+			}
+		}
+	}
+	else if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
 
 		if (GetCurrentHealth() <= 0.f)
 		{
-			UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
-			if (ASC && !ASC->HasMatchingGameplayTag(GuestGameplayTags::TAG_State_Dead))
-			{
-				ASC->AddLooseGameplayTag(GuestGameplayTags::TAG_State_Dead);
-			}
+			ApplyDeath();
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
@@ -35,5 +46,16 @@ void UGuestAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	{
 		SetMaxBattery(FMath::Max(0.f, GetMaxBattery()));
 		SetCurrentBattery(FMath::Clamp(GetCurrentBattery(), 0.f, GetMaxBattery()));
+	}
+}
+
+void UGuestAttributeSet::ApplyDeath()
+{
+	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	if (!ASC) return;
+
+	if (!ASC->HasMatchingGameplayTag(GuestGameplayTags::TAG_State_Dead))
+	{
+		ASC->AddLooseGameplayTag(GuestGameplayTags::TAG_State_Dead);
 	}
 }
