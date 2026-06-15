@@ -1,6 +1,6 @@
 Event	ID	Name			Wwise Object Path	Notes
-	3824618851	UI_PressButton			\Default Work Unit\UI\UI_PressButton	
+	1969534457	UI_EX			\Default Work Unit\UI\UI_EX	
 
 In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
-	792062620	UI_PressButton	.cache\34\{34F317AC-EE20-1418-ED13-43E3890775D6}.wem		\Containers\Default Work Unit\UI\UI_PressButton		47492
+	1041608359	0_UI_EX	.cache\34\{34F317AC-EE20-1418-ED13-43E3890775D6}.wem		\Containers\Default Work Unit\UI\0_UI_EX		47492
 

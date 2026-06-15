@@ -168,7 +168,10 @@ FGuestUIInputConfig UGuestUISubsystem::ResolveInputConfig(const FGameplayTag& St
     {
         return *Found;
     }
-
+    // [추가된 안전망] 어느 태그에서 롤백이 실패했는지 명확히 로그로 출력합니다.
+    UE_LOG(LogTemp, Warning, TEXT("[GuestUI] 경고: '%s' 스택의 InputConfig를 찾을 수 없습니다. 기본값(GameOnly)으로 폴백되어 마우스가 사라질 수 있습니다."), 
+        StackTag.IsValid() ? *StackTag.ToString() : TEXT("유효하지 않은 태그 (히스토리가 비어있음)"));
+    
     return FGuestUIInputConfig{};
 }
 
