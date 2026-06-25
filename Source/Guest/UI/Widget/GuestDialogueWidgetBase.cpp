@@ -60,9 +60,19 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 			Box_Choices->SetVisibility(ESlateVisibility::Collapsed);
 		}
 		if (Btn_Next) Btn_Next->SetVisibility(ESlateVisibility::Visible);
-		if (Text_PlayerResponse && !Node->PlayerResponseText.IsEmpty())
+		if (Text_PlayerResponse)
 		{
-			Text_PlayerResponse->SetText(Node->PlayerResponseText);
+			if (!Node->PlayerResponseText.IsEmpty())
+			{
+				Text_PlayerResponse->SetText(Node->PlayerResponseText);
+			}
+			else
+			{
+				const FText DefaultText = Node->NextNodeID.IsNone()
+					? FText::FromString(TEXT("대화 종료"))
+					: FText::FromString(TEXT("계속"));
+				Text_PlayerResponse->SetText(DefaultText);
+			}
 		}
 	}
 }
