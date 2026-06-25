@@ -35,6 +35,16 @@ struct FNPCDialogueData
     TArray<FNPCDialogueLine> Lines;
 };
 
+/** 바 모드 대화 데이터. */
+USTRUCT(BlueprintType)
+struct FBarDialogueData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FNPCDialogueData DialogueData;
+};
+
 /** 확인 모달 버튼 결과. */
 UENUM(BlueprintType)
 enum class EGuestConfirmResult : uint8
