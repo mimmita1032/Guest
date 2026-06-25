@@ -13,8 +13,9 @@ class UCommonActivatableWidget;
 class UCommonActivatableWidgetContainerBase;
 class UInputMappingContext;
 class APlayerController;
+class UGDialogueDataAsset;
 
-/**  스타일: 위젯이 푸시되었을 때 알림을 주는 델리게이트 */
+/** 위젯이 푸시되었을 때 알림을 주는 델리게이트 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableWidget*, Widget);
 
 /**
@@ -24,83 +25,86 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableW
 UCLASS(BlueprintType)
 class GUEST_API UGuestUISubsystem : public UGameInstanceSubsystem
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
 
-    //~ Begin USubsystem Interface
-    virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
-    virtual void Deinitialize() override;
-    //~ End USubsystem Interface
+	//~ Begin USubsystem Interface
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+	virtual void Deinitialize() override;
+	//~ End USubsystem Interface
 
-    // ── Stack 관리 ──
-    void RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetContainerBase* Stack);
+	// ── Stack 관리 ──
+	void RegisterStack(FGameplayTag StackTag, UCommonActivatableWidgetContainerBase* Stack);
 
-    // ── 입력 Config 등록 ──
-    void RegisterInputConfig(const FGameplayTag& StackTag, const FGuestUIInputConfig& Config);
+	// ── 입력 Config 등록 ──
+	void RegisterInputConfig(const FGameplayTag& StackTag, const FGuestUIInputConfig& Config);
 
-    // ── 위젯 Push / Pop ──
-    UFUNCTION(BlueprintCallable, Category = "Guest|UI", meta = (DisplayName = "Push Widget"))
-    void PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag);
+	// ── 위젯 Push / Pop ──
+	UFUNCTION(BlueprintCallable, Category = "Guest|UI", meta = (DisplayName = "Push Widget"))
+	void PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag);
 
-    UFUNCTION(BlueprintCallable, Category = "Guest|UI")
-    void PopWidget(FGameplayTag StackTag);
-    
-    /** NPC 대화 위젯을 GameMenu 스택에 열고 데이터를 전달한다. (Skyrim 스타일) */
-    UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
-    void OpenNPCDialogue(const FNPCDialogueData& Data);
+	UFUNCTION(BlueprintCallable, Category = "Guest|UI")
+	void PopWidget(FGameplayTag StackTag);
 
-    /** 위젯이 활성화된 직후 대화 데이터를 가져갈 때 사용. */
-    const FNPCDialogueData& GetPendingDialogueData() const { return PendingDialogueData; }
+	/**
+	 * 바 모드 전체화면 대화를 BarDialogue 스택에 열고 세션을 시작한다.
+	 * 위젯 활성화 시 GetPendingDialogueAsset()으로 데이터를 가져간다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
+	void OpenBarDialogue(UGDialogueDataAsset* DialogueAsset, AActor* NPCActor = nullptr);
 
-    /** 바 모드 전체화면 대화 위젯을 BarDialogue 스택에 열고 데이터를 전달한다. (VA-11 HALL-A 스타일) */
-    UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
-    void OpenBarDialogue(const FBarDialogueData& Data, AActor* DialogueActor = nullptr);
+	/**
+	 * 스카이림 스타일 NPC 대화를 GameMenu 스택에 열고 세션을 시작한다.
+	 * 위젯 활성화 시 GetPendingDialogueAsset()으로 데이터를 가져간다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
+	void OpenNPCDialogue(UGDialogueDataAsset* DialogueAsset);
 
-    /** 바 모드 위젯이 활성화된 직후 데이터를 가져갈 때 사용. */
-    const FBarDialogueData& GetPendingBarDialogueData() const { return PendingBarDialogueData; }
+	/** 위젯 NativeOnActivated에서 대화 에셋을 가져올 때 사용. */
+	UGDialogueDataAsset* GetPendingDialogueAsset() const { return PendingDialogueAsset.Get(); }
 
-    /** 현재 대화 중인 바 NPC 액터 반환. 카메라 블렌드에 사용. */
-    AActor* GetPendingBarDialogueActor() const { return PendingBarDialogueActor.Get(); }
+	/** 현재 대화 중인 NPC 액터 반환. 카메라 블렌드에 사용. */
+	AActor* GetPendingDialogueNPCActor() const { return PendingDialogueNPCActor.Get(); }
 
-    /** 전역 알림용 델리게이트 */
-    UPROPERTY(BlueprintAssignable, Category = "UI")
-    FOnWidgetPushed OnWidgetPushed;
+	/** 전역 알림용 델리게이트 */
+	UPROPERTY(BlueprintAssignable, Category = "UI")
+	FOnWidgetPushed OnWidgetPushed;
 
-    UFUNCTION(BlueprintPure, Category = "Guest|UI")
-    EGuestInputMode GetCurrentInputMode() const { return CurrentInputMode; }
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	EGuestInputMode GetCurrentInputMode() const { return CurrentInputMode; }
 
-    UFUNCTION(BlueprintPure, Category = "Guest|UI")
-    FGameplayTag GetCurrentStackTag() const { return CurrentStackTag; }
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	FGameplayTag GetCurrentStackTag() const { return CurrentStackTag; }
 
 private:
 
-    // ── Stack 데이터 ──
-    UPROPERTY()
-    TMap<FGameplayTag, UCommonActivatableWidgetContainerBase*> StackMap;
+	// ── Stack 데이터 ──
+	UPROPERTY()
+	TMap<FGameplayTag, UCommonActivatableWidgetContainerBase*> StackMap;
 
-    /** 활성화된 스택의 히스토리. */
-    UPROPERTY()
-    TArray<FGameplayTag> ActiveStackHistory;
+	UPROPERTY()
+	TArray<FGameplayTag> ActiveStackHistory;
 
-    // ── 입력 데이터 ──
-    TMap<FGameplayTag, FGuestUIInputConfig> InputConfigMap;
-    FGameplayTag CurrentStackTag;
-    EGuestInputMode CurrentInputMode = EGuestInputMode::GameOnly;
+	// ── 입력 데이터 ──
+	TMap<FGameplayTag, FGuestUIInputConfig> InputConfigMap;
+	FGameplayTag CurrentStackTag;
+	EGuestInputMode CurrentInputMode = EGuestInputMode::GameOnly;
 
-    UPROPERTY()
-    TObjectPtr<UInputMappingContext> CurrentIMC = nullptr;
+	UPROPERTY()
+	TObjectPtr<UInputMappingContext> CurrentIMC = nullptr;
 
-    // ── 입력 내부 헬퍼 ──
-    FGuestUIInputConfig ResolveInputConfig(const FGameplayTag& StackTag) const;
-    void ApplyInputConfig(const FGuestUIInputConfig& Config);
-    void ApplyInputMode(EGuestInputMode InputMode, APlayerController* PC);
-    void SwapIMC(UInputMappingContext* NewIMC, int32 Priority, APlayerController* PC);
-    APlayerController* GetLocalPlayerController() const;
+	// ── 입력 내부 헬퍼 ──
+	FGuestUIInputConfig ResolveInputConfig(const FGameplayTag& StackTag) const;
+	void ApplyInputConfig(const FGuestUIInputConfig& Config);
+	void ApplyInputMode(EGuestInputMode InputMode, APlayerController* PC);
+	void SwapIMC(UInputMappingContext* NewIMC, int32 Priority, APlayerController* PC);
+	APlayerController* GetLocalPlayerController() const;
 
-    FNPCDialogueData PendingDialogueData;
-    FBarDialogueData PendingBarDialogueData;
+	// ── 대화 세션 ──
+	UPROPERTY()
+	TObjectPtr<UGDialogueDataAsset> PendingDialogueAsset;
 
-    UPROPERTY()
-    TWeakObjectPtr<AActor> PendingBarDialogueActor;
+	UPROPERTY()
+	TWeakObjectPtr<AActor> PendingDialogueNPCActor;
 };

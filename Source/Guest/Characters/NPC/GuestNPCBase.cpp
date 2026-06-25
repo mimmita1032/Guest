@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Guest/AI/Controllers/GuestAIController.h"
 #include "Guest/Data/DataAssets/GNPCScheduleDataAsset.h"
-#include "Guest/Data/DataAssets/GNPCDialogueDataAsset.h"
+#include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Utils/GLog.h"
@@ -43,12 +43,12 @@ void AGuestNPCBase::BeginPlay()
 
 void AGuestNPCBase::Interact_Implementation(AActor* Interactor)
 {
-	if (!DialogueDataAsset) return;
+	if (!DialogueAsset) return;
 
 	UGuestUISubsystem* UISys = GetGameInstance()->GetSubsystem<UGuestUISubsystem>();
 	if (!UISys) return;
 
-	UISys->OpenNPCDialogue(DialogueDataAsset->DialogueData);
+	UISys->OpenNPCDialogue(DialogueAsset);
 }
 
 void AGuestNPCBase::HandleTimeChanged(float CurrentHour)

@@ -3,43 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Guest/UI/Base/GuestActivatableBase.h"
-#include "Guest/UI/Types/GuestUITypes.h"
+#include "Guest/UI/Widget/GuestDialogueWidgetBase.h"
 #include "GuestNPCDialogueWidget.generated.h"
 
-class UCommonTextBlock;
-class UCommonButtonBase;
-
 /**
- * NPC 대화 위젯.
- * UGuestUISubsystem::OpenNPCDialogue() 호출 시 GameMenu 스택에 Push된다.
- * NativeOnActivated()에서 Subsystem의 PendingDialogueData를 읽어 대화를 시작한다.
+ * 스카이림 스타일 NPC 대화 위젯.
+ * AGuestNPCBase::Interact_Implementation에서 열린다.
+ * GameMenu 스택에 Push되며 카메라 전환 없이 인게임 HUD 위에 표시된다.
+ *
+ * WBP 구성은 GuestDialogueWidgetBase 주석 참고.
  */
 UCLASS(Abstract)
-class GUEST_API UGuestNPCDialogueWidget : public UGuestActivatableBase
+class GUEST_API UGuestNPCDialogueWidget : public UGuestDialogueWidgetBase
 {
 	GENERATED_BODY()
 
 protected:
-	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
-
-private:
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_SpeakerName;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Text_DialogueLine;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonButtonBase> Btn_Next;
-
-	void ShowCurrentLine();
-
-	UFUNCTION()
-	void OnNextClicked();
-
-	FNPCDialogueData CurrentDialogueData;
-	int32 CurrentLineIndex = 0;
 };

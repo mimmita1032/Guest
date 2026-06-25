@@ -3,6 +3,7 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -35,6 +36,8 @@ void UGuestUISubsystem::Deinitialize()
     InputConfigMap.Empty();
     ActiveStackHistory.Empty();
     CurrentIMC = nullptr;
+    PendingDialogueAsset = nullptr;
+    PendingDialogueNPCActor = nullptr;
     Super::Deinitialize();
 }
 
@@ -107,18 +110,19 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
     );
 }
 
-void UGuestUISubsystem::OpenBarDialogue(const FBarDialogueData& Data, AActor* DialogueActor)
+void UGuestUISubsystem::OpenBarDialogue(UGDialogueDataAsset* DialogueAsset, AActor* NPCActor)
 {
-    if (Data.DialogueData.Lines.IsEmpty()) return;
-    PendingBarDialogueData = Data;
-    PendingBarDialogueActor = DialogueActor;
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = NPCActor;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_BarDialogue, GuestGameplayTags::TAG_Widget_BarDialogue);
 }
 
-void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
+void UGuestUISubsystem::OpenNPCDialogue(UGDialogueDataAsset* DialogueAsset)
 {
-    if (Data.Lines.IsEmpty()) return;
-    PendingDialogueData = Data;
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = nullptr;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
 }
 
