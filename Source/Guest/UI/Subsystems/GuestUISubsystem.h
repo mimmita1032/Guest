@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableW
  * UGuestUISubsystem
  * Guest 게임의 중앙 UI + 입력 통합 관리자.
  */
-UCLASS()
+UCLASS(BlueprintType)
 class GUEST_API UGuestUISubsystem : public UGameInstanceSubsystem
 {
     GENERATED_BODY()
@@ -46,12 +46,19 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Guest|UI")
     void PopWidget(FGameplayTag StackTag);
     
-    /** NPC 대화 위젯을 GameMenu 스택에 열고 데이터를 전달한다. */
+    /** NPC 대화 위젯을 GameMenu 스택에 열고 데이터를 전달한다. (Skyrim 스타일) */
     UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
     void OpenNPCDialogue(const FNPCDialogueData& Data);
 
     /** 위젯이 활성화된 직후 대화 데이터를 가져갈 때 사용. */
     const FNPCDialogueData& GetPendingDialogueData() const { return PendingDialogueData; }
+
+    /** 바 모드 전체화면 대화 위젯을 BarDialogue 스택에 열고 데이터를 전달한다. (VA-11 HALL-A 스타일) */
+    UFUNCTION(BlueprintCallable, Category = "UI|Dialogue")
+    void OpenBarDialogue(const FBarDialogueData& Data);
+
+    /** 바 모드 위젯이 활성화된 직후 데이터를 가져갈 때 사용. */
+    const FBarDialogueData& GetPendingBarDialogueData() const { return PendingBarDialogueData; }
 
     /** 전역 알림용 델리게이트 */
     UPROPERTY(BlueprintAssignable, Category = "UI")
@@ -89,4 +96,5 @@ private:
     APlayerController* GetLocalPlayerController() const;
 
     FNPCDialogueData PendingDialogueData;
+    FBarDialogueData PendingBarDialogueData;
 };

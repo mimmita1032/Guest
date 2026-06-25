@@ -107,6 +107,13 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
     );
 }
 
+void UGuestUISubsystem::OpenBarDialogue(const FBarDialogueData& Data)
+{
+    if (Data.DialogueData.Lines.IsEmpty()) return;
+    PendingBarDialogueData = Data;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_BarDialogue, GuestGameplayTags::TAG_Widget_BarDialogue);
+}
+
 void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
 {
     if (Data.Lines.IsEmpty()) return;
