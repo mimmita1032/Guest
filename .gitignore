@@ -99,3 +99,11 @@ Guest_WwiseProject/Originals/
 cesium-request-cache.sqlite
 cesium-request-cache.sqlite-shm
 cesium-request-cache.sqlite-wal
+
+# =====================================
+# 로컬 작업 스크립트 (Notion 등)
+# =====================================
+*.py
+children.json
+db_check.json
+notion_result.json
