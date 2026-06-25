@@ -55,6 +55,10 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonButtonBase> Btn_Next;
 
+	/** Btn_Next 내부 텍스트. PlayerResponseText를 여기에 표시한다. */
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> Text_PlayerResponse;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UVerticalBox> Box_Choices;
 

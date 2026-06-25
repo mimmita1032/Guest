@@ -60,6 +60,10 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 			Box_Choices->SetVisibility(ESlateVisibility::Collapsed);
 		}
 		if (Btn_Next) Btn_Next->SetVisibility(ESlateVisibility::Visible);
+		if (Text_PlayerResponse && !Node->PlayerResponseText.IsEmpty())
+		{
+			Text_PlayerResponse->SetText(Node->PlayerResponseText);
+		}
 	}
 }
 

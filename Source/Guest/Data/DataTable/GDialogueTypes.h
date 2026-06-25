@@ -50,6 +50,13 @@ struct FDialogueNode : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
 	TArray<FDialogueChoice> Choices;
 
+	/**
+	 * Choices가 없을 때 Btn_Next에 표시할 플레이어 응답 텍스트.
+	 * 비어있으면 버튼 텍스트를 변경하지 않는다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+	FText PlayerResponseText;
+
 	/** 이 노드 도달 시 퀘스트 서브시스템에 전달할 이벤트 ID. 비어있으면 없음. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue|Quest")
 	FName QuestEventID;
