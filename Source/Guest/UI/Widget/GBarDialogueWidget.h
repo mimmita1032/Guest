@@ -9,6 +9,7 @@
 
 class UCommonTextBlock;
 class UCommonButtonBase;
+class ABarCustomerNPC;
 
 /**
  * 바 모드 전체화면 대화 위젯 (VA-11 HALL-A 스타일).
@@ -42,6 +43,7 @@ private:
     TObjectPtr<UCommonButtonBase> Btn_Next;
 
     void ShowCurrentLine();
+    void BlendToNPCCamera(ABarCustomerNPC* NPC);
 
     UFUNCTION()
     void OnNextClicked();

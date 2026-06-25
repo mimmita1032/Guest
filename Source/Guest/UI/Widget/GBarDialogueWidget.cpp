@@ -2,8 +2,10 @@
 
 #include "Guest/UI/Widget/GBarDialogueWidget.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/Characters/NPC/BarCustomerNPC.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
+#include "GameFramework/PlayerController.h"
 
 void UGBarDialogueWidget::NativeOnInitialized()
 {
@@ -19,20 +21,44 @@ void UGBarDialogueWidget::NativeOnActivated()
 {
     Super::NativeOnActivated();
 
-    if (UGuestUISubsystem* UISys = GetUISubsystem())
-    {
-        CurrentBarData = UISys->GetPendingBarDialogueData();
-    }
+    UGuestUISubsystem* UISys = GetUISubsystem();
+    if (!UISys) return;
 
+    CurrentBarData = UISys->GetPendingBarDialogueData();
     CurrentLineIndex = 0;
     ShowCurrentLine();
+
+    if (ABarCustomerNPC* NPC = Cast<ABarCustomerNPC>(UISys->GetPendingBarDialogueActor()))
+    {
+        BlendToNPCCamera(NPC);
+    }
 }
 
 void UGBarDialogueWidget::NativeOnDeactivated()
 {
     Super::NativeOnDeactivated();
+
+    UGuestUISubsystem* UISys = GetUISubsystem();
+    if (UISys)
+    {
+        if (ABarCustomerNPC* NPC = Cast<ABarCustomerNPC>(UISys->GetPendingBarDialogueActor()))
+        {
+            NPC->EndBarDialogue();
+        }
+    }
+
     CurrentBarData = FBarDialogueData{};
     CurrentLineIndex = 0;
+}
+
+void UGBarDialogueWidget::BlendToNPCCamera(ABarCustomerNPC* NPC)
+{
+    if (!NPC) return;
+
+    APlayerController* PC = GetOwningPlayer();
+    if (!PC) return;
+
+    PC->SetViewTargetWithBlend(NPC, 0.5f);
 }
 
 void UGBarDialogueWidget::ShowCurrentLine()
