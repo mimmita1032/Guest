@@ -47,6 +47,30 @@ void UGuestAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 		SetMaxBattery(FMath::Max(0.f, GetMaxBattery()));
 		SetCurrentBattery(FMath::Clamp(GetCurrentBattery(), 0.f, GetMaxBattery()));
 	}
+	else if (Data.EvaluatedData.Attribute == GetPurifyAmountAttribute())
+	{
+		const float IncomingPurify = GetPurifyAmount();
+		SetPurifyAmount(0.f);
+
+		if (IncomingPurify > 0.f)
+		{
+			SetPurifyGauge(FMath::Clamp(GetPurifyGauge() + IncomingPurify, 0.f, GetMaxPurifyGauge()));
+
+			if (GetPurifyGauge() >= GetMaxPurifyGauge())
+			{
+				ApplyDeath();
+			}
+		}
+	}
+	else if (Data.EvaluatedData.Attribute == GetPurifyGaugeAttribute())
+	{
+		SetPurifyGauge(FMath::Clamp(GetPurifyGauge(), 0.f, GetMaxPurifyGauge()));
+	}
+	else if (Data.EvaluatedData.Attribute == GetMaxPurifyGaugeAttribute())
+	{
+		SetMaxPurifyGauge(FMath::Max(0.f, GetMaxPurifyGauge()));
+		SetPurifyGauge(FMath::Clamp(GetPurifyGauge(), 0.f, GetMaxPurifyGauge()));
+	}
 }
 
 void UGuestAttributeSet::ApplyDeath()

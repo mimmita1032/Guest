@@ -35,6 +35,16 @@ void AGuestEnemyCharacter::BeginPlay()
 		GuestGameplayTags::TAG_State_Dead,
 		EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &AGuestEnemyCharacter::OnDeadTagChanged);
+
+	GuestASC->RegisterGameplayTagEvent(
+		GuestGameplayTags::TAG_State_Blinded,
+		EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &AGuestEnemyCharacter::OnBlindedTagChanged);
+
+	if (EnemyIdentityTag.IsValid())
+	{
+		GuestASC->AddLooseGameplayTag(EnemyIdentityTag);
+	}
 }
 
 UAbilitySystemComponent* AGuestEnemyCharacter::GetAbilitySystemComponent() const
@@ -64,4 +74,15 @@ void AGuestEnemyCharacter::HandleDeath()
 
 	// 사망 몽타주 / 이펙트는 Blueprint에서 처리
 	// BlueprintNativeEvent로 필요 시 하위 클래스에서 Override 가능
+}
+
+void AGuestEnemyCharacter::OnBlindedTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// Blinded가 해제(0)될 때만 Reality Enemy에 Calm 상태 부여
+	if (NewCount > 0 || EnemyIdentityTag != GuestGameplayTags::TAG_Enemy_Type_Reality) return;
+
+	if (!GuestASC->HasMatchingGameplayTag(GuestGameplayTags::TAG_State_Alert_Calm))
+	{
+		GuestASC->AddLooseGameplayTag(GuestGameplayTags::TAG_State_Alert_Calm);
+	}
 }

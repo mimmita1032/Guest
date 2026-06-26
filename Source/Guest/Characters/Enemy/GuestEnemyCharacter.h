@@ -47,9 +47,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TSoftObjectPtr<UGCharacterGASData> EnemyGasData;
 
+	// TAG_Enemy_Type_Reality 또는 TAG_Enemy_Type_AfterImage 중 하나를 할당
+	UPROPERTY(EditDefaultsOnly, Category = "Enemy", meta = (Categories = "Guest.Enemy.Type"))
+	FGameplayTag EnemyIdentityTag;
+
 	virtual void HandleDeath();
 
 private:
 	UFUNCTION()
 	void OnDeadTagChanged(const FGameplayTag Tag, int32 NewCount);
+
+	// Blinded 해제 시 Reality Enemy의 경계 상태를 Calm으로 전환
+	UFUNCTION()
+	void OnBlindedTagChanged(const FGameplayTag Tag, int32 NewCount);
 };

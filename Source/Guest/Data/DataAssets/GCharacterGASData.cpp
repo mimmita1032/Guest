@@ -38,6 +38,11 @@ void UGCharacterGASData::InitBaseStatsToASC(const UDataTable* BaseStatTableToGiv
 	{
 		InASCToGive->SetNumericAttributeBase(UGuestAttributeSet::GetMaxHealthAttribute(), BaseStats->Health);
 		InASCToGive->SetNumericAttributeBase(UGuestAttributeSet::GetMaxBatteryAttribute(), BaseStats->Battery);
+
+		if (BaseStats->MaxPurifyGauge > 0.f)
+		{
+			InASCToGive->SetNumericAttributeBase(UGuestAttributeSet::GetMaxPurifyGaugeAttribute(), BaseStats->MaxPurifyGauge);
+		}
 	}
 }
 
