@@ -10,12 +10,38 @@
     "Type": "User",
     "GUID": "{75A6BF86-A283-4833-8860-762AF134863F}",
     "Language": "SFX",
-    "Hash": "{1D274AC9-C4E5-57C1-670D-0E88BA083489}",
+    "Hash": "{7D0308C1-58A2-627A-C17B-79A2F4ADF14E}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\UI",
     "ShortName": "UI",
-    "Path": "UI.bnk"
+    "Path": "UI.bnk",
+    "Media": [
+     {
+      "Id": "1041608359",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "Press_button.wav",
+      "CachePath": "34/{34F317AC-EE20-1418-ED13-43E3890775D6}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "1969534457",
+      "Name": "UI_EX",
+      "ObjectPath": "\\Events\\Default Work Unit\\UI\\UI_EX",
+      "GUID": "{20C56DE7-051C-4095-A891-3E8A14EEE2E5}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.24686459",
+      "DurationMax": "0.24686459",
+      "MediaRefs": [
+       {
+        "Id": "1041608359"
+       }
+      ]
+     }
+    ]
    }
   ],
-  "FileHash": "{DF809453-E9C3-66F1-36F8-DF11D07F56EB}"
+  "FileHash": "{7714CFF6-192D-D487-98FC-312551478142}"
  }
 }

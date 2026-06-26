@@ -40,7 +40,7 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	
 	public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save|Meta")
-	int32 SaveVersion = 3;
+	int32 SaveVersion = 4;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Meta")
 	FDateTime SavedAt;
@@ -51,9 +51,18 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Player")
 	FGuestPlayerWorldState PlayerWorld;
 	
+	// 퀘스트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FGuestSavedActiveQuestEntry> SavedActiveQuests;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FName> SavedCompletedQuestIDs;
+	
+	//GAS어트리뷰트
+	// 저장된 적 없는 구버전 세이브 구분용으로 기본값 -1
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|GAS")
+	float SavedCurrentHealth = -1.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|GAS")
+	float SavedCurrentBattery = -1.f;
 };

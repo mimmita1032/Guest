@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "GCameraComponent.generated.h"
 
 class UTextureRenderTarget2D;
 class USceneCaptureComponent2D;
 class UKismetRenderingLibrary;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhotoTaken, UTextureRenderTarget2D*, Photo);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUEST_API UGCameraComponent : public UActorComponent
@@ -21,13 +21,13 @@ public:
 	UGCameraComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "Camera")
-	void TakePhoto();
+	void TakePhoto(const FPhotoData& Metadata);
 
 	UFUNCTION(BlueprintPure, Category = "Camera")
 	UTextureRenderTarget2D* GetRenderTarget() const { return RenderTarget; }
 
 	UFUNCTION(BlueprintPure, Category = "Camera")
-	const TArray<UTextureRenderTarget2D*>& GetPhotos() const { return Photos; }
+	const TArray<FPhotoData>& GetPhotos() const { return Photos; }
 
 	UFUNCTION(BlueprintPure, Category = "Camera")
 	int32 GetPhotoCount() const { return Photos.Num(); }
@@ -49,5 +49,5 @@ private:
 	TObjectPtr<UTextureRenderTarget2D> RenderTarget;
 
 	UPROPERTY()
-	TArray<TObjectPtr<UTextureRenderTarget2D>> Photos;
+	TArray<FPhotoData> Photos;
 };

@@ -11,8 +11,7 @@ UGA_Interact::UGA_Interact()
 	FGameplayTagContainer Tags;
 	Tags.AddTag(GuestGameplayTags::TAG_Ability_Interact);
 	SetAssetTags(Tags);
-
-	BlockAbilitiesWithTag.AddTag(GuestGameplayTags::TAG_Ability_Interact);
+	BlockAbilitiesWithTag.AddTag(GuestGameplayTags::TAG_Ability_Interact); // GA 활성화중 중복 사용 방지
 }
 
 void UGA_Interact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

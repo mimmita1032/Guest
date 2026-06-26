@@ -14,10 +14,12 @@ class GUEST_API UGDigicamTabBase : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	// 탭 활성화 시 데이터 갱신용
-	UFUNCTION(BlueprintImplementableEvent, Category = "Digicam|Tab")
+	// 탭 활성화 시 데이터 갱신용 (C++ 서브클래스는 _Implementation override)
+	UFUNCTION(BlueprintNativeEvent, Category = "Digicam|Tab")
 	void OnTabActivated();
+	virtual void OnTabActivated_Implementation() {}
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Digicam|Tab")
+	UFUNCTION(BlueprintNativeEvent, Category = "Digicam|Tab")
 	void OnTabDeactivated();
+	virtual void OnTabDeactivated_Implementation() {}
 };

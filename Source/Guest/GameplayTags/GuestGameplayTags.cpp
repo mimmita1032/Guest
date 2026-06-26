@@ -10,10 +10,14 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_GameHUD, "Guest.WidgetStack.GameHUD");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_GameMenu, "Guest.WidgetStack.GameMenu");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_Modal, "Guest.WidgetStack.Modal");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_BarDialogue, "Guest.WidgetStack.BarDialogue");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_GameHUD, "Guest.Widget.GameHUD");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_MainMenu, "Guest.Widget.MainMenu");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Options, "Guest.Widget.Options");
+	
 	
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");
@@ -21,6 +25,9 @@ namespace GuestGameplayTags
 
 	// NPC 대화 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_NPCDialogue, "Guest.Widget.NPCDialogue");
+
+	// 바 모드 대화 위젯 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_BarDialogue, "Guest.Widget.BarDialogue");
 
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");

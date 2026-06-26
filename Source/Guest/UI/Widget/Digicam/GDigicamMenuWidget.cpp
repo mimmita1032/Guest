@@ -2,12 +2,22 @@
 
 #include "GDigicamMenuWidget.h"
 #include "Components/WidgetSwitcher.h"
+#include "GDigicamTabBase.h"
 
 void UGDigicamMenuWidget::SwitchTab(int32 TabIndex)
 {
-	if (ContentSwitcher)
+	if (!ContentSwitcher) return;
+
+	if (UGDigicamTabBase* OldTab = Cast<UGDigicamTabBase>(ContentSwitcher->GetActiveWidget()))
 	{
-		ContentSwitcher->SetActiveWidgetIndex(TabIndex);
+		OldTab->OnTabDeactivated();
+	}
+
+	ContentSwitcher->SetActiveWidgetIndex(TabIndex);
+
+	if (UGDigicamTabBase* NewTab = Cast<UGDigicamTabBase>(ContentSwitcher->GetActiveWidget()))
+	{
+		NewTab->OnTabActivated();
 	}
 }
 
