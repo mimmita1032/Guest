@@ -14,7 +14,7 @@ struct FDialogueChoice
 
 	/** 플레이어에게 보여지는 선택지 텍스트. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-	FText ChoiceText;
+	FString ChoiceText;
 
 	/** 이 선택지 선택 시 이동할 노드 ID. NAME_None = 대화 종료. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
@@ -38,10 +38,10 @@ struct FDialogueNode : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-	FText SpeakerName;
+	FString SpeakerName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-	FText DialogueText;
+	FString DialogueText;
 
 	/** 선택지 없을 때 다음 노드 ID. NAME_None = 대화 종료. Choices가 있으면 무시됨. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
@@ -55,7 +55,7 @@ struct FDialogueNode : public FTableRowBase
 	 * 비어있으면 버튼 텍스트를 변경하지 않는다.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-	FText PlayerResponseText;
+	FString PlayerResponseText;
 
 	/** 이 노드 도달 시 퀘스트 서브시스템에 전달할 이벤트 ID. 비어있으면 없음. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue|Quest")
