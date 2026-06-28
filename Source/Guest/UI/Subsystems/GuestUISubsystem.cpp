@@ -54,6 +54,24 @@ void UGuestUISubsystem::RegisterStack(FGameplayTag StackTag, UCommonActivatableW
     }
 }
 
+void UGuestUISubsystem::NotifyWidgetDeactivated(FGameplayTag StackTag)
+{
+    ActiveStackHistory.RemoveSingle(StackTag);
+
+    FGameplayTag FallbackStackTag;
+    if (ActiveStackHistory.Num() > 0)
+    {
+        FallbackStackTag = ActiveStackHistory.Top();
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("[GuestUI] Widget 종료: %s → 입력 복구: %s"),
+        *StackTag.ToString(),
+        FallbackStackTag.IsValid() ? *FallbackStackTag.ToString() : TEXT("GameOnly"));
+
+    CurrentStackTag = FallbackStackTag;
+    ApplyInputConfig(ResolveInputConfig(FallbackStackTag));
+}
+
 // ─────────────────────────────────────────────────────────
 // 3. 입력 Config 등록
 // ─────────────────────────────────────────────────────────

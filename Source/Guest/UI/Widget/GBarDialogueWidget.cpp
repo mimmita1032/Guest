@@ -3,6 +3,7 @@
 #include "Guest/UI/Widget/GBarDialogueWidget.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Characters/NPC/BarCustomerNPC.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "GameFramework/PlayerController.h"
 
 void UGBarDialogueWidget::NativeOnActivated()
@@ -31,6 +32,7 @@ void UGBarDialogueWidget::NativeOnDeactivated()
 		{
 			NPC->EndBarDialogue();
 		}
+		UISys->NotifyWidgetDeactivated(GuestGameplayTags::TAG_WidgetStack_BarDialogue);
 	}
 
 	ResetDialogueSession();
