@@ -27,13 +27,13 @@ enum class EQuestObjectiveType : uint8
 UENUM(BlueprintType)
 enum class EQuestTimeState : uint8
 {
-	Any,	// 시간 무관
-	Past,	// 과거에서만 수락 가능
-	Present // 현재에서만 수락 가능
+	Any,
+	Past,
+	Present
 };
 
 /*=================
-설계도용 목표 구조체 (DataTable 저장, 읽기 전용)
+목표 하나 (TargetID 기준으로 진행 카운트)
 =================*/
 USTRUCT(BlueprintType)
 struct FQuestObjectiveData
@@ -49,6 +49,23 @@ struct FQuestObjectiveData
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Objective")
 	int32 RequiredAmount = 1;
+
+	// UI에 표시할 목표 설명
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Objective")
+	FString ObjectiveText;
+};
+
+/*=================
+단계 하나 (동시에 달성해야 하는 목표들의 묶음)
+한 단계의 모든 Objectives가 완료되어야 다음 단계로 진행
+=================*/
+USTRUCT(BlueprintType)
+struct FQuestStepData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+	TArray<FQuestObjectiveData> Objectives;
 };
 
 /*=================
@@ -59,18 +76,14 @@ struct FQuestData : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	// 퀘스트 고유 ID (예: Q_Main_001)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Identity")
-	FName QuestID = NAME_None;
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Identity")
 	EQuestType QuestType = EQuestType::Sub;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Identity")
-	FText QuestName;
+	FString QuestName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Identity")
-	FText Description;
+	FString Description;
 
 	// 이 퀘스트가 발생 가능한 시간대
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Prerequisites")
@@ -80,9 +93,9 @@ struct FQuestData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Prerequisites")
 	FName RequiredQuestID = NAME_None;
 
-	// 단계별 목표 배열 (순서대로 진행)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Objectives")
-	TArray<FQuestObjectiveData> Objectives;
+	// 단계 배열 - 순서대로 진행, 각 단계 내 Objectives는 동시 달성
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Steps")
+	TArray<FQuestStepData> Steps;
 
 	// 완료 보상 아이템 ID
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
@@ -94,18 +107,18 @@ struct FQuestData : public FTableRowBase
 };
 
 /*=================
-런타임 진행 상태 (서브시스템이 보유, 세이브 데이터에 포함 예정)
+런타임 진행 상태 (서브시스템 보유, 세이브 데이터 포함)
 =================*/
 USTRUCT(BlueprintType)
 struct FQuestRuntimeData
 {
 	GENERATED_BODY()
 
-	// 현재 진행 중인 목표 인덱스
+	// 현재 진행 중인 단계 인덱스
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Runtime")
 	int32 CurrentStep = 0;
 
-	// 각 목표의 현재 달성 수량 (Objectives 배열과 인덱스 1:1 대응)
+	// 현재 단계 내 각 목표의 달성 수량 (Steps[CurrentStep].Objectives와 인덱스 1:1 대응)
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Runtime")
 	TArray<int32> ObjectiveCounts;
 };
