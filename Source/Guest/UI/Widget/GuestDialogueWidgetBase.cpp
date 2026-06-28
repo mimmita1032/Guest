@@ -7,6 +7,7 @@
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 
 void UGuestDialogueWidgetBase::NativeOnInitialized()
 {
@@ -93,7 +94,12 @@ void UGuestDialogueWidgetBase::PopulateChoices(const TArray<FDialogueChoice>& Ch
 
 		ChoiceWidget->SetupChoice(Choice);
 		ChoiceWidget->OnChoiceSelected.AddUObject(this, &UGuestDialogueWidgetBase::OnChoiceSelected);
-		Box_Choices->AddChild(ChoiceWidget);
+
+		if (UVerticalBoxSlot* VSlot = Cast<UVerticalBoxSlot>(Box_Choices->AddChild(ChoiceWidget)))
+		{
+			VSlot->SetHorizontalAlignment(HAlign_Fill);
+			VSlot->SetPadding(FMargin(0.f, 4.f));
+		}
 	}
 }
 
