@@ -12,6 +12,7 @@ class UGInventorySlotWidget;
 class UUniformGridPanel;
 class UCanvasPanel;
 class UGInventoryItemWidget;
+class UGuestAudioDataAsset;
 
 UCLASS()
 class GUEST_API UGInventoryWidget : public UCommonActivatableWidget
@@ -55,4 +56,8 @@ protected:
 	// SlotSize는 여기서만 관리 — ItemWidget에 InitItem으로 전달
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|UI")
 	float SlotSize = 60.0f;
+
+	// ★ Wwise 사운드 데이터 에셋
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Audio")
+	TObjectPtr<UGuestAudioDataAsset> AudioDataAsset;
 };
