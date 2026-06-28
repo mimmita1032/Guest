@@ -48,5 +48,22 @@ void ABarCustomerNPC::EndBarDialogue()
 	APawn* PlayerPawn = PC->GetPawn();
 	if (!PlayerPawn) return;
 
+	// 블렌드 중 이동 잠금 후 타이머로 복구
+	PC->SetIgnoreMoveInput(true);
+	CachedPC = PC;
+
 	PC->SetViewTargetWithBlend(PlayerPawn, CameraBlendTime);
+
+	GetWorldTimerManager().SetTimer(
+		CameraRestoreTimerHandle,
+		this, &ABarCustomerNPC::RestorePlayerInput,
+		CameraBlendTime, false);
+}
+
+void ABarCustomerNPC::RestorePlayerInput()
+{
+	if (APlayerController* PC = CachedPC.Get())
+	{
+		PC->ResetIgnoreMoveInput();
+	}
 }

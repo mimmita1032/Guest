@@ -42,6 +42,17 @@ public:
 	UCameraComponent* GetDialogueCamera() const { return DialogueCamera; }
 
 protected:
+	/** 카메라 복귀 블렌드 완료 후 플레이어 이동 입력을 복구한다. */
+	UFUNCTION()
+	void RestorePlayerInput();
+
+private:
+	FTimerHandle CameraRestoreTimerHandle;
+
+	UPROPERTY()
+	TWeakObjectPtr<APlayerController> CachedPC;
+
+public:
 	/** NPC 상반신을 바라보는 대화 전용 카메라. 에디터에서 위치/회전 조정. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bar|Camera")
 	TObjectPtr<UCameraComponent> DialogueCamera;
