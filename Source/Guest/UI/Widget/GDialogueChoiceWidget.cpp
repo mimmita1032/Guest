@@ -19,7 +19,7 @@ void UGDialogueChoiceWidget::SetupChoice(const FDialogueChoice& Choice)
 	CachedNextNodeID = Choice.NextNodeID;
 	if (Text_ChoiceContent)
 	{
-		Text_ChoiceContent->SetText(Choice.ChoiceText);
+		Text_ChoiceContent->SetText(FText::FromString(Choice.ChoiceText));
 	}
 }
 

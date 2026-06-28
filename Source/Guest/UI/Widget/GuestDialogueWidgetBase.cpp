@@ -45,8 +45,8 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 		return;
 	}
 
-	if (Text_SpeakerName)  Text_SpeakerName->SetText(Node->SpeakerName);
-	if (Text_DialogueLine) Text_DialogueLine->SetText(Node->DialogueText);
+	if (Text_SpeakerName)  Text_SpeakerName->SetText(FText::FromString(Node->SpeakerName));
+	if (Text_DialogueLine) Text_DialogueLine->SetText(FText::FromString(Node->DialogueText));
 
 	if (Node->Choices.Num() > 0)
 	{
@@ -66,7 +66,7 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 		{
 			if (!Node->PlayerResponseText.IsEmpty())
 			{
-				Text_PlayerResponse->SetText(Node->PlayerResponseText);
+				Text_PlayerResponse->SetText(FText::FromString(Node->PlayerResponseText));
 			}
 			else
 			{
