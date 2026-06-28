@@ -50,6 +50,7 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 	if (Node->Choices.Num() > 0)
 	{
 		if (Btn_Next) Btn_Next->SetVisibility(ESlateVisibility::Collapsed);
+		if (Text_PlayerResponse) Text_PlayerResponse->SetVisibility(ESlateVisibility::Collapsed);
 		PopulateChoices(Node->Choices);
 	}
 	else
