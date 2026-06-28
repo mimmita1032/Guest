@@ -4,6 +4,7 @@
 #include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 #include "Guest/Data/DataTable/GDialogueTypes.h"
 #include "Guest/UI/Widget/GDialogueChoiceWidget.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/VerticalBox.h"
@@ -47,6 +48,17 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 
 	if (Text_SpeakerName)  Text_SpeakerName->SetText(FText::FromString(Node->SpeakerName));
 	if (Text_DialogueLine) Text_DialogueLine->SetText(FText::FromString(Node->DialogueText));
+
+	if (!Node->QuestEventID.IsNone())
+	{
+		if (UGameInstance* GI = GetGameInstance())
+		{
+			if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+			{
+				QuestSys->AcceptQuest(Node->QuestEventID);
+			}
+		}
+	}
 
 	if (Node->Choices.Num() > 0)
 	{
