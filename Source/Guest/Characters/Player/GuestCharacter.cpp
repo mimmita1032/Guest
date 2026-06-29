@@ -27,6 +27,7 @@
 #include "Guest/Data/Input/GInputConfigData.h"
 #include "Guest/Components/Input/GuestInputComponent.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Components/CharacterComponents/GuestPawnUIComponent.h"
 
 // Sets default values
 AGuestCharacter::AGuestCharacter()
@@ -75,6 +76,7 @@ AGuestCharacter::AGuestCharacter()
    
    GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
    GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
+   PawnUIComponent = CreateDefaultSubobject<UGuestPawnUIComponent>(TEXT("PawnUIComponent"));
 }
 
 void AGuestCharacter::BeginPlay()
@@ -133,17 +135,32 @@ void AGuestCharacter::BeginPlay()
 void AGuestCharacter::PossessedBy(AController* NewController)
 {
    Super::PossessedBy(NewController);
-   
+
    if (GuestAbilitySystemComponent)
    {
-      GuestAbilitySystemComponent->InitAbilityActorInfo(this,this);
+      GuestAbilitySystemComponent->InitAbilityActorInfo(this, this);
    }
-   
+
    ensureMsgf(!CharacterGasData.IsNull(), TEXT("캐릭터 GAS 데이터 할당 안됨"));
-   
+
    if (UGCharacterGASData* LoadedData = CharacterGasData.LoadSynchronous())
    {
       LoadedData->GiveToASC(GuestAbilitySystemComponent);
+   }
+
+   // GiveToASC 이후 — Attribute 초기값이 설정된 뒤 바인딩
+   if (PawnUIComponent)
+   {
+      PawnUIComponent->InitializeWithASC(GuestAbilitySystemComponent);
+   }
+
+   // Dead Tag 이벤트 등록 — 사망 감지
+   if (GuestAbilitySystemComponent)
+   {
+      GuestAbilitySystemComponent->RegisterGameplayTagEvent(
+         GuestGameplayTags::TAG_State_Dead,
+         EGameplayTagEventType::NewOrRemoved)
+         .AddUObject(this, &AGuestCharacter::OnDeadTagChanged);
    }
 }
 
@@ -443,4 +460,28 @@ void AGuestCharacter::AbilityInputPressed(FGameplayTag InputTag)
 void AGuestCharacter::AbilityInputReleased(FGameplayTag InputTag)
 {
    GuestAbilitySystemComponent->OnAbilityReleased(InputTag);
+}
+
+void AGuestCharacter::OnDeadTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+   // NewOrRemoved: Count 0→1 시 한 번만 발화
+   if (NewCount > 0)
+   {
+      HandleDeath();
+   }
+}
+
+void AGuestCharacter::HandleDeath()
+{
+   // 이동 / 입력 정지
+   GetCharacterMovement()->DisableMovement();
+   if (APlayerController* PC = Cast<APlayerController>(GetController()))
+   {
+      DisableInput(PC);
+   }
+
+   // 콜리전 비활성화
+   SetActorEnableCollision(false);
+
+   // 사망 몽타주 / GameOver UI는 Blueprint에서 처리
 }
