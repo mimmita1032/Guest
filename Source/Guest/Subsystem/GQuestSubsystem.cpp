@@ -8,14 +8,14 @@ void UGQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	QuestDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Core/Data/DT_QuestData")));
+	QuestDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Data/Quest/DT_QuestData")));
 	if (QuestDataTable)
 	{
 		G_LOG(TEXT("퀘스트 데이터 테이블 로드 성공"));
 	}
 	else
 	{
-		G_ERR(TEXT("퀘스트 데이터 테이블 로드 실패! 경로를 다시 체크: /Game/Core/Data/DT_QuestData"));
+		G_ERR(TEXT("퀘스트 데이터 테이블 로드 실패! 경로를 다시 체크: /Game/Data/Quest/DT_QuestData"));
 	}
 
 	OnObjectiveUpdated.AddDynamic(this, &UGQuestSubsystem::HandleObjectiveUpdated);
@@ -66,7 +66,7 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 수락 완료 (단계 %d개)"),
 		*QuestID.ToString(), *Data->QuestName, Data->Steps.Num());
 
-	// TODO: UI 서브시스템에 퀘스트 수락 알림 전달
+	OnQuestListChanged.Broadcast();
 }
 
 void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
@@ -121,6 +121,7 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 		{
 			// 다음 단계 목표 수량에 맞게 카운트 초기화
 			Runtime.ObjectiveCounts.SetNumZeroed(Data->Steps[Runtime.CurrentStep].Objectives.Num());
+			OnQuestListChanged.Broadcast();
 		}
 	}
 }
@@ -141,7 +142,7 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 		G_LOG(TEXT("퀘스트 시스템: 보상 아이템 [%s] 지급 예정"), *Data->RewardItemID.ToString());
 	}
 
-	// TODO: UI 서브시스템에 퀘스트 완료 팝업 알림 전달
+	OnQuestListChanged.Broadcast();
 
 	if (!Data->NextQuestID.IsNone())
 	{
@@ -172,6 +173,16 @@ TArray<FName> UGQuestSubsystem::GetActiveQuestIDs() const
 TArray<FName> UGQuestSubsystem::GetCompletedQuestIDs() const
 {
 	return CompletedQuests.Array();
+}
+
+bool UGQuestSubsystem::GetQuestRuntimeData(FName QuestID, FQuestRuntimeData& OutData) const
+{
+	if (const FQuestRuntimeData* Found = ActiveQuests.Find(QuestID))
+	{
+		OutData = *Found;
+		return true;
+	}
+	return false;
 }
 
 const FQuestData* UGQuestSubsystem::FindQuestData(FName QuestID) const

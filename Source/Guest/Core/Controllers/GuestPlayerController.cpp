@@ -22,6 +22,7 @@
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 
 
@@ -43,6 +44,15 @@ void AGuestPlayerController::BeginPlay()
 	if (IsLocalController())
 	{
 		CreatePrimaryLayout();
+
+		if (QuestTrackerClass)
+		{
+			QuestTrackerInstance = CreateWidget<UGQuestTrackerWidget>(this, QuestTrackerClass);
+			if (QuestTrackerInstance)
+			{
+				QuestTrackerInstance->AddToViewport(10);
+			}
+		}
 	}
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
