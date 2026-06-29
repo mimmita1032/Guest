@@ -3,6 +3,7 @@
 #include "Guest/Characters/NPC/BarCustomerNPC.h"
 #include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -47,6 +48,17 @@ void ABarCustomerNPC::EndBarDialogue()
 
 	APawn* PlayerPawn = PC->GetPawn();
 	if (!PlayerPawn) return;
+
+	if (!TalkObjectiveID.IsNone())
+	{
+		if (UGameInstance* GI = GetGameInstance())
+		{
+			if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+			{
+				QuestSys->OnObjectiveUpdated.Broadcast(TalkObjectiveID, 1);
+			}
+		}
+	}
 
 	// 블렌드 중 이동 잠금 후 타이머로 복구
 	PC->SetIgnoreMoveInput(true);

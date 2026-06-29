@@ -11,6 +11,7 @@ class UGuestUISubsystem;
 class UGuestPrimaryLayout;
 class UGuestGameInstance;
 class UInputAction;
+class UGQuestTrackerWidget;
 
 /**
  * AGuestPlayerController
@@ -75,7 +76,16 @@ private:
 	UPROPERTY()
 	TObjectPtr<UGuestPrimaryLayout> PrimaryLayout;
 
-	
+#pragma endregion
+
+#pragma region QuestTracker
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Guest|UI")
+	TSubclassOf<UGQuestTrackerWidget> QuestTrackerClass;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UGQuestTrackerWidget> QuestTrackerInstance;
 #pragma endregion
 /*===========================================================
  * [디버그 전용] 퀘스트 시스템 콘솔 테스트 함수

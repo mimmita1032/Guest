@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Dialogue")
 	TObjectPtr<UGDialogueDataAsset> DialogueAsset;
 
+	/** 대화 종료 시 퀘스트 목표(Talk) 달성으로 브로드캐스트할 ID. 비어있으면 전달하지 않음. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Quest")
+	FName TalkObjectiveID;
+
 	/** 카메라 전환 블렌드 시간 (초). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Camera")
 	float CameraBlendTime = 0.5f;

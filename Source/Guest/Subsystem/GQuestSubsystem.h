@@ -14,6 +14,9 @@ struct FGuestSavedActiveQuestEntry;
 // 아이템 획득 / NPC 대화 / 구역 진입 시 Broadcast → 서브시스템이 수신하여 장부 갱신
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestObjectiveUpdated, FName, TargetID, int32, Amount);
 
+// 퀘스트 수락/완료/목표 진행 시 Broadcast → UI 트래커가 구독하여 갱신
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestListChanged);
+
 UCLASS()
 class GUEST_API UGQuestSubsystem : public UGameInstanceSubsystem
 {
@@ -27,6 +30,10 @@ public:
 	// 아이템/NPC/트리거가 이 델리게이트에 Broadcast하면 서브시스템이 자동으로 장부를 갱신
 	UPROPERTY(BlueprintAssignable, Category = "Quest")
 	FOnQuestObjectiveUpdated OnObjectiveUpdated;
+
+	// 퀘스트 상태 변경 시 Broadcast (수락/완료/목표 진행) → UI 트래커용
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnQuestListChanged OnQuestListChanged;
 #pragma endregion
 
 #pragma region Quest Flow
@@ -50,6 +57,13 @@ public:
 	// 완료된 퀘스트 목록 반환
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	TArray<FName> GetCompletedQuestIDs() const;
+
+	// UI에서 퀘스트 진행 상태 조회
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool GetQuestRuntimeData(FName QuestID, FQuestRuntimeData& OutData) const;
+
+	// UI에서 퀘스트 정적 데이터 조회
+	const FQuestData* FindQuestDataPublic(FName QuestID) const { return FindQuestData(QuestID); }
 
 private:
 	// OnObjectiveUpdated 델리게이트 수신 핸들러

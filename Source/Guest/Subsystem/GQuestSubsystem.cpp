@@ -8,14 +8,14 @@ void UGQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	QuestDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Core/Data/DT_QuestData")));
+	QuestDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Data/Quest/DT_QuestData")));
 	if (QuestDataTable)
 	{
 		G_LOG(TEXT("퀘스트 데이터 테이블 로드 성공"));
 	}
 	else
 	{
-		G_ERR(TEXT("퀘스트 데이터 테이블 로드 실패! 경로를 다시 체크: /Game/Core/Data/DT_QuestData"));
+		G_ERR(TEXT("퀘스트 데이터 테이블 로드 실패! 경로를 다시 체크: /Game/Data/Quest/DT_QuestData"));
 	}
 
 	OnObjectiveUpdated.AddDynamic(this, &UGQuestSubsystem::HandleObjectiveUpdated);
@@ -43,7 +43,6 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 		return;
 	}
 
-	// 선행 퀘스트 검증
 	if (!Data->RequiredQuestID.IsNone() && !IsQuestCompleted(Data->RequiredQuestID))
 	{
 		G_WARN(TEXT("퀘스트 시스템: [%s] 선행 퀘스트 [%s] 미완료로 수락 불가"),
@@ -51,19 +50,23 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 		return;
 	}
 
-	// TODO: RequiredTimeState 검증 (GSpacetimeSubsystem과 연동 필요)
-	// EQuestTimeState::Past / Present 조건을 현재 레벨 시간대와 비교
+	// TODO: RequiredTimeState 검증 (GSpacetimeSubsystem 연동 필요)
 
-	// 진행 장부에 등록 - 목표 수량 배열을 Objectives 크기에 맞게 초기화
+	if (Data->Steps.Num() == 0)
+	{
+		G_WARN(TEXT("퀘스트 시스템: [%s] Steps가 비어있어 수락 불가"), *QuestID.ToString());
+		return;
+	}
+
 	FQuestRuntimeData RuntimeData;
 	RuntimeData.CurrentStep = 0;
-	RuntimeData.ObjectiveCounts.SetNum(Data->Objectives.Num());
+	RuntimeData.ObjectiveCounts.SetNumZeroed(Data->Steps[0].Objectives.Num());
 	ActiveQuests.Add(QuestID, RuntimeData);
 
-	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 수락 완료 (목표 %d개)"),
-		*QuestID.ToString(), *Data->QuestName.ToString(), Data->Objectives.Num());
+	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 수락 완료 (단계 %d개)"),
+		*QuestID.ToString(), *Data->QuestName, Data->Steps.Num());
 
-	// TODO: UI 서브시스템에 퀘스트 수락 알림 전달
+	OnQuestListChanged.Broadcast();
 }
 
 void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
@@ -71,34 +74,55 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 	for (auto& [QuestID, Runtime] : ActiveQuests)
 	{
 		const FQuestData* Data = FindQuestData(QuestID);
-		if (!Data || !Data->Objectives.IsValidIndex(Runtime.CurrentStep)) continue;
+		if (!Data || !Data->Steps.IsValidIndex(Runtime.CurrentStep)) continue;
 
-		const FQuestObjectiveData& CurrentObjective = Data->Objectives[Runtime.CurrentStep];
-		if (CurrentObjective.TargetID != TargetID) continue;
+		const FQuestStepData& CurrentStepData = Data->Steps[Runtime.CurrentStep];
+		bool bAnyMatch = false;
 
-		Runtime.ObjectiveCounts[Runtime.CurrentStep] += Amount;
-
-		G_LOG(TEXT("퀘스트 시스템: 대상 [%s] %d개 갱신 완료 (%d / %d)"),
-			*TargetID.ToString(), Amount,
-			Runtime.ObjectiveCounts[Runtime.CurrentStep],
-			CurrentObjective.RequiredAmount);
-
-		// 현재 목표 달성 여부 확인
-		if (Runtime.ObjectiveCounts[Runtime.CurrentStep] >= CurrentObjective.RequiredAmount)
+		// 현재 단계의 매칭 목표 카운트 갱신
+		for (int32 i = 0; i < CurrentStepData.Objectives.Num(); ++i)
 		{
-			Runtime.CurrentStep++;
-			G_LOG(TEXT("퀘스트 시스템: [%s] 목표 완료 → 다음 단계 %d"),
-				*QuestID.ToString(), Runtime.CurrentStep);
+			const FQuestObjectiveData& Obj = CurrentStepData.Objectives[i];
+			if (Obj.TargetID != TargetID) continue;
 
-			// 모든 목표 완료 시 퀘스트 완료 처리
-			if (Runtime.CurrentStep >= Data->Objectives.Num())
+			Runtime.ObjectiveCounts[i] = FMath::Min(
+				Runtime.ObjectiveCounts[i] + Amount, Obj.RequiredAmount);
+			bAnyMatch = true;
+
+			G_LOG(TEXT("퀘스트 시스템: [%s] 단계%d 목표[%s] %d / %d"),
+				*QuestID.ToString(), Runtime.CurrentStep,
+				*TargetID.ToString(), Runtime.ObjectiveCounts[i], Obj.RequiredAmount);
+		}
+
+		if (!bAnyMatch) continue;
+
+		// 현재 단계의 모든 목표 달성 여부 확인
+		bool bStepComplete = true;
+		for (int32 i = 0; i < CurrentStepData.Objectives.Num(); ++i)
+		{
+			if (Runtime.ObjectiveCounts[i] < CurrentStepData.Objectives[i].RequiredAmount)
 			{
-				CompleteQuest(QuestID);
+				bStepComplete = false;
+				break;
 			}
 		}
 
-		// 퀘스트 하나에만 갱신되도록 동일 TargetID라도 첫 번째 매칭만 처리
-		break;
+		if (!bStepComplete) continue;
+
+		Runtime.CurrentStep++;
+		G_LOG(TEXT("퀘스트 시스템: [%s] 단계 완료 → 다음 단계 %d"),
+			*QuestID.ToString(), Runtime.CurrentStep);
+
+		if (Runtime.CurrentStep >= Data->Steps.Num())
+		{
+			CompleteQuest(QuestID);
+		}
+		else
+		{
+			// 다음 단계 목표 수량에 맞게 카운트 초기화
+			Runtime.ObjectiveCounts.SetNumZeroed(Data->Steps[Runtime.CurrentStep].Objectives.Num());
+			OnQuestListChanged.Broadcast();
+		}
 	}
 }
 
@@ -110,7 +134,7 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 	ActiveQuests.Remove(QuestID);
 	CompletedQuests.Add(QuestID);
 
-	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 완료!"), *QuestID.ToString(), *Data->QuestName.ToString());
+	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 완료!"), *QuestID.ToString(), *Data->QuestName);
 
 	// TODO: RewardItemID 기반 보상 아이템 인벤토리에 지급
 	if (!Data->RewardItemID.IsNone())
@@ -118,9 +142,8 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 		G_LOG(TEXT("퀘스트 시스템: 보상 아이템 [%s] 지급 예정"), *Data->RewardItemID.ToString());
 	}
 
-	// TODO: UI 서브시스템에 퀘스트 완료 팝업 알림 전달
+	OnQuestListChanged.Broadcast();
 
-	// 다음 퀘스트 자동 연결
 	if (!Data->NextQuestID.IsNone())
 	{
 		G_LOG(TEXT("퀘스트 시스템: 연결 퀘스트 [%s] 자동 수락"), *Data->NextQuestID.ToString());
@@ -152,6 +175,16 @@ TArray<FName> UGQuestSubsystem::GetCompletedQuestIDs() const
 	return CompletedQuests.Array();
 }
 
+bool UGQuestSubsystem::GetQuestRuntimeData(FName QuestID, FQuestRuntimeData& OutData) const
+{
+	if (const FQuestRuntimeData* Found = ActiveQuests.Find(QuestID))
+	{
+		OutData = *Found;
+		return true;
+	}
+	return false;
+}
+
 const FQuestData* UGQuestSubsystem::FindQuestData(FName QuestID) const
 {
 	if (!QuestDataTable) return nullptr;
@@ -165,14 +198,14 @@ void UGQuestSubsystem::ExportQuestSaveData(TArray<FGuestSavedActiveQuestEntry>& 
 {
 	OutActiveQuests.Reset();
 	OutCompletedQuestIDs.Reset();
-	
+
 	OutActiveQuests.Reserve(ActiveQuests.Num());
-	for (const TPair<FName, FQuestRuntimeData>& pair : ActiveQuests)
+	for (const TPair<FName, FQuestRuntimeData>& Pair : ActiveQuests)
 	{
 		FGuestSavedActiveQuestEntry Entry;
-		Entry.QuestID = pair.Key;
-		Entry.CurrentStep = pair.Value.CurrentStep;
-		Entry.ObjectiveCounts = pair.Value.ObjectiveCounts;
+		Entry.QuestID = Pair.Key;
+		Entry.CurrentStep = Pair.Value.CurrentStep;
+		Entry.ObjectiveCounts = Pair.Value.ObjectiveCounts;
 		OutActiveQuests.Add(MoveTemp(Entry));
 	}
 	OutCompletedQuestIDs = CompletedQuests.Array();
@@ -182,52 +215,41 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 {
 	ActiveQuests.Reset();
 	CompletedQuests.Reset();
-	
-	//완료 목록 복원
+
 	for (const FName& QuestID : InCompletedQuestIDs)
 	{
-		if (QuestID.IsNone())
-		{
-			continue;
-		}
-		
+		if (QuestID.IsNone()) continue;
 		if (!FindQuestData(QuestID))
 		{
 			G_WARN(TEXT("퀘스트 복원 스킵(완료): [%s] DataTable에 없음"), *QuestID.ToString());
 			continue;
 		}
-		
 		CompletedQuests.Add(QuestID);
 	}
-	
+
 	for (const FGuestSavedActiveQuestEntry& Entry : InActiveQuests)
 	{
-		if (Entry.QuestID.IsNone())
-		{
-			continue;
-		}
-		
+		if (Entry.QuestID.IsNone()) continue;
+
 		const FQuestData* Data = FindQuestData(Entry.QuestID);
 		if (!Data)
 		{
 			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] DataTable에 없음"), *Entry.QuestID.ToString());
 			continue;
 		}
-		
-		if (CompletedQuests.Contains(Entry.QuestID))
-		{
-			continue;
-		}
-		
+
+		if (CompletedQuests.Contains(Entry.QuestID)) continue;
+
 		FQuestRuntimeData Runtime;
-		const int32 ObjectiveNum = Data -> Objectives.Num();
-		
-		Runtime.CurrentStep = FMath::Clamp(Entry.CurrentStep, 0, FMath::Max(0, ObjectiveNum - 1));
-		
+		const int32 StepNum = Data->Steps.Num();
+		Runtime.CurrentStep = FMath::Clamp(Entry.CurrentStep, 0, FMath::Max(0, StepNum - 1));
+
+		const int32 ObjectiveNum = Data->Steps.IsValidIndex(Runtime.CurrentStep)
+			? Data->Steps[Runtime.CurrentStep].Objectives.Num() : 0;
 		Runtime.ObjectiveCounts = Entry.ObjectiveCounts;
 		Runtime.ObjectiveCounts.SetNumZeroed(ObjectiveNum);
-		
+
 		ActiveQuests.Add(Entry.QuestID, MoveTemp(Runtime));
 	}
 }
-#pragma endregion 
+#pragma endregion
