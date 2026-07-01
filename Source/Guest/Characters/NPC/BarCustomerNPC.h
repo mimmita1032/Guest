@@ -8,6 +8,7 @@
 #include "BarCustomerNPC.generated.h"
 
 class UCameraComponent;
+class UBoxComponent;
 class UGDialogueDataAsset;
 
 /**
@@ -57,6 +58,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bar|Camera")
 	TObjectPtr<UCameraComponent> DialogueCamera;
 
+	/** 플레이어가 진입하면 자동으로 대화를 시작하는 트리거 범위. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Bar|Dialogue")
+	TObjectPtr<UBoxComponent> DialogueTrigger;
+
 	/** 이 NPC의 대화 데이터. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Dialogue")
 	TObjectPtr<UGDialogueDataAsset> DialogueAsset;
@@ -68,4 +73,12 @@ public:
 	/** 카메라 전환 블렌드 시간 (초). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Camera")
 	float CameraBlendTime = 0.5f;
+
+private:
+	bool bIsDialogueActive = false;
+
+	UFUNCTION()
+	void OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
 };
