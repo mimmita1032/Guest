@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "GuestEnemyCharacter.generated.h"
 
 class UGuestAbilitySystemComponent;

@@ -9,29 +9,9 @@ void UGuestAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
-	{
-		const float IncomingDamage = GetDamage();
-		SetDamage(0.f);
-
-		if (IncomingDamage > 0.f)
-		{
-			SetCurrentHealth(FMath::Clamp(GetCurrentHealth() - IncomingDamage, 0.f, GetMaxHealth()));
-
-			if (GetCurrentHealth() <= 0.f)
-			{
-				ApplyDeath();
-			}
-		}
-	}
-	else if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
+	if (Data.EvaluatedData.Attribute == GetCurrentHealthAttribute())
 	{
 		SetCurrentHealth(FMath::Clamp(GetCurrentHealth(), 0.f, GetMaxHealth()));
-
-		if (GetCurrentHealth() <= 0.f)
-		{
-			ApplyDeath();
-		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
 	{
