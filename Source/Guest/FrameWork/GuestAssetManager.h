@@ -18,7 +18,7 @@ class GUEST_API UGuestAssetManager : public UAssetManager
 public:
 	static UGuestAssetManager& Get();
 	void LoadGuestItems(const FStreamableDelegate& LoadFinishedDelegate);
-	bool GetLoadedItems(TArray<const UGItemDefinition*>& OutItems);
+	bool GetLoadedItems(TArray<const UGItemDefinition*>& OutItems) const;
 private:
 	void GuestItemLoadFinished(FStreamableDelegate CallBack);
 };
