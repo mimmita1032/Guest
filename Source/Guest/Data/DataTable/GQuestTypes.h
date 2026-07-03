@@ -93,6 +93,10 @@ struct FQuestData : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Prerequisites")
 	FName RequiredQuestID = NAME_None;
 
+	// 이 퀘스트를 수락 가능한 최소 스토리 진행도 (0 = 진행도 무관)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Prerequisites")
+	int32 RequiredStoryProgress = 0;
+
 	// 단계 배열 - 순서대로 진행, 각 단계 내 Objectives는 동시 달성
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Steps")
 	TArray<FQuestStepData> Steps;
@@ -104,6 +108,10 @@ struct FQuestData : public FTableRowBase
 	// 완료 후 자동 연결될 다음 퀘스트 ID
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
 	FName NextQuestID = NAME_None;
+
+	// 완료 시 스토리 진행도를 이 값으로 올림 (0 = 변화 없음, 현재 진행도보다 낮으면 무시)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
+	int32 StoryProgressOnComplete = 0;
 };
 
 /*=================
