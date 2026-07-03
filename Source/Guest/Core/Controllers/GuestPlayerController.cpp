@@ -272,6 +272,19 @@ void AGuestPlayerController::DebugCompletedQuests()
 	}
 }
 
+/*
+ * 콘솔 명령어: DebugSetStoryProgress 3
+ * 스토리 진행도를 강제로 설정합니다. RequiredStoryProgress 게이팅 테스트용.
+ */
+void AGuestPlayerController::DebugSetStoryProgress(int32 NewProgress)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	QuestSys->SetStoryProgress(NewProgress);
+	G_LOG(TEXT("[디버그] 스토리 진행도 → %d"), QuestSys->GetStoryProgress());
+}
+
 #pragma endregion
 
 #pragma region  SaveDebug
@@ -337,6 +350,7 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 			QuestSys->ExportQuestSaveData(
 				SaveObject->SavedActiveQuests,
 				SaveObject->SavedCompletedQuestIDs);
+			SaveObject->SavedStoryProgress = QuestSys->GetStoryProgress();
 		}
 	}
 	
