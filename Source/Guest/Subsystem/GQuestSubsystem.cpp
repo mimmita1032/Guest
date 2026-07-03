@@ -50,6 +50,13 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 		return;
 	}
 
+	if (StoryProgress < Data->RequiredStoryProgress)
+	{
+		G_WARN(TEXT("퀘스트 시스템: [%s] 스토리 진행도 부족 (현재 %d / 필요 %d)으로 수락 불가"),
+			*QuestID.ToString(), StoryProgress, Data->RequiredStoryProgress);
+		return;
+	}
+
 	// TODO: RequiredTimeState 검증 (GSpacetimeSubsystem 연동 필요)
 
 	if (Data->Steps.Num() == 0)
@@ -142,6 +149,11 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 		G_LOG(TEXT("퀘스트 시스템: 보상 아이템 [%s] 지급 예정"), *Data->RewardItemID.ToString());
 	}
 
+	if (Data->StoryProgressOnComplete > StoryProgress)
+	{
+		SetStoryProgress(Data->StoryProgressOnComplete);
+	}
+
 	OnQuestListChanged.Broadcast();
 
 	if (!Data->NextQuestID.IsNone())
@@ -149,6 +161,18 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 		G_LOG(TEXT("퀘스트 시스템: 연결 퀘스트 [%s] 자동 수락"), *Data->NextQuestID.ToString());
 		AcceptQuest(Data->NextQuestID);
 	}
+}
+#pragma endregion
+
+#pragma region Story Progress
+void UGQuestSubsystem::SetStoryProgress(int32 NewProgress)
+{
+	if (NewProgress == StoryProgress) return;
+
+	StoryProgress = NewProgress;
+	G_LOG(TEXT("퀘스트 시스템: 스토리 진행도 → %d"), StoryProgress);
+
+	OnQuestListChanged.Broadcast();
 }
 #pragma endregion
 

@@ -104,6 +104,9 @@ private:
  *  DebugCompletedQuests
  *    → 완료된 퀘스트 목록을 로그로 출력
  *
+ *  DebugSetStoryProgress 3
+ *    → 스토리 진행도를 3으로 강제 설정 (RequiredStoryProgress 게이팅 테스트용)
+ *
  * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
  *===========================================================*/
 #pragma region QuestDebug
@@ -123,6 +126,10 @@ public:
 	// [디버그] 완료된 퀘스트 목록 로그 출력 — 콘솔 입력: DebugCompletedQuests
 	UFUNCTION(Exec)
 	void DebugCompletedQuests();
+
+	// [디버그] 스토리 진행도 강제 설정 — 콘솔 입력: DebugSetStoryProgress 3
+	UFUNCTION(Exec)
+	void DebugSetStoryProgress(int32 NewProgress);
 #pragma endregion
 #pragma region SaveDebug
 	

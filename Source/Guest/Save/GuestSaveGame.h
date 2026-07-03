@@ -73,9 +73,13 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	// 퀘스트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FGuestSavedActiveQuestEntry> SavedActiveQuests;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FName> SavedCompletedQuestIDs;
+
+	// 스토리 진행도 (0 = 게임 시작). 특정 진행도부터 열리는 퀘스트 게이팅에 사용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
+	int32 SavedStoryProgress = 0;
 	
 	//GAS어트리뷰트
 	// 저장된 적 없는 구버전 세이브 구분용으로 기본값 -1
