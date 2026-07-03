@@ -66,7 +66,6 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		QuestSys->ImportQuestSaveData(
 			SaveObject->SavedActiveQuests,
 			SaveObject->SavedCompletedQuestIDs);
-		QuestSys->SetStoryProgress(SaveObject->SavedStoryProgress);
 	}
 	
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);

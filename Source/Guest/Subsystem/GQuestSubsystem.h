@@ -74,21 +74,6 @@ private:
 	void CompleteQuest(FName QuestID);
 #pragma endregion
 
-#pragma region Story Progress
-public:
-	// 현재 스토리 진행도 조회 (RequiredStoryProgress 게이팅용)
-	UFUNCTION(BlueprintCallable, Category = "Quest|Story")
-	int32 GetStoryProgress() const { return StoryProgress; }
-
-	// 스토리 진행도 갱신 (퀘스트 완료/이벤트 트리거 등에서 호출, 세이브 로드 시 복원에도 사용)
-	UFUNCTION(BlueprintCallable, Category = "Quest|Story")
-	void SetStoryProgress(int32 NewProgress);
-
-private:
-	UPROPERTY()
-	int32 StoryProgress = 0;
-#pragma endregion
-
 #pragma region Data
 protected:
 	// 마스터 퀘스트 데이터 테이블
