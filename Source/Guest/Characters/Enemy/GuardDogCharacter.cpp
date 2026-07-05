@@ -23,7 +23,7 @@ void AGuardDogCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Apply Blueprint-overridden defaults after the class default object is initialized.
+	// Blueprint에서 변경한 이동속도를 게임 시작 시 최종 반영한다.
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
 		Movement->MaxWalkSpeed = bIsChasing ? ChaseSpeed : WalkSpeed;
@@ -39,6 +39,7 @@ void AGuardDogCharacter::SetChasing(const bool bNewChasing)
 
 	bIsChasing = bNewChasing;
 
+	// 추격 여부에 따라 CharacterMovement의 최대 이동속도를 교체한다.
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
 		Movement->MaxWalkSpeed = bIsChasing ? ChaseSpeed : WalkSpeed;

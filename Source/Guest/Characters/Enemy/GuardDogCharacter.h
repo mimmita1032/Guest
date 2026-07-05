@@ -7,8 +7,8 @@
 #include "GuardDogCharacter.generated.h"
 
 /**
- * Hostile dog character base.
- * Detection, chase decisions, and attacks are intentionally left to later commits.
+ * 맹견 몹의 캐릭터 베이스.
+ * 이동 상태와 Blueprint 연동 지점을 담당한다.
  */
 UCLASS(Blueprintable)
 class GUEST_API AGuardDogCharacter : public AGuestEnemyCharacter
@@ -19,14 +19,14 @@ public:
 	AGuardDogCharacter();
 	virtual void BeginPlay() override;
 
-	/** Switches between the normal and chase movement speeds. */
+	/** 일반 이동과 추격 이동속도를 전환한다. */
 	UFUNCTION(BlueprintCallable, Category = "Guest|GuardDog|Movement")
 	void SetChasing(bool bNewChasing);
 
 	UFUNCTION(BlueprintPure, Category = "Guest|GuardDog|Movement")
 	bool IsChasing() const { return bIsChasing; }
 
-	/** Entry point for a future attack task or gameplay ability. */
+	/** 추후 BT Task 또는 Gameplay Ability가 호출할 공격 진입점이다. */
 	UFUNCTION(BlueprintCallable, Category = "Guest|GuardDog|Combat")
 	void RequestAttack();
 
@@ -37,11 +37,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Movement", meta = (ClampMin = "0.0", Units = "cm/s"))
 	float ChaseSpeed = 600.f;
 
-	/** Animation Blueprints can react to chase state changes through this hook. */
+	/** 추격 상태 변경을 Animation Blueprint 등에 전달한다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Guest|GuardDog|Movement")
 	void OnChasingStateChanged(bool bNowChasing);
 
-	/** Blueprint hook only; damage and cooldown logic will be implemented later. */
+	/** 실제 피해와 쿨다운 구현 전 사용할 Blueprint 공격 이벤트다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Guest|GuardDog|Combat")
 	void OnAttackRequested();
 
