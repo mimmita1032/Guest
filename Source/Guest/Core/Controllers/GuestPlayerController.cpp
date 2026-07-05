@@ -368,7 +368,7 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		Inv->ExportInventorySaveData(SaveObject->SavedInventory);
 	}
 	
-	SaveObject->SaveVersion = 4;
+	SaveObject->SaveVersion = UGuestSaveGame::CurrentSaveVersion;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();
