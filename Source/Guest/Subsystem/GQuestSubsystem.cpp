@@ -78,7 +78,6 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 
 void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 {
-	TArray<FName> QuestsToComplete;
 	for (auto& [QuestID, Runtime] : ActiveQuests)
 	{
 		const FQuestData* Data = FindQuestData(QuestID);
@@ -123,20 +122,14 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 
 		if (Runtime.CurrentStep >= Data->Steps.Num())
 		{
-			QuestsToComplete.Add(QuestID);
+			CompleteQuest(QuestID);
 		}
 		else
 		{
-			Runtime.ObjectiveCounts.SetNumZeroed(
-				Data->Steps[Runtime.CurrentStep].Objectives.Num());
-
+			// 다음 단계 목표 수량에 맞게 카운트 초기화
+			Runtime.ObjectiveCounts.SetNumZeroed(Data->Steps[Runtime.CurrentStep].Objectives.Num());
 			OnQuestListChanged.Broadcast();
 		}
-	}
-	// 순회가 끝난 뒤 완료 처리
-	for (const FName& QuestID : QuestsToComplete)
-	{
-		CompleteQuest(QuestID);
 	}
 }
 
@@ -325,6 +318,5 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 
 		ActiveQuests.Add(Entry.QuestID, MoveTemp(Runtime));
 	}
-	OnQuestListChanged.Broadcast();
 }
 #pragma endregion
