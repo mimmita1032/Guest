@@ -2,8 +2,14 @@
 
 #include "Guest/AI/Controllers/GuardDogAIController.h"
 
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BlackboardData.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Data/DataAssets/GAISightDataAsset.h"
+
+const FName AGuardDogAIController::BB_TargetActor(TEXT("TargetActor"));
+const FName AGuardDogAIController::BB_LastKnownLocation(TEXT("LastKnownLocation"));
+const FName AGuardDogAIController::BB_IsAlerted(TEXT("IsAlerted"));
 
 AGuardDogAIController::AGuardDogAIController()
 {
@@ -33,6 +39,24 @@ void AGuardDogAIController::BeginPlay()
 		this, &AGuardDogAIController::HandleTargetPerceptionUpdated);
 }
 
+void AGuardDogAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (!BlackboardAsset)
+	{
+		return;
+	}
+
+	UBlackboardComponent* InitializedBlackboard = nullptr;
+	if (UseBlackboard(BlackboardAsset, InitializedBlackboard) && InitializedBlackboard)
+	{
+		InitializedBlackboard->SetValueAsBool(BB_IsAlerted, false);
+		InitializedBlackboard->ClearValue(BB_TargetActor);
+		InitializedBlackboard->ClearValue(BB_LastKnownLocation);
+	}
+}
+
 void AGuardDogAIController::ApplySightSettings()
 {
 	if (SightDataAsset)
@@ -57,6 +81,14 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		SensedPlayer = Actor;
+
+		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
+		{
+			BlackboardComp->SetValueAsObject(BB_TargetActor, Actor);
+			BlackboardComp->SetValueAsBool(BB_IsAlerted, true);
+			BlackboardComp->ClearValue(BB_LastKnownLocation);
+		}
+
 		OnPlayerSensed(Actor);
 		return;
 	}
@@ -64,6 +96,13 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 	if (SensedPlayer == Actor)
 	{
 		SensedPlayer = nullptr;
+
+		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
+		{
+			BlackboardComp->SetValueAsVector(BB_LastKnownLocation, Stimulus.StimulusLocation);
+			BlackboardComp->ClearValue(BB_TargetActor);
+		}
+
 		OnPlayerLost(Actor);
 	}
 }

@@ -9,6 +9,7 @@
 #include "GuardDogAIController.generated.h"
 
 class UGAISightDataAsset;
+class UBlackboardData;
 
 /**
  * Controller dedicated to hostile guard dogs.
@@ -22,11 +23,19 @@ class GUEST_API AGuardDogAIController : public AAIController
 public:
 	AGuardDogAIController();
 
+	static const FName BB_TargetActor;
+	static const FName BB_LastKnownLocation;
+	static const FName BB_IsAlerted;
+
 	UFUNCTION(BlueprintPure, Category = "Guest|GuardDog|Perception")
 	AActor* GetSensedPlayer() const { return SensedPlayer; }
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|AI")
+	TObjectPtr<UBlackboardData> BlackboardAsset;
 
 	/** Optional tuning asset. SightConfig fallback values are used when unset. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Perception")
