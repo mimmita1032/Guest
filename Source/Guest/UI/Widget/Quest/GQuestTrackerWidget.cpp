@@ -14,6 +14,9 @@ void UGQuestTrackerWidget::NativeOnInitialized()
 	{
 		QuestSys->OnQuestListChanged.AddDynamic(this, &UGQuestTrackerWidget::RefreshQuestList);
 	}
+
+	// 구독 시점에 이미 진행 중인 퀘스트가 있으면 즉시 반영 (BeginPlay 순서상 브로드캐스트를 놓칠 수 있음)
+	RefreshQuestList();
 }
 
 void UGQuestTrackerWidget::RefreshQuestList()
