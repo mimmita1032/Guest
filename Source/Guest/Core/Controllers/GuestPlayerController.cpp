@@ -42,19 +42,7 @@ void AGuestPlayerController::UpdateRotation(float DeltaTime)
 {
 	Super::UpdateRotation(DeltaTime);
 
-	const AGuestCharacter* GuestChar = Cast<AGuestCharacter>(GetPawn());
-
-	// TEMP DEBUG - 원인 파악용, 확인 끝나면 제거할 것
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Yellow, FString::Printf(
-			TEXT("[DEBUG] UpdateRotation 호출됨 / Pawn=%s / GuestChar캐스트=%s / RawPitch=%.2f"),
-			GetPawn() ? *GetPawn()->GetClass()->GetName() : TEXT("null"),
-			GuestChar ? TEXT("성공") : TEXT("실패(null)"),
-			GetControlRotation().Pitch));
-	}
-
-	if (GuestChar)
+	if (const AGuestCharacter* GuestChar = Cast<AGuestCharacter>(GetPawn()))
 	{
 		FRotator NewRotation = GetControlRotation();
 		NewRotation.Pitch = FMath::ClampAngle(
@@ -62,14 +50,6 @@ void AGuestPlayerController::UpdateRotation(float DeltaTime)
 			GuestChar->GetMinViewPitch(),
 			GuestChar->GetMaxViewPitch());
 		SetControlRotation(NewRotation);
-
-		// TEMP DEBUG
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(2, 0.0f, FColor::Green, FString::Printf(
-				TEXT("[DEBUG] ClampedPitch=%.2f / Min=%.2f / Max=%.2f"),
-				NewRotation.Pitch, GuestChar->GetMinViewPitch(), GuestChar->GetMaxViewPitch()));
-		}
 	}
 }
 
