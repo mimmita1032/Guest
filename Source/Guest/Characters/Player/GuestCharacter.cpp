@@ -299,12 +299,10 @@ void AGuestCharacter::LookAction(const FInputActionValue& Value)
     {
        AddControllerYawInput(LookAxisVector.X);
        AddControllerPitchInput(LookAxisVector.Y);
-
-       // SpringArm이 Controller의 ControlRotation을 직접 읽어서 회전하는 구조라
-       // PlayerCameraManager의 ViewPitchMin/Max는 이 회전에 영향을 못 줌 -> 여기서 직접 클램프
-       FRotator ControlRot = Controller->GetControlRotation();
-       ControlRot.Pitch = FMath::ClampAngle(FRotator::NormalizeAxis(ControlRot.Pitch), MinViewPitch, MaxViewPitch);
-       Controller->SetControlRotation(ControlRot);
+       // 피치 클램프는 AGuestPlayerController::UpdateRotation에서 처리.
+       // AddControllerPitchInput은 즉시 반영이 아니라 RotationInput에 누적됐다가
+       // 컨트롤러의 UpdateRotation에서 ControlRotation에 반영되므로, 여기서 바로
+       // GetControlRotation()을 읽어 클램프해봐야 그 프레임엔 적용 전 값이라 무의미함.
     }
 }
 

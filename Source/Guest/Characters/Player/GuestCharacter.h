@@ -145,7 +145,16 @@ protected:
 #pragma endregion // CameraZoom
 
 #pragma region CameraPitch
-    // 카메라 피치 제한 (BeginPlay에서 PlayerCameraManager에 적용, 바닥 회피 계산에도 사용)
+public:
+    // AGuestPlayerController::UpdateRotation에서 ControlRotation 클램프에 사용
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMinViewPitch() const { return MinViewPitch; }
+
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMaxViewPitch() const { return MaxViewPitch; }
+
+protected:
+    // 카메라 피치 제한 (바닥 회피 계산 및 ControlRotation 클램프에 사용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
     float MinViewPitch = -35.0f;
 
