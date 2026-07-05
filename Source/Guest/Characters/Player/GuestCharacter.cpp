@@ -42,8 +42,8 @@ AGuestCharacter::AGuestCharacter()
     SpringArmComp->bInheritYaw = true;
     SpringArmComp->bInheritRoll = true;
     
-    SpringArmComp->bDoCollisionTest = true; 
-    SpringArmComp->ProbeSize = 12.0f; 
+    SpringArmComp->bDoCollisionTest = true;
+    SpringArmComp->ProbeSize = 20.0f;
     SpringArmComp->ProbeChannel = ECC_Camera;
     SpringArmComp->TargetOffset = FVector::ZeroVector;
     SpringArmComp->SocketOffset = FVector(0.0f, 75.0f, 0.0f);
@@ -104,8 +104,8 @@ void AGuestCharacter::BeginPlay()
     {
        if (PC->PlayerCameraManager)
        {
-          PC->PlayerCameraManager->ViewPitchMin = -50.0f; 
-          PC->PlayerCameraManager->ViewPitchMax = 60.0f;  
+          PC->PlayerCameraManager->ViewPitchMin = MinViewPitch;
+          PC->PlayerCameraManager->ViewPitchMax = MaxViewPitch;
        }
        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
        {
@@ -168,9 +168,16 @@ void AGuestCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, TargetZoomLength, 0.1f))
+    // 수평(0도)에서 MinViewPitch(제일 아래)로 내려다볼수록 목표 길이를 점점 줄여서,
+    // SpringArm이 바닥에 닿아 콜리전 트레이스로 확 당겨지는 것을 미리 방지
+    const float ControlPitch = FRotator::NormalizeAxis(GetControlRotation().Pitch);
+    const float PitchAlpha = FMath::GetMappedRangeValueClamped(
+       FVector2D(0.0f, MinViewPitch), FVector2D(1.0f, 0.0f), ControlPitch);
+    const float PitchAdjustedTargetLength = FMath::Lerp(MinArmLengthWhenLookingDown, TargetZoomLength, PitchAlpha);
+
+    if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, 0.1f))
     {
-       SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, TargetZoomLength, DeltaTime, ZoomSpeed);
+       SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, DeltaTime, ZoomSpeed);
     }
 
     float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SpringArmComp->TargetArmLength);

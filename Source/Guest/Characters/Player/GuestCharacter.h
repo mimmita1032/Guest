@@ -136,9 +136,22 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float ZoomSpeed;
 
+    // 아래를 내려다볼 때 SpringArm이 바닥 콜리전에 걸리지 않도록 줄어드는 최소 길이
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float MinArmLengthWhenLookingDown = 150.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
     bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
+
+#pragma region CameraPitch
+    // 카메라 피치 제한 (BeginPlay에서 PlayerCameraManager에 적용, 바닥 회피 계산에도 사용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MinViewPitch = -50.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MaxViewPitch = 60.0f;
+#pragma endregion // CameraPitch
 
 #pragma region anim
 public:
