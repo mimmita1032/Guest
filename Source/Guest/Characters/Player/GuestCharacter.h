@@ -156,10 +156,10 @@ public:
 protected:
     // 카메라 피치 제한 (바닥 회피 계산 및 ControlRotation 클램프에 사용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
-    float MinViewPitch = -35.0f;
+    float MinViewPitch = -25.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
-    float MaxViewPitch = 35.0f;
+    float MaxViewPitch = 25.0f;
 #pragma endregion // CameraPitch
 
 #pragma region anim
