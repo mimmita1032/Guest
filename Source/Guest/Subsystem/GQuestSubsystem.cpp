@@ -262,7 +262,28 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 			continue;
 		}
 
-		if (CompletedQuests.Contains(Entry.QuestID)) continue;
+		if (Data->Steps.IsEmpty())
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] Steps가 비어 있음"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
+
+		if (CompletedQuests.Contains(Entry.QuestID))
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] 완료 목록과 중복"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
+		
+		// 먼저 정상 복원된 항목을 유지
+		if (ActiveQuests.Contains(Entry.QuestID))
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] 활성 목록에서 중복"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
+		
 
 		FQuestRuntimeData Runtime;
 		const int32 StepNum = Data->Steps.Num();
