@@ -159,7 +159,7 @@ protected:
     float MinViewPitch = -35.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
-    float MaxViewPitch = 60.0f;
+    float MaxViewPitch = 35.0f;
 #pragma endregion // CameraPitch
 
 #pragma region anim
