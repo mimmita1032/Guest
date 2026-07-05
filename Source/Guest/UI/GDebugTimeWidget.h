@@ -8,7 +8,6 @@
 
 class USlider;
 class UTextBlock;
-class UButton;
 
 UCLASS()
 class GUEST_API UGDebugTimeWidget : public UUserWidget
@@ -26,17 +25,10 @@ protected:
 	UFUNCTION()
 	void UpdateTimeText(float CurrentHour);
 
-	// 동기화 버튼
-	UFUNCTION()
-	void OnSyncButtonClicked();
-
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<USlider> TimeSlider;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TimeText;
-	
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> SyncButton;
 };
