@@ -136,6 +136,11 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float ZoomSpeed;
 
+    // FOV/소켓오프셋 전환 연출용으로 TargetZoomLength를 부드럽게 뒤따라가는 값
+    // (TargetZoomLength는 휠 한 번에 ZoomStep만큼 즉시 점프하므로, FOV 등에 그대로 쓰면 뚝뚝 끊겨 보임)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float SmoothedZoomLength;
+
     // 아래를 내려다볼 때 SpringArm이 바닥 콜리전에 걸리지 않도록 줄어드는 최소 길이
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float MinArmLengthWhenLookingDown = 150.0f;

@@ -73,6 +73,7 @@ AGuestCharacter::AGuestCharacter()
     // 연산용 초기값
     TargetZoomLength = 400.0f;
     ZoomSpeed = 10.0f;
+    SmoothedZoomLength = TargetZoomLength;
    
    GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
    GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
@@ -122,7 +123,8 @@ void AGuestCharacter::BeginPlay()
       // 줌 연산용 초기값 세팅 (초기 타겟 거리를 범위 안으로 클램핑)
       TargetZoomLength = FMath::Clamp(CharacterData->TargetZoomLength, CharacterData->MinZoomLength, CharacterData->MaxZoomLength);
       ZoomSpeed = CharacterData->ZoomSpeed;
-       
+      SmoothedZoomLength = TargetZoomLength;
+
       UE_LOG(LogTemp, Log, TEXT("캐릭터 데이터 에셋 로드 성공. 점프력: %f"), CharacterData->JumpZVelocity);
    }
 
@@ -177,15 +179,16 @@ void AGuestCharacter::Tick(float DeltaTime)
        SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, DeltaTime, ZoomSpeed);
     }
 
-    // FPS 전환 연출(소켓 오프셋/FOV/메시 숨김)은 플레이어가 실제로 의도한 줌 거리(TargetZoomLength) 기준으로만
-    // 판단해야 함 - PitchAdjustedTargetLength(현재 실제 거리)로 계산하면 아래를 내려다볼 때도
-    // 이 연출이 같이 발동해서 카메라가 더 내려가는 것처럼 보이는 문제가 생김
-    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), TargetZoomLength);
+    // FPS 전환 연출(소켓 오프셋/FOV/메시 숨김)은 플레이어가 실제로 의도한 줌 거리(TargetZoomLength) 기준으로
+    // 판단하되, TargetZoomLength 자체는 휠 한 번에 ZoomStep만큼 즉시 점프하므로 그대로 쓰면 뚝뚝 끊겨 보임.
+    // 부드럽게 뒤따라가는 SmoothedZoomLength를 통해서만 계산.
+    SmoothedZoomLength = FMath::FInterpTo(SmoothedZoomLength, TargetZoomLength, DeltaTime, ZoomSpeed);
+    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SmoothedZoomLength);
 
     SpringArmComp->SocketOffset.Y = FMath::Lerp(0.0f, 75.0f, FpsAlpha);
     SpringArmComp->SocketOffset.Z = FMath::Lerp(0.0f, 140.0f, FpsAlpha);
 
-    if (TargetZoomLength < 50.0f)
+    if (SmoothedZoomLength < 50.0f)
     {
        SpringArmComp->bDoCollisionTest = false;
     }
@@ -197,7 +200,7 @@ void AGuestCharacter::Tick(float DeltaTime)
     float TargetFOV = FMath::Lerp(100.0f, 90.0f, FpsAlpha);
     CameraComp->SetFieldOfView(TargetFOV);
 
-    if (TargetZoomLength < 20.0f)
+    if (SmoothedZoomLength < 20.0f)
     {
        if (GetMesh()) GetMesh()->SetOwnerNoSee(true);
     }
