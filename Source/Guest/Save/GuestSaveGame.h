@@ -58,8 +58,10 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	GENERATED_BODY()
 	
 	public:
+	static constexpr int32 CurrentSaveVersion = 4;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save|Meta")
-	int32 SaveVersion = 4;
+	int32 SaveVersion = CurrentSaveVersion;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Meta")
 	FDateTime SavedAt;
