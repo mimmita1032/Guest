@@ -240,6 +240,7 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 	ActiveQuests.Reset();
 	CompletedQuests.Reset();
 
+	// DataTable에 존재하는 완료 퀘스트만 복원
 	for (const FName& QuestID : InCompletedQuestIDs)
 	{
 		if (QuestID.IsNone()) continue;
@@ -251,6 +252,7 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 		CompletedQuests.Add(QuestID);
 	}
 
+	// 활성 퀘스트는 현재 데이터 구조에 맞는 항목만 복원
 	for (const FGuestSavedActiveQuestEntry& Entry : InActiveQuests)
 	{
 		if (Entry.QuestID.IsNone()) continue;
@@ -262,16 +264,57 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 			continue;
 		}
 
-		if (CompletedQuests.Contains(Entry.QuestID)) continue;
+		if (Data->Steps.IsEmpty())
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] Steps가 비어 있음"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
 
+		if (CompletedQuests.Contains(Entry.QuestID))
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] 완료 목록과 중복"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
+
+		// 중복 저장 데이터는 먼저 정상 복원된 항목을 유지
+		if (ActiveQuests.Contains(Entry.QuestID))
+		{
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] 활성 목록에서 중복"),
+				*Entry.QuestID.ToString());
+			continue;
+		}
+
+		if (!Data->Steps.IsValidIndex(Entry.CurrentStep))
+		{
+			G_WARN(
+				TEXT("퀘스트 복원 스킵(진행): [%s] CurrentStep=%d, 유효 범위=0~%d"),
+				*Entry.QuestID.ToString(),
+				Entry.CurrentStep,
+				Data->Steps.Num() - 1);
+
+			continue;
+		}
+
+		// 검증된 단계와 목표 진행도를 런타임 데이터로 복원
 		FQuestRuntimeData Runtime;
-		const int32 StepNum = Data->Steps.Num();
-		Runtime.CurrentStep = FMath::Clamp(Entry.CurrentStep, 0, FMath::Max(0, StepNum - 1));
+		Runtime.CurrentStep = Entry.CurrentStep;
 
 		const int32 ObjectiveNum = Data->Steps.IsValidIndex(Runtime.CurrentStep)
 			? Data->Steps[Runtime.CurrentStep].Objectives.Num() : 0;
 		Runtime.ObjectiveCounts = Entry.ObjectiveCounts;
 		Runtime.ObjectiveCounts.SetNumZeroed(ObjectiveNum);
+
+		const FQuestStepData& CurrentStep = Data->Steps[Runtime.CurrentStep];
+
+		for (int32 Index = 0; Index < ObjectiveNum; ++Index)
+		{
+			Runtime.ObjectiveCounts[Index] = FMath::Clamp(
+				Runtime.ObjectiveCounts[Index],
+				0,
+				CurrentStep.Objectives[Index].RequiredAmount);
+		}
 
 		ActiveQuests.Add(Entry.QuestID, MoveTemp(Runtime));
 	}
