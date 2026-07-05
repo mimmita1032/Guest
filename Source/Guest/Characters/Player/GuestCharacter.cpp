@@ -177,12 +177,15 @@ void AGuestCharacter::Tick(float DeltaTime)
        SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, DeltaTime, ZoomSpeed);
     }
 
-    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SpringArmComp->TargetArmLength);
+    // FPS 전환 연출(소켓 오프셋/FOV/메시 숨김)은 플레이어가 실제로 의도한 줌 거리(TargetZoomLength) 기준으로만
+    // 판단해야 함 - PitchAdjustedTargetLength(현재 실제 거리)로 계산하면 아래를 내려다볼 때도
+    // 이 연출이 같이 발동해서 카메라가 더 내려가는 것처럼 보이는 문제가 생김
+    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), TargetZoomLength);
 
     SpringArmComp->SocketOffset.Y = FMath::Lerp(0.0f, 75.0f, FpsAlpha);
     SpringArmComp->SocketOffset.Z = FMath::Lerp(0.0f, 140.0f, FpsAlpha);
-    
-    if (SpringArmComp->TargetArmLength < 50.0f)
+
+    if (TargetZoomLength < 50.0f)
     {
        SpringArmComp->bDoCollisionTest = false;
     }
@@ -190,11 +193,11 @@ void AGuestCharacter::Tick(float DeltaTime)
     {
        SpringArmComp->bDoCollisionTest = true;
     }
-    
+
     float TargetFOV = FMath::Lerp(100.0f, 90.0f, FpsAlpha);
     CameraComp->SetFieldOfView(TargetFOV);
-    
-    if (SpringArmComp->TargetArmLength < 20.0f)
+
+    if (TargetZoomLength < 20.0f)
     {
        if (GetMesh()) GetMesh()->SetOwnerNoSee(true);
     }
