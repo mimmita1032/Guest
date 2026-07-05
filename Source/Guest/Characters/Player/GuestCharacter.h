@@ -147,7 +147,7 @@ protected:
 #pragma region CameraPitch
     // 카메라 피치 제한 (BeginPlay에서 PlayerCameraManager에 적용, 바닥 회피 계산에도 사용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
-    float MinViewPitch = -50.0f;
+    float MinViewPitch = -35.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
     float MaxViewPitch = 60.0f;
