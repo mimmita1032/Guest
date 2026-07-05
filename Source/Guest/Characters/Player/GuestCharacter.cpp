@@ -102,11 +102,8 @@ void AGuestCharacter::BeginPlay()
     
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
-       if (PC->PlayerCameraManager)
-       {
-          PC->PlayerCameraManager->ViewPitchMin = MinViewPitch;
-          PC->PlayerCameraManager->ViewPitchMax = MaxViewPitch;
-       }
+       // 피치 제한은 SpringArm이 읽는 ControlRotation에 직접 걸어야 해서 LookAction에서 클램프함
+       // (PlayerCameraManager->ViewPitchMin/Max는 이 카메라 구조에 영향 없음)
        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
        {
           Subsystem->ClearAllMappings();
@@ -302,6 +299,12 @@ void AGuestCharacter::LookAction(const FInputActionValue& Value)
     {
        AddControllerYawInput(LookAxisVector.X);
        AddControllerPitchInput(LookAxisVector.Y);
+
+       // SpringArm이 Controller의 ControlRotation을 직접 읽어서 회전하는 구조라
+       // PlayerCameraManager의 ViewPitchMin/Max는 이 회전에 영향을 못 줌 -> 여기서 직접 클램프
+       FRotator ControlRot = Controller->GetControlRotation();
+       ControlRot.Pitch = FMath::ClampAngle(FRotator::NormalizeAxis(ControlRot.Pitch), MinViewPitch, MaxViewPitch);
+       Controller->SetControlRotation(ControlRot);
     }
 }
 
