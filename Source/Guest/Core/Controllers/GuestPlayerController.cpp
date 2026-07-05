@@ -25,6 +25,7 @@
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/Characters/Player/GuestCharacter.h"
 
 
 
@@ -35,6 +36,21 @@ namespace
 
 AGuestPlayerController::AGuestPlayerController()
 {
+}
+
+void AGuestPlayerController::UpdateRotation(float DeltaTime)
+{
+	Super::UpdateRotation(DeltaTime);
+
+	if (const AGuestCharacter* GuestChar = Cast<AGuestCharacter>(GetPawn()))
+	{
+		FRotator NewRotation = GetControlRotation();
+		NewRotation.Pitch = FMath::ClampAngle(
+			FRotator::NormalizeAxis(NewRotation.Pitch),
+			GuestChar->GetMinViewPitch(),
+			GuestChar->GetMaxViewPitch());
+		SetControlRotation(NewRotation);
+	}
 }
 
 void AGuestPlayerController::BeginPlay()

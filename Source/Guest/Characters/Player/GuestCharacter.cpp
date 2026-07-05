@@ -42,8 +42,8 @@ AGuestCharacter::AGuestCharacter()
     SpringArmComp->bInheritYaw = true;
     SpringArmComp->bInheritRoll = true;
     
-    SpringArmComp->bDoCollisionTest = true; 
-    SpringArmComp->ProbeSize = 12.0f; 
+    SpringArmComp->bDoCollisionTest = true;
+    SpringArmComp->ProbeSize = 20.0f;
     SpringArmComp->ProbeChannel = ECC_Camera;
     SpringArmComp->TargetOffset = FVector::ZeroVector;
     SpringArmComp->SocketOffset = FVector(0.0f, 75.0f, 0.0f);
@@ -73,6 +73,7 @@ AGuestCharacter::AGuestCharacter()
     // 연산용 초기값
     TargetZoomLength = 400.0f;
     ZoomSpeed = 10.0f;
+    SmoothedZoomLength = TargetZoomLength;
    
    GuestAbilitySystemComponent = CreateDefaultSubobject<UGuestAbilitySystemComponent>(TEXT("GuestAbilitySystemComponent"));
    GuestAttributeSet = CreateDefaultSubobject<UGuestAttributeSet>(TEXT("GuestAttributeSet"));
@@ -102,11 +103,8 @@ void AGuestCharacter::BeginPlay()
     
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
-       if (PC->PlayerCameraManager)
-       {
-          PC->PlayerCameraManager->ViewPitchMin = -50.0f; 
-          PC->PlayerCameraManager->ViewPitchMax = 60.0f;  
-       }
+       // 피치 제한은 SpringArm이 읽는 ControlRotation에 직접 걸어야 해서 LookAction에서 클램프함
+       // (PlayerCameraManager->ViewPitchMin/Max는 이 카메라 구조에 영향 없음)
        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
        {
           Subsystem->ClearAllMappings();
@@ -125,7 +123,8 @@ void AGuestCharacter::BeginPlay()
       // 줌 연산용 초기값 세팅 (초기 타겟 거리를 범위 안으로 클램핑)
       TargetZoomLength = FMath::Clamp(CharacterData->TargetZoomLength, CharacterData->MinZoomLength, CharacterData->MaxZoomLength);
       ZoomSpeed = CharacterData->ZoomSpeed;
-       
+      SmoothedZoomLength = TargetZoomLength;
+
       UE_LOG(LogTemp, Log, TEXT("캐릭터 데이터 에셋 로드 성공. 점프력: %f"), CharacterData->JumpZVelocity);
    }
 
@@ -168,17 +167,28 @@ void AGuestCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, TargetZoomLength, 0.1f))
+    // 수평(0도)에서 MinViewPitch(제일 아래)로 내려다볼수록 목표 길이를 점점 줄여서,
+    // SpringArm이 바닥에 닿아 콜리전 트레이스로 확 당겨지는 것을 미리 방지
+    const float ControlPitch = FRotator::NormalizeAxis(GetControlRotation().Pitch);
+    const float PitchAlpha = FMath::GetMappedRangeValueClamped(
+       FVector2D(0.0f, MinViewPitch), FVector2D(1.0f, 0.0f), ControlPitch);
+    const float PitchAdjustedTargetLength = FMath::Lerp(MinArmLengthWhenLookingDown, TargetZoomLength, PitchAlpha);
+
+    if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, 0.1f))
     {
-       SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, TargetZoomLength, DeltaTime, ZoomSpeed);
+       SpringArmComp->TargetArmLength = FMath::FInterpTo(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, DeltaTime, ZoomSpeed);
     }
 
-    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SpringArmComp->TargetArmLength);
+    // FPS 전환 연출(소켓 오프셋/FOV/메시 숨김)은 플레이어가 실제로 의도한 줌 거리(TargetZoomLength) 기준으로
+    // 판단하되, TargetZoomLength 자체는 휠 한 번에 ZoomStep만큼 즉시 점프하므로 그대로 쓰면 뚝뚝 끊겨 보임.
+    // 부드럽게 뒤따라가는 SmoothedZoomLength를 통해서만 계산.
+    SmoothedZoomLength = FMath::FInterpTo(SmoothedZoomLength, TargetZoomLength, DeltaTime, ZoomSpeed);
+    float FpsAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.0f, 450.0f), FVector2D(0.0f, 1.0f), SmoothedZoomLength);
 
     SpringArmComp->SocketOffset.Y = FMath::Lerp(0.0f, 75.0f, FpsAlpha);
     SpringArmComp->SocketOffset.Z = FMath::Lerp(0.0f, 140.0f, FpsAlpha);
-    
-    if (SpringArmComp->TargetArmLength < 50.0f)
+
+    if (SmoothedZoomLength < 50.0f)
     {
        SpringArmComp->bDoCollisionTest = false;
     }
@@ -186,11 +196,11 @@ void AGuestCharacter::Tick(float DeltaTime)
     {
        SpringArmComp->bDoCollisionTest = true;
     }
-    
+
     float TargetFOV = FMath::Lerp(100.0f, 90.0f, FpsAlpha);
     CameraComp->SetFieldOfView(TargetFOV);
-    
-    if (SpringArmComp->TargetArmLength < 20.0f)
+
+    if (SmoothedZoomLength < 20.0f)
     {
        if (GetMesh()) GetMesh()->SetOwnerNoSee(true);
     }
@@ -295,6 +305,10 @@ void AGuestCharacter::LookAction(const FInputActionValue& Value)
     {
        AddControllerYawInput(LookAxisVector.X);
        AddControllerPitchInput(LookAxisVector.Y);
+       // 피치 클램프는 AGuestPlayerController::UpdateRotation에서 처리.
+       // AddControllerPitchInput은 즉시 반영이 아니라 RotationInput에 누적됐다가
+       // 컨트롤러의 UpdateRotation에서 ControlRotation에 반영되므로, 여기서 바로
+       // GetControlRotation()을 읽어 클램프해봐야 그 프레임엔 적용 전 값이라 무의미함.
     }
 }
 

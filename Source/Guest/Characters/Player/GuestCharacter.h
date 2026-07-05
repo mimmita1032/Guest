@@ -136,9 +136,36 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float ZoomSpeed;
 
+    // FOV/소켓오프셋 전환 연출용으로 TargetZoomLength를 부드럽게 뒤따라가는 값
+    // (TargetZoomLength는 휠 한 번에 ZoomStep만큼 즉시 점프하므로, FOV 등에 그대로 쓰면 뚝뚝 끊겨 보임)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float SmoothedZoomLength;
+
+    // 아래를 내려다볼 때 SpringArm이 바닥 콜리전에 걸리지 않도록 줄어드는 최소 길이
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float MinArmLengthWhenLookingDown = 150.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
     bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
+
+#pragma region CameraPitch
+public:
+    // AGuestPlayerController::UpdateRotation에서 ControlRotation 클램프에 사용
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMinViewPitch() const { return MinViewPitch; }
+
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMaxViewPitch() const { return MaxViewPitch; }
+
+protected:
+    // 카메라 피치 제한 (바닥 회피 계산 및 ControlRotation 클램프에 사용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MinViewPitch = -25.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MaxViewPitch = 25.0f;
+#pragma endregion // CameraPitch
 
 #pragma region anim
 public:

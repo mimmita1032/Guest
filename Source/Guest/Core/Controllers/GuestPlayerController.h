@@ -27,6 +27,10 @@ protected:
 
 	virtual void SetupInputComponent() override;
 
+	// SpringArm이 ControlRotation을 직접 읽는 구조라, 여기서 최종 값을 클램프해야
+	// (AddControllerPitchInput 직후 읽으면 아직 반영 전이라 무의미함)
+	virtual void UpdateRotation(float DeltaTime) override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
