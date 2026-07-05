@@ -73,45 +73,22 @@ void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)
 #pragma region Time
 void UGSpacetimeSubsystem::UpdateWorldTime(float DeltaTime)
 {
-	if (!bUseRealTimeSync)
+	CurrentTime += (DeltaTime * TimeScale) / 3600.0f;
+
+	if (CurrentTime >= 24.0f)
 	{
-		return;
+		CurrentTime = FMath::Fmod(CurrentTime, 24.0f);
 	}
-
-	FDateTime CurrentRealTime = FDateTime::Now();
-
-	const int32 Hour   = CurrentRealTime.GetHour();
-	const int32 Minute = CurrentRealTime.GetMinute();
-	const int32 Second = CurrentRealTime.GetSecond();
-
-	// 분이 바뀌지 않으면 브로드캐스트 생략
-	if (Hour == LastBroadcastHour && Minute == LastBroadcastMinute)
-	{
-		return;
-	}
-	LastBroadcastHour   = Hour;
-	LastBroadcastMinute = Minute;
-
-	CurrentTime = Hour + (Minute / 60.0f) + (Second / 3600.0f);
 
 	OnTimeChanged.Broadcast(CurrentTime);
 }
 
 void UGSpacetimeSubsystem::SetWorldTime(float NewHour)
 {
-	// 디버그 UI(슬라이더)로 이 함수가 호출되는 순간, 현실 시간 동기화를 강제로 끔
-	bUseRealTimeSync = false;
-    
 	CurrentTime = FMath::Clamp(NewHour, 0.0f, 23.99f);
-    
-	OnTimeChanged.Broadcast(CurrentTime);
-    
-	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정 (현실 시간 동기화 중지)"), CurrentTime);
-}
 
-void UGSpacetimeSubsystem::ResumeRealTimeSync()
-{
-	bUseRealTimeSync = true;
-	G_LOG(TEXT("현실 시간 동기화"));
+	OnTimeChanged.Broadcast(CurrentTime);
+
+	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정"), CurrentTime);
 }
 #pragma endregion

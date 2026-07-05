@@ -52,10 +52,6 @@ public:
 	// 시간을 특정 값으로 강제 설정하는 함수
 	void SetWorldTime(float NewHour);
 
-	// 현실 시간 다시 동기화
-	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
-	void ResumeRealTimeSync();
-
 	// 현재 시간을 반환하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
 	float GetCurrentHour() const { return CurrentTime; }
@@ -69,14 +65,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, Category = "Spacetime|Time")
 	float CurrentTime = 9.0f;
 
-	// 시간 흐름 배율 (현실 시간 대비 게임 시간의 속도)
+	// 시간 흐름 배율 (게임 1시간 = 현실 3600/TimeScale초. 예: 60이면 하루가 현실 24분)
 	UPROPERTY(EditAnywhere, Category = "Spacetime|Time")
-	float TimeScale = 1.0f;
-
-private:
-	bool bUseRealTimeSync = true; //현실시간 ON/OFF
-	int32 LastBroadcastHour   = -1;
-	int32 LastBroadcastMinute = -1;
+	float TimeScale = 60.0f;
 #pragma endregion
 	
 	
