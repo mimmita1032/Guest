@@ -3,6 +3,7 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -35,6 +36,8 @@ void UGuestUISubsystem::Deinitialize()
     InputConfigMap.Empty();
     ActiveStackHistory.Empty();
     CurrentIMC = nullptr;
+    PendingDialogueAsset = nullptr;
+    PendingDialogueNPCActor = nullptr;
     Super::Deinitialize();
 }
 
@@ -49,6 +52,24 @@ void UGuestUISubsystem::RegisterStack(FGameplayTag StackTag, UCommonActivatableW
         StackMap.Add(StackTag, Stack);
         UE_LOG(LogTemp, Log, TEXT("[GuestUI] Stack 등록: %s"), *StackTag.ToString());
     }
+}
+
+void UGuestUISubsystem::NotifyWidgetDeactivated(FGameplayTag StackTag)
+{
+    ActiveStackHistory.RemoveSingle(StackTag);
+
+    FGameplayTag FallbackStackTag;
+    if (ActiveStackHistory.Num() > 0)
+    {
+        FallbackStackTag = ActiveStackHistory.Top();
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("[GuestUI] Widget 종료: %s → 입력 복구: %s"),
+        *StackTag.ToString(),
+        FallbackStackTag.IsValid() ? *FallbackStackTag.ToString() : TEXT("GameOnly"));
+
+    CurrentStackTag = FallbackStackTag;
+    ApplyInputConfig(ResolveInputConfig(FallbackStackTag));
 }
 
 // ─────────────────────────────────────────────────────────
@@ -107,10 +128,19 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
     );
 }
 
-void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
+void UGuestUISubsystem::OpenBarDialogue(UGDialogueDataAsset* DialogueAsset, AActor* NPCActor)
 {
-    if (Data.Lines.IsEmpty()) return;
-    PendingDialogueData = Data;
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = NPCActor;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_BarDialogue, GuestGameplayTags::TAG_Widget_BarDialogue);
+}
+
+void UGuestUISubsystem::OpenNPCDialogue(UGDialogueDataAsset* DialogueAsset)
+{
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = nullptr;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
 }
 

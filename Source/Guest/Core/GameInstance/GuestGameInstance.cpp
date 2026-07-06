@@ -7,9 +7,11 @@
 #include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Utils/GLog.h"
 
 void UGuestGameInstance::Init()
 {
@@ -53,6 +55,13 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		return;
 	}
 
+	if (SaveObject->SaveVersion != UGuestSaveGame::CurrentSaveVersion)
+	{
+		G_WARN(TEXT("세이브 로드 거부: 지원하지 않는 버전입니다. 저장 버전=%d, 현재 버전=%d"),
+			SaveObject->SaveVersion, UGuestSaveGame::CurrentSaveVersion);
+		return;
+	}
+
 	UWorld* World = GetWorld();
 	if (!World)
 	{
@@ -65,6 +74,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		QuestSys->ImportQuestSaveData(
 			SaveObject->SavedActiveQuests,
 			SaveObject->SavedCompletedQuestIDs);
+		QuestSys->SetStoryProgress(SaveObject->SavedStoryProgress);
 	}
 	
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
@@ -82,6 +92,10 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+				}
 			}
 		}
 		return;
@@ -102,6 +116,10 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+				}
 			}
 		}
 		return;
@@ -150,6 +168,13 @@ void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 		
 			// ── 맵 전환 후 GAS 어트리뷰트 복원 ──
 			RestoreGASAttributes(Pawn, PendingSaveObject);
+			if (PendingSaveObject)
+			{
+				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+				{
+					Inv->ImportInventorySaveData(PendingSaveObject->SavedInventory);
+				}
+			}
 			PendingSaveObject = nullptr;
 		
 			bPendingApplyPlayerWorld = false;

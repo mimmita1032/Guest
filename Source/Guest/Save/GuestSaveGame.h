@@ -32,6 +32,25 @@ struct FGuestSavedActiveQuestEntry
 	TArray<int32> ObjectiveCounts;
 };
 
+USTRUCT(BlueprintType)
+struct FGuestSavedInventoryEntry
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FName ItemID = NAME_None;
+	
+	//아이템 위치
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FIntPoint TopLeft = FIntPoint::ZeroValue;
+	
+	//아이템 사이즈
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FIntPoint Size = FIntPoint(1, 1);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	int32 Quantity = 1;
+};
 
 UCLASS()
 class GUEST_API UGuestSaveGame : public USaveGame
@@ -39,8 +58,10 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	GENERATED_BODY()
 	
 	public:
+	static constexpr int32 CurrentSaveVersion = 4;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save|Meta")
-	int32 SaveVersion = 4;
+	int32 SaveVersion = CurrentSaveVersion;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Meta")
 	FDateTime SavedAt;
@@ -54,9 +75,13 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	// 퀘스트
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FGuestSavedActiveQuestEntry> SavedActiveQuests;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FName> SavedCompletedQuestIDs;
+
+	// 스토리 진행도 (0 = 게임 시작). 특정 진행도부터 열리는 퀘스트 게이팅에 사용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
+	int32 SavedStoryProgress = 0;
 	
 	//GAS어트리뷰트
 	// 저장된 적 없는 구버전 세이브 구분용으로 기본값 -1
@@ -65,4 +90,8 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|GAS")
 	float SavedCurrentBattery = -1.f;
+	
+	//인벤토리
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	TArray<FGuestSavedInventoryEntry> SavedInventory;
 };

@@ -12,54 +12,29 @@
  * 별도 파일로 분리하여 순환 참조 없이 어느 UI 클래스에서나 포함 가능.
  */
 
-/** NPC 대화 한 줄. */
-USTRUCT(BlueprintType)
-struct FNPCDialogueLine
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FText SpeakerName;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FText DialogueText;
-};
-
-/** NPC 한 명의 전체 대화 데이터. */
-USTRUCT(BlueprintType)
-struct FNPCDialogueData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FNPCDialogueLine> Lines;
-};
-
 /** 확인 모달 버튼 결과. */
 UENUM(BlueprintType)
 enum class EGuestConfirmResult : uint8
 {
-    Confirmed UMETA(DisplayName = "확인"),
-    Cancelled UMETA(DisplayName = "취소"),
-    Closed    UMETA(DisplayName = "닫힘"),
-    Unknown   UMETA(DisplayName = "알 수 없음"),
+	Confirmed UMETA(DisplayName = "확인"),
+	Cancelled UMETA(DisplayName = "취소"),
+	Closed    UMETA(DisplayName = "닫힘"),
+	Unknown   UMETA(DisplayName = "알 수 없음"),
 };
 
 /** 확인 모달에 전달할 설정 데이터. */
 USTRUCT(BlueprintType)
 struct FGuestConfirmData
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-    /** 모달 제목 텍스트. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FText TitleText;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText TitleText;
 
-    /** 모달 본문 텍스트. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FText BodyText;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText BodyText;
 
-    /** true = Yes/No 모드, false = OK/Cancel 모드. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bYesNoMode = false;
+	/** true = Yes/No 모드, false = OK/Cancel 모드. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bYesNoMode = false;
 };

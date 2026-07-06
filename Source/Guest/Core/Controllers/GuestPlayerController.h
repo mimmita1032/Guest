@@ -11,6 +11,7 @@ class UGuestUISubsystem;
 class UGuestPrimaryLayout;
 class UGuestGameInstance;
 class UInputAction;
+class UGQuestTrackerWidget;
 
 /**
  * AGuestPlayerController
@@ -25,6 +26,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
+
+	// SpringArm이 ControlRotation을 직접 읽는 구조라, 여기서 최종 값을 클램프해야
+	// (AddControllerPitchInput 직후 읽으면 아직 반영 전이라 무의미함)
+	virtual void UpdateRotation(float DeltaTime) override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -75,7 +80,16 @@ private:
 	UPROPERTY()
 	TObjectPtr<UGuestPrimaryLayout> PrimaryLayout;
 
-	
+#pragma endregion
+
+#pragma region QuestTracker
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Guest|UI")
+	TSubclassOf<UGQuestTrackerWidget> QuestTrackerClass;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UGQuestTrackerWidget> QuestTrackerInstance;
 #pragma endregion
 /*===========================================================
  * [디버그 전용] 퀘스트 시스템 콘솔 테스트 함수
@@ -93,6 +107,9 @@ private:
  *
  *  DebugCompletedQuests
  *    → 완료된 퀘스트 목록을 로그로 출력
+ *
+ *  DebugSetStoryProgress 3
+ *    → 스토리 진행도를 3으로 강제 설정 (RequiredStoryProgress 게이팅 테스트용)
  *
  * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
  *===========================================================*/
@@ -113,6 +130,10 @@ public:
 	// [디버그] 완료된 퀘스트 목록 로그 출력 — 콘솔 입력: DebugCompletedQuests
 	UFUNCTION(Exec)
 	void DebugCompletedQuests();
+
+	// [디버그] 스토리 진행도 강제 설정 — 콘솔 입력: DebugSetStoryProgress 3
+	UFUNCTION(Exec)
+	void DebugSetStoryProgress(int32 NewProgress);
 #pragma endregion
 #pragma region SaveDebug
 	

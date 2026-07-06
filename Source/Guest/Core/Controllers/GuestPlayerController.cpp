@@ -9,6 +9,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/UI/Layout/GuestPrimaryLayout.h"
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
@@ -22,7 +23,9 @@
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/Characters/Player/GuestCharacter.h"
 
 
 
@@ -35,6 +38,21 @@ AGuestPlayerController::AGuestPlayerController()
 {
 }
 
+void AGuestPlayerController::UpdateRotation(float DeltaTime)
+{
+	Super::UpdateRotation(DeltaTime);
+
+	if (const AGuestCharacter* GuestChar = Cast<AGuestCharacter>(GetPawn()))
+	{
+		FRotator NewRotation = GetControlRotation();
+		NewRotation.Pitch = FMath::ClampAngle(
+			FRotator::NormalizeAxis(NewRotation.Pitch),
+			GuestChar->GetMinViewPitch(),
+			GuestChar->GetMaxViewPitch());
+		SetControlRotation(NewRotation);
+	}
+}
+
 void AGuestPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -43,6 +61,15 @@ void AGuestPlayerController::BeginPlay()
 	if (IsLocalController())
 	{
 		CreatePrimaryLayout();
+
+		if (QuestTrackerClass)
+		{
+			QuestTrackerInstance = CreateWidget<UGQuestTrackerWidget>(this, QuestTrackerClass);
+			if (QuestTrackerInstance)
+			{
+				QuestTrackerInstance->AddToViewport(10);
+			}
+		}
 	}
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
@@ -261,6 +288,19 @@ void AGuestPlayerController::DebugCompletedQuests()
 	}
 }
 
+/*
+ * 콘솔 명령어: DebugSetStoryProgress 3
+ * 스토리 진행도를 강제로 설정합니다. RequiredStoryProgress 게이팅 테스트용.
+ */
+void AGuestPlayerController::DebugSetStoryProgress(int32 NewProgress)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	QuestSys->SetStoryProgress(NewProgress);
+	G_LOG(TEXT("[디버그] 스토리 진행도 → %d"), QuestSys->GetStoryProgress());
+}
+
 #pragma endregion
 
 #pragma region  SaveDebug
@@ -326,6 +366,7 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 			QuestSys->ExportQuestSaveData(
 				SaveObject->SavedActiveQuests,
 				SaveObject->SavedCompletedQuestIDs);
+			SaveObject->SavedStoryProgress = QuestSys->GetStoryProgress();
 		}
 	}
 	
@@ -338,7 +379,12 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		}
 	}
 	
-	SaveObject->SaveVersion = 4;
+	if (UGInventoryComponent* Inv = ControllerPawn->FindComponentByClass<UGInventoryComponent>())
+	{
+		Inv->ExportInventorySaveData(SaveObject->SavedInventory);
+	}
+	
+	SaveObject->SaveVersion = UGuestSaveGame::CurrentSaveVersion;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();

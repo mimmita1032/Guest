@@ -21,10 +21,11 @@ class UCommonActivatableWidgetContainerBase;
  * Parent Class: GuestPrimaryLayout.
  * 아래 이름으로 CommonActivatableWidgetStack 4개 배치:
  *
- *   Stack_Frontend  (ZOrder 0) - 메인메뉴, PressAnyKey
- *   Stack_GameHUD   (ZOrder 1) - 상시 HUD
- *   Stack_GameMenu  (ZOrder 2) - 카메라 UI, 인벤토리 등
- *   Stack_Modal     (ZOrder 3) - 확인창, 알림 (최상단)
+ *   Stack_Frontend    (ZOrder 0) - 메인메뉴, PressAnyKey
+ *   Stack_GameHUD     (ZOrder 1) - 상시 HUD
+ *   Stack_GameMenu    (ZOrder 2) - 카메라 UI, 인벤토리 등
+ *   Stack_BarDialogue (ZOrder 2) - 바 모드 전체화면 대화 (VA-11 HALL-A 스타일)
+ *   Stack_Modal       (ZOrder 3) - 확인창, 알림 (최상단)
  */
 UCLASS(Abstract, BlueprintType, meta = (DisableNativeTick))
 class GUEST_API UGuestPrimaryLayout : public UCommonUserWidget
@@ -59,4 +60,8 @@ private:
     /** 모달 레이어. ZOrder 3 (최상단). */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UCommonActivatableWidgetContainerBase> Stack_Modal;
+
+    /** 바 모드 전체화면 대화 레이어. ZOrder 2 (GameMenu와 동급, 별도 스택). */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UCommonActivatableWidgetContainerBase> Stack_BarDialogue;
 };

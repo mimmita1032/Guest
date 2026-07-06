@@ -10,6 +10,7 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_GameHUD, "Guest.WidgetStack.GameHUD");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_GameMenu, "Guest.WidgetStack.GameMenu");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_Modal, "Guest.WidgetStack.Modal");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_BarDialogue, "Guest.WidgetStack.BarDialogue");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
@@ -25,6 +26,9 @@ namespace GuestGameplayTags
 	// NPC 대화 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_NPCDialogue, "Guest.Widget.NPCDialogue");
 
+	// 바 모드 대화 위젯 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_BarDialogue, "Guest.Widget.BarDialogue");
+
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Consumable, "Item.Type.Consumable");
@@ -37,8 +41,16 @@ namespace GuestGameplayTags
 	
 	//인풋
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Interact, "Guest.InputTag.Interact");
-	
+	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Attack,   "Guest.InputTag.Attack");
+
 	//Ability
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Interact, "Guest.Ability.Interact");
-	
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Melee,    "Guest.Ability.Melee");
+
+	//State
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "Guest.State.Dead");
+
+	//GE SetByCaller 데이터
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Damage, "Guest.Data.Damage");
+
 }
