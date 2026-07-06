@@ -9,6 +9,8 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Sound/GuestSoundSubsystem.h"
+#include "Guest/Sound/GuestSoundTags.h"
 
 void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 {
@@ -23,6 +25,12 @@ void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 void UGInventoryWidget::NativeOnActivated()
 {
 	Super::NativeOnActivated();
+
+	// 사운드: 인벤토리 열기
+	if (UGuestSoundSubsystem* SoundSys = GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
+	{
+		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ScreenOpen, AudioDataAsset);
+	}
 
 	if (!InventoryComponent)
 	{
@@ -40,6 +48,12 @@ void UGInventoryWidget::NativeOnActivated()
 
 void UGInventoryWidget::NativeDestruct()
 {
+	// 사운드: 인벤토리 닫기
+	if (UGuestSoundSubsystem* SoundSys = GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
+	{
+		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ScreenClose, AudioDataAsset);
+	}
+
 	if (InventoryComponent)
 	{
 		InventoryComponent->OnInventoryChanged.RemoveAll(this);
@@ -67,7 +81,6 @@ void UGInventoryWidget::OnRefreshInventory()
 	const int32 Rows      = InventoryComponent->Rows;
 	const int32 TotalSlots = Columns * Rows;
 
-	// 빈 배경 격자 생성
 	for (int32 i = 0; i < TotalSlots; ++i)
 	{
 		if (UGInventorySlotWidget* NewSlot = CreateWidget<UGInventorySlotWidget>(GetOwningPlayer(), SlotWidgetClass))
@@ -85,7 +98,6 @@ void UGInventoryWidget::OnRefreshInventory()
 		}
 	}
 
-	// 핸들 목록 한 번만 조회해 재사용
 	const TArray<FInventoryItemHandle> Handles = InventoryComponent->GetAllHandles();
 
 	for (const FInventoryItemHandle& Handle : Handles)
@@ -97,8 +109,6 @@ void UGInventoryWidget::OnRefreshInventory()
 		if (UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 		{
 			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize);
-
-			// OnRefreshInventory 호출마다 위젯을 새로 생성하므로 중복 바인딩 없음
 			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
 
 			if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
@@ -117,5 +127,12 @@ void UGInventoryWidget::HandleItemDroppedOutside(FInventoryItemHandle Handle)
 {
 	if (!Handle.IsValid()) return;
 	if (!InventoryComponent) return;
+
+	//사운드: 인벤토리 밖으로 버릴 때 (드롭 사운드)
+	if (UGuestSoundSubsystem* SoundSys = GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
+	{
+		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ButtonClick, AudioDataAsset);
+	}
+
 	InventoryComponent->DropItem(Handle);
 }

@@ -9,6 +9,7 @@
 
 class UImage;
 class UTexture2D;
+class UGuestAudioDataAsset; 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemDroppedOutside, FInventoryItemHandle, Handle);
 
@@ -18,11 +19,9 @@ class GUEST_API UGInventoryItemWidget : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	// 호출부(InventoryWidget)에서 Fragment 조회 후 Icon·GridSize·SlotSize를 전달
 	void InitItem(FInventoryItemHandle InHandle, TSoftObjectPtr<UTexture2D> InIcon,
-	              FIntPoint InGridSize, float InSlotSize);
+				  FIntPoint InGridSize, float InSlotSize);
 
-	// 인벤토리 외부 드롭 시 Broadcast — InventoryWidget이 구독해서 DropItem 처리
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDroppedOutside OnItemDroppedOutside;
 
@@ -40,6 +39,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|Item")
 	FIntPoint CachedGridSize = FIntPoint(1, 1);
+
+	// Wwise 사운드 데이터 에셋
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Audio")
+	TObjectPtr<UGuestAudioDataAsset> AudioDataAsset;
 
 private:
 	UPROPERTY()
