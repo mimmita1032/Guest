@@ -103,6 +103,11 @@ void AGuardDogAIController::OnPossess(APawn* InPawn)
 		InitializedBlackboard->ClearValue(BB_TargetActor);
 		InitializedBlackboard->ClearValue(BB_LastKnownLocation);
 	}
+	
+	if (BehaviorTree)
+	{
+		RunBehaviorTree(BehaviorTree);
+	}
 }
 
 void AGuardDogAIController::ApplySightSettings()
