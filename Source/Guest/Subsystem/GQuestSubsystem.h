@@ -104,6 +104,9 @@ private:
 
 	// 헬퍼: DataTable에서 퀘스트 데이터 조회
 	const FQuestData* FindQuestData(FName QuestID) const;
+
+	// 진행/저장 매칭 키인 StepID/ObjectiveID가 비었거나 중복인 행을 기동 시점에 경고 (기획 데이터 입력 유도)
+	void ValidateQuestDataTableIDs() const;
 #pragma endregion
 	
 	

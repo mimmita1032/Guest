@@ -12,6 +12,7 @@ void UGQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (QuestDataTable)
 	{
 		G_LOG(TEXT("퀘스트 데이터 테이블 로드 성공"));
+		ValidateQuestDataTableIDs();
 	}
 	else
 	{
@@ -65,9 +66,16 @@ void UGQuestSubsystem::AcceptQuest(FName QuestID)
 		return;
 	}
 
+	// StepID가 비어 있으면 진행/저장 매칭이 모두 불가능하므로 수락 자체를 막고 데이터 입력을 유도
+	if (Data->Steps[0].StepID.IsNone())
+	{
+		G_WARN(TEXT("퀘스트 시스템: [%s] 첫 단계의 StepID가 비어 있어 수락 불가 — DT_QuestData에 StepID 입력 필요"),
+			*QuestID.ToString());
+		return;
+	}
+
 	FQuestRuntimeData RuntimeData;
-	RuntimeData.CurrentStep = 0;
-	RuntimeData.ObjectiveCounts.SetNumZeroed(Data->Steps[0].Objectives.Num());
+	RuntimeData.InitializeForStep(Data->Steps[0]);
 	ActiveQuests.Add(QuestID, RuntimeData);
 
 	G_LOG(TEXT("퀘스트 시스템: [%s] '%s' 수락 완료 (단계 %d개)"),
@@ -82,33 +90,37 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 	for (auto& [QuestID, Runtime] : ActiveQuests)
 	{
 		const FQuestData* Data = FindQuestData(QuestID);
-		if (!Data || !Data->Steps.IsValidIndex(Runtime.CurrentStep)) continue;
+		if (!Data) continue;
 
-		const FQuestStepData& CurrentStepData = Data->Steps[Runtime.CurrentStep];
+		const int32 StepIndex = Data->FindStepIndexByID(Runtime.CurrentStepID);
+		if (StepIndex == INDEX_NONE) continue;
+
+		const FQuestStepData& CurrentStepData = Data->Steps[StepIndex];
 		bool bAnyMatch = false;
 
 		// 현재 단계의 매칭 목표 카운트 갱신
-		for (int32 i = 0; i < CurrentStepData.Objectives.Num(); ++i)
+		for (const FQuestObjectiveData& Obj : CurrentStepData.Objectives)
 		{
-			const FQuestObjectiveData& Obj = CurrentStepData.Objectives[i];
 			if (Obj.TargetID != TargetID) continue;
 
-			Runtime.ObjectiveCounts[i] = FMath::Min(
-				Runtime.ObjectiveCounts[i] + Amount, Obj.RequiredAmount);
+			FQuestObjectiveProgress* Progress = Runtime.FindObjectiveProgress(Obj.ObjectiveID);
+			if (!Progress) continue;
+
+			Progress->Count = FMath::Min(Progress->Count + Amount, Obj.RequiredAmount);
 			bAnyMatch = true;
 
-			G_LOG(TEXT("퀘스트 시스템: [%s] 단계%d 목표[%s] %d / %d"),
-				*QuestID.ToString(), Runtime.CurrentStep,
-				*TargetID.ToString(), Runtime.ObjectiveCounts[i], Obj.RequiredAmount);
+			G_LOG(TEXT("퀘스트 시스템: [%s] 단계[%s] 목표[%s] %d / %d"),
+				*QuestID.ToString(), *Runtime.CurrentStepID.ToString(),
+				*TargetID.ToString(), Progress->Count, Obj.RequiredAmount);
 		}
 
 		if (!bAnyMatch) continue;
 
 		// 현재 단계의 모든 목표 달성 여부 확인
 		bool bStepComplete = true;
-		for (int32 i = 0; i < CurrentStepData.Objectives.Num(); ++i)
+		for (const FQuestObjectiveData& Obj : CurrentStepData.Objectives)
 		{
-			if (Runtime.ObjectiveCounts[i] < CurrentStepData.Objectives[i].RequiredAmount)
+			if (Runtime.GetObjectiveCount(Obj.ObjectiveID) < Obj.RequiredAmount)
 			{
 				bStepComplete = false;
 				break;
@@ -117,18 +129,24 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 
 		if (!bStepComplete) continue;
 
-		Runtime.CurrentStep++;
-		G_LOG(TEXT("퀘스트 시스템: [%s] 단계 완료 → 다음 단계 %d"),
-			*QuestID.ToString(), Runtime.CurrentStep);
-
-		if (Runtime.CurrentStep >= Data->Steps.Num())
+		const int32 NextStepIndex = StepIndex + 1;
+		if (!Data->Steps.IsValidIndex(NextStepIndex))
 		{
 			QuestsToComplete.Add(QuestID);
 		}
 		else
 		{
-			Runtime.ObjectiveCounts.SetNumZeroed(
-				Data->Steps[Runtime.CurrentStep].Objectives.Num());
+			const FQuestStepData& NextStep = Data->Steps[NextStepIndex];
+			if (NextStep.StepID.IsNone())
+			{
+				// CurrentStepID가 None이 되면 이후 목표 갱신이 전부 무시되어 퀘스트가 멈춤
+				G_WARN(TEXT("퀘스트 시스템: [%s] 다음 단계(인덱스 %d)의 StepID가 비어 있음 — 진행이 멈추므로 DT_QuestData 입력 필요"),
+					*QuestID.ToString(), NextStepIndex);
+			}
+
+			Runtime.InitializeForStep(NextStep);
+			G_LOG(TEXT("퀘스트 시스템: [%s] 단계 완료 → 다음 단계 [%s]"),
+				*QuestID.ToString(), *Runtime.CurrentStepID.ToString());
 
 			OnQuestListChanged.Broadcast();
 		}
@@ -221,6 +239,51 @@ const FQuestData* UGQuestSubsystem::FindQuestData(FName QuestID) const
 	if (!QuestDataTable) return nullptr;
 	return QuestDataTable->FindRow<FQuestData>(QuestID, TEXT("QuestLookup"));
 }
+
+void UGQuestSubsystem::ValidateQuestDataTableIDs() const
+{
+	if (!QuestDataTable) return;
+
+	for (const FName& RowName : QuestDataTable->GetRowNames())
+	{
+		const FQuestData* Data = QuestDataTable->FindRow<FQuestData>(RowName, TEXT("QuestIDValidation"), false);
+		if (!Data) continue;
+
+		TSet<FName> SeenStepIDs;
+		for (int32 StepIndex = 0; StepIndex < Data->Steps.Num(); ++StepIndex)
+		{
+			const FQuestStepData& Step = Data->Steps[StepIndex];
+			if (Step.StepID.IsNone())
+			{
+				G_WARN(TEXT("퀘스트 데이터 검증: [%s] 단계 %d의 StepID가 비어 있음 — 입력 전까지 진행/저장 불가"),
+					*RowName.ToString(), StepIndex);
+			}
+			else if (SeenStepIDs.Contains(Step.StepID))
+			{
+				G_WARN(TEXT("퀘스트 데이터 검증: [%s] StepID [%s] 중복 — 복원 시 앞쪽 단계로만 매칭됨"),
+					*RowName.ToString(), *Step.StepID.ToString());
+			}
+			SeenStepIDs.Add(Step.StepID);
+
+			TSet<FName> SeenObjectiveIDs;
+			for (int32 ObjIndex = 0; ObjIndex < Step.Objectives.Num(); ++ObjIndex)
+			{
+				const FName ObjectiveID = Step.Objectives[ObjIndex].ObjectiveID;
+				if (ObjectiveID.IsNone())
+				{
+					G_WARN(TEXT("퀘스트 데이터 검증: [%s] 단계 %d 목표 %d의 ObjectiveID가 비어 있음 — 입력 전까지 진행/저장 불안정"),
+						*RowName.ToString(), StepIndex, ObjIndex);
+				}
+				else if (SeenObjectiveIDs.Contains(ObjectiveID))
+				{
+					G_WARN(TEXT("퀘스트 데이터 검증: [%s] 단계 %d ObjectiveID [%s] 중복 — 진행도가 앞쪽 목표로만 매칭됨"),
+						*RowName.ToString(), StepIndex, *ObjectiveID.ToString());
+				}
+				SeenObjectiveIDs.Add(ObjectiveID);
+			}
+		}
+	}
+}
 #pragma endregion
 
 #pragma region Save
@@ -235,8 +298,8 @@ void UGQuestSubsystem::ExportQuestSaveData(TArray<FGuestSavedActiveQuestEntry>& 
 	{
 		FGuestSavedActiveQuestEntry Entry;
 		Entry.QuestID = Pair.Key;
-		Entry.CurrentStep = Pair.Value.CurrentStep;
-		Entry.ObjectiveCounts = Pair.Value.ObjectiveCounts;
+		Entry.CurrentStepID = Pair.Value.CurrentStepID;
+		Entry.ObjectiveProgress = Pair.Value.ObjectiveProgress;
 		OutActiveQuests.Add(MoveTemp(Entry));
 	}
 	OutCompletedQuestIDs = CompletedQuests.Array();
@@ -293,34 +356,35 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 			continue;
 		}
 
-		if (!Data->Steps.IsValidIndex(Entry.CurrentStep))
+		// 저장된 StepID가 현재 DataTable에 실제로 존재하는지 검증 (NAME_None 포함)
+		const FQuestStepData* StepData = Data->FindStepByID(Entry.CurrentStepID);
+		if (!StepData)
 		{
-			G_WARN(
-				TEXT("퀘스트 복원 스킵(진행): [%s] CurrentStep=%d, 유효 범위=0~%d"),
+			G_WARN(TEXT("퀘스트 복원 스킵(진행): [%s] StepID [%s]가 현재 DataTable에 없음"),
 				*Entry.QuestID.ToString(),
-				Entry.CurrentStep,
-				Data->Steps.Num() - 1);
+				*Entry.CurrentStepID.ToString());
 
 			continue;
 		}
 
-		// 검증된 단계와 목표 진행도를 런타임 데이터로 복원
+		// 현재 단계의 목표 기준으로 장부를 새로 만들고, 저장된 진행도를 ObjectiveID로 매칭해 복원
 		FQuestRuntimeData Runtime;
-		Runtime.CurrentStep = Entry.CurrentStep;
+		Runtime.InitializeForStep(*StepData);
 
-		const int32 ObjectiveNum = Data->Steps.IsValidIndex(Runtime.CurrentStep)
-			? Data->Steps[Runtime.CurrentStep].Objectives.Num() : 0;
-		Runtime.ObjectiveCounts = Entry.ObjectiveCounts;
-		Runtime.ObjectiveCounts.SetNumZeroed(ObjectiveNum);
-
-		const FQuestStepData& CurrentStep = Data->Steps[Runtime.CurrentStep];
-
-		for (int32 Index = 0; Index < ObjectiveNum; ++Index)
+		for (const FQuestObjectiveProgress& Saved : Entry.ObjectiveProgress)
 		{
-			Runtime.ObjectiveCounts[Index] = FMath::Clamp(
-				Runtime.ObjectiveCounts[Index],
-				0,
-				CurrentStep.Objectives[Index].RequiredAmount);
+			const FQuestObjectiveData* Obj = StepData->FindObjectiveByID(Saved.ObjectiveID);
+			FQuestObjectiveProgress* Target = Runtime.FindObjectiveProgress(Saved.ObjectiveID);
+			if (!Obj || !Target)
+			{
+				G_WARN(TEXT("퀘스트 복원: [%s] 목표 진행도 스킵 — ObjectiveID [%s]가 단계 [%s]에 없음"),
+					*Entry.QuestID.ToString(),
+					*Saved.ObjectiveID.ToString(),
+					*Entry.CurrentStepID.ToString());
+				continue;
+			}
+
+			Target->Count = FMath::Clamp(Saved.Count, 0, Obj->RequiredAmount);
 		}
 
 		ActiveQuests.Add(Entry.QuestID, MoveTemp(Runtime));
