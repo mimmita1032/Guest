@@ -91,4 +91,23 @@ void UGSpacetimeSubsystem::SetWorldTime(float NewHour)
 
 	G_LOG(TEXT("디버그 UI 조작: 세계 시간이 %.2f시로 설정"), CurrentTime);
 }
+
+void UGSpacetimeSubsystem::ExportTimeSaveData(float& OutCurrentHour) const
+{
+	OutCurrentHour = CurrentTime;
+}
+
+void UGSpacetimeSubsystem::ImportTimeSaveData(float InCurrentHour)
+{
+	// 시간이 저장된 적 없는 세이브(-1 센티널)는 현재 시간 유지
+	if (InCurrentHour < 0.0f)
+	{
+		return;
+	}
+
+	CurrentTime = FMath::Clamp(InCurrentHour, 0.0f, 23.99f);
+	OnTimeChanged.Broadcast(CurrentTime);
+
+	G_LOG(TEXT("세이브 로드: 세계 시간을 %.2f시로 복원"), CurrentTime);
+}
 #pragma endregion

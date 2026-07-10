@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "Guest/Data/DataTable/GQuestTypes.h"
+#include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "GuestSaveGame.generated.h"
 
 
@@ -95,4 +96,12 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	//인벤토리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
 	TArray<FGuestSavedInventoryEntry> SavedInventory;
+
+	// 세계 시간 (0.0~24.0시). 저장된 적 없는 구버전 세이브 구분용 기본값 -1
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	float SavedWorldHour = -1.f;
+
+	// 디지캠으로 촬영한 사진 (Snapshot 텍스처는 직렬화되지 않고 CompressedImage에서 재생성)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Photo")
+	TArray<FPhotoData> SavedPhotos;
 };

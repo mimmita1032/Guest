@@ -22,7 +22,9 @@
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
@@ -367,6 +369,16 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 				SaveObject->SavedActiveQuests,
 				SaveObject->SavedCompletedQuestIDs);
 			SaveObject->SavedStoryProgress = QuestSys->GetStoryProgress();
+		}
+
+		if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
+		{
+			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour);
+		}
+
+		if (UGPhotoLibrarySubsystem* PhotoLib = GI->GetSubsystem<UGPhotoLibrarySubsystem>())
+		{
+			PhotoLib->ExportPhotoSaveData(SaveObject->SavedPhotos);
 		}
 	}
 	

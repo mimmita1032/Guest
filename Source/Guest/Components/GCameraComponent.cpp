@@ -4,6 +4,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/Texture2D.h"
+#include "ImageUtils.h"
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
@@ -77,6 +78,13 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	FPhotoData NewPhoto    = Metadata;
 	NewPhoto.Snapshot      = Snapshot;
 	NewPhoto.RealWorldTime = FDateTime::Now();
+
+	// 세이브 파일에 사진을 남기기 위해 촬영 시점에 PNG로 압축해 보관 (텍스처는 직렬화 불가)
+	TArray64<uint8> PngData;
+	FImageUtils::PNGCompressImageArray(Width, Height,
+		TArrayView64<const FColor>(Pixels.GetData(), Pixels.Num()), PngData);
+	NewPhoto.CompressedImage.Reset();
+	NewPhoto.CompressedImage.Append(PngData.GetData(), static_cast<int32>(PngData.Num()));
 
 	UGameInstance* PhotoGI = GetWorld()->GetGameInstance();
 	if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
