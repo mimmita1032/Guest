@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "Guest/UI/Base/GuestActivatableBase.h"
 #include "Guest/Items/Instance/GItemInstance.h"
 #include "GInventoryWidget.generated.h"
 
@@ -14,7 +14,7 @@ class UCanvasPanel;
 class UGInventoryItemWidget;
 
 UCLASS()
-class GUEST_API UGInventoryWidget : public UCommonActivatableWidget
+class GUEST_API UGInventoryWidget : public UGuestActivatableBase
 {
 	GENERATED_BODY()
 
@@ -24,6 +24,7 @@ public:
 
 protected:
 	virtual void NativeOnActivated() override;
+	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
@@ -33,6 +34,10 @@ protected:
 	// ItemWidget의 OnItemDroppedOutside 델리게이트 수신 → DropItem 처리
 	UFUNCTION()
 	void HandleItemDroppedOutside(FInventoryItemHandle Handle);
+
+	// SlotWidget의 OnSlotItemDropped 델리게이트 수신 → MoveItem 처리
+	UFUNCTION()
+	void HandleSlotItemDropped(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory|UI")

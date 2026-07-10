@@ -8,6 +8,8 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/Utils/GLog.h"
 
 void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
@@ -15,8 +17,7 @@ void UGInventoryWidget::SetInventoryComponent(UGInventoryComponent* InComponent)
 	if (InComponent)
 	{
 		InventoryComponent = InComponent;
-		InventoryComponent->OnInventoryChanged.AddDynamic(this, &UGInventoryWidget::OnRefreshInventory);
-		G_LOG(TEXT("인벤토리 위젯: 컴포넌트 연결 및 델리게이트 바인딩 완료"));
+		G_LOG(TEXT("인벤토리 위젯: 컴포넌트 연결 완료"));
 	}
 }
 
@@ -35,7 +36,27 @@ void UGInventoryWidget::NativeOnActivated()
 		}
 	}
 
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnInventoryChanged.AddDynamic(this, &UGInventoryWidget::OnRefreshInventory);
+	}
+
 	OnRefreshInventory();
+}
+
+void UGInventoryWidget::NativeOnDeactivated()
+{
+	Super::NativeOnDeactivated();
+
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnInventoryChanged.RemoveDynamic(this, &UGInventoryWidget::OnRefreshInventory);
+	}
+
+	if (UGuestUISubsystem* UISys = GetUISubsystem())
+	{
+		UISys->NotifyWidgetDeactivated(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+	}
 }
 
 void UGInventoryWidget::NativeDestruct()
@@ -76,6 +97,9 @@ void UGInventoryWidget::OnRefreshInventory()
 			const int32 Col = i % Columns;
 
 			NewSlot->SetSlotPosition(Col, Row);
+
+			// OnRefreshInventory 호출마다 위젯을 새로 생성하므로 중복 바인딩 없음
+			NewSlot->OnSlotItemDropped.AddDynamic(this, &UGInventoryWidget::HandleSlotItemDropped);
 
 			if (UUniformGridSlot* GridSlot = Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col))
 			{
@@ -118,4 +142,11 @@ void UGInventoryWidget::HandleItemDroppedOutside(FInventoryItemHandle Handle)
 	if (!Handle.IsValid()) return;
 	if (!InventoryComponent) return;
 	InventoryComponent->DropItem(Handle);
+}
+
+void UGInventoryWidget::HandleSlotItemDropped(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY)
+{
+	if (!Handle.IsValid()) return;
+	if (!InventoryComponent) return;
+	InventoryComponent->MoveItem(Handle, TargetX, TargetY);
 }

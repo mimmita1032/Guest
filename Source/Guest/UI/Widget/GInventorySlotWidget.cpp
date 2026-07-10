@@ -2,7 +2,6 @@
 
 #include "GInventorySlotWidget.h"
 #include "GItemDragDropOperation.h"
-#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Utils/GLog.h"
 
 void UGInventorySlotWidget::SetSlotPosition(int32 InX, int32 InY)
@@ -19,18 +18,12 @@ bool UGInventorySlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDra
 	{
 		if (DragOp->DraggedHandle.IsValid())
 		{
-			if (APawn* OwningPawn = GetOwningPlayerPawn())
-			{
-				if (UGInventoryComponent* InvComp = OwningPawn->FindComponentByClass<UGInventoryComponent>())
-				{
-					const int32 TargetX = SlotX - DragOp->DragOffset.X;
-					const int32 TargetY = SlotY - DragOp->DragOffset.Y;
+			const int32 TargetX = SlotX - DragOp->DragOffset.X;
+			const int32 TargetY = SlotY - DragOp->DragOffset.Y;
 
-					InvComp->MoveItem(DragOp->DraggedHandle, TargetX, TargetY);
-					G_LOG(TEXT("아이템 드롭: 타겟 좌표 (%d, %d)"), TargetX, TargetY);
-					return true;
-				}
-			}
+			OnSlotItemDropped.Broadcast(DragOp->DraggedHandle, TargetX, TargetY);
+			G_LOG(TEXT("아이템 드롭: 타겟 좌표 (%d, %d)"), TargetX, TargetY);
+			return true;
 		}
 	}
 
