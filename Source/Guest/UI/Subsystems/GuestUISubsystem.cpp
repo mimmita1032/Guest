@@ -72,6 +72,20 @@ void UGuestUISubsystem::NotifyWidgetDeactivated(FGameplayTag StackTag)
     ApplyInputConfig(ResolveInputConfig(FallbackStackTag));
 }
 
+bool UGuestUISubsystem::IsWidgetActive(FGameplayTag StackTag, FGameplayTag WidgetTag) const
+{
+    UCommonActivatableWidgetContainerBase* const* Stack = StackMap.Find(StackTag);
+    if (!Stack || !*Stack) return false;
+
+    UCommonActivatableWidget* ActiveWidget = (*Stack)->GetActiveWidget();
+    if (!ActiveWidget) return false;
+
+    const UGuestUISettings* Settings = GetDefault<UGuestUISettings>();
+    const UClass* WidgetClass = Settings->FindWidgetClassByTag(WidgetTag).Get();
+
+    return WidgetClass && ActiveWidget->IsA(WidgetClass);
+}
+
 // ─────────────────────────────────────────────────────────
 // 3. 입력 Config 등록
 // ─────────────────────────────────────────────────────────

@@ -443,18 +443,16 @@ void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
 {
    if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
    {
-      if (bIsInventoryOpen)
+      if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory))
       {
          UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
-         bIsInventoryOpen = false;
-            
+
          G_LOG(TEXT("캐릭터 입력: 인벤토리 닫기 실행"));
       }
       else
       {
          UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Inventory);
-         bIsInventoryOpen = true;
-            
+
          G_LOG(TEXT("캐릭터 입력: 인벤토리 열기 실행"));
       }
    }

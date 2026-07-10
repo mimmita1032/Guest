@@ -50,6 +50,10 @@ public:
 	/** 위젯이 NativeOnDeactivated에서 직접 호출해 입력 모드를 복구한다. */
 	void NotifyWidgetDeactivated(FGameplayTag StackTag);
 
+	/** 지정한 스택의 현재 활성 위젯이 WidgetTag에 해당하는 클래스인지 조회한다. */
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	bool IsWidgetActive(FGameplayTag StackTag, FGameplayTag WidgetTag) const;
+
 	/**
 	 * 바 모드 전체화면 대화를 BarDialogue 스택에 열고 세션을 시작한다.
 	 * 위젯 활성화 시 GetPendingDialogueAsset()으로 데이터를 가져간다.

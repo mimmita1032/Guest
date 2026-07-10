@@ -198,7 +198,6 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGInventoryComponent> InventoryComponent;
 
-    bool bIsInventoryOpen = false;
     bool bIsDigicamOpen   = false;
 #pragma endregion
 
