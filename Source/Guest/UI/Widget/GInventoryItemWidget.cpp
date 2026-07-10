@@ -6,6 +6,8 @@
 #include "Engine/Texture2D.h"
 #include "GItemDragDropOperation.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Sound/GuestSoundSubsystem.h"
+#include "Guest/Sound/GuestSoundTags.h"
 
 void UGInventoryItemWidget::InitItem(FInventoryItemHandle InHandle, TSoftObjectPtr<UTexture2D> InIcon,
                                      FIntPoint InGridSize, float InSlotSize)
@@ -41,6 +43,12 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
 	if (!ItemHandle.IsValid()) return;
+
+	// 사운드: 아이템을 클릭해서 집어들 때 (드래그 시작)
+	if (UGuestSoundSubsystem* SoundSys = GetOwningPlayer()->GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
+	{
+		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ButtonClick, AudioDataAsset);
+	}
 
 	UGInventoryItemWidget* DragVisual = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), GetClass());
 	if (!DragVisual) return;
