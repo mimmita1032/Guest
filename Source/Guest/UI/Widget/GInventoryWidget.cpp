@@ -72,6 +72,12 @@ void UGInventoryWidget::NativeDestruct()
 
 TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
 {
+	// GuestUISubsystem이 결정한 값을 그대로 반환 — 여기서 값을 따로 하드코딩하면
+	// CommonUI ActionRouter와 GuestUISubsystem이 서로 다른 입력모드를 주장할 수 있음
+	if (const UGuestUISubsystem* UISys = GetUISubsystem())
+	{
+		return UISys->GetDesiredUIInputConfig();
+	}
 	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
 }
 

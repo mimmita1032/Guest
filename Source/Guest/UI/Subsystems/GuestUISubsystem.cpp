@@ -72,6 +72,22 @@ void UGuestUISubsystem::NotifyWidgetDeactivated(FGameplayTag StackTag)
     ApplyInputConfig(ResolveInputConfig(FallbackStackTag));
 }
 
+FUIInputConfig UGuestUISubsystem::GetDesiredUIInputConfig() const
+{
+    switch (CurrentInputMode)
+    {
+    case EGuestInputMode::GameOnly:
+        return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, true);
+
+    case EGuestInputMode::UIOnly:
+        return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+
+    case EGuestInputMode::GameAndUI:
+    default:
+        return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+    }
+}
+
 bool UGuestUISubsystem::IsWidgetActive(FGameplayTag StackTag, FGameplayTag WidgetTag) const
 {
     UCommonActivatableWidgetContainerBase* const* Stack = StackMap.Find(StackTag);
