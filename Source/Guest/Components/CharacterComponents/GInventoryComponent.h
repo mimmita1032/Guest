@@ -104,6 +104,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	TArray<FInventoryItemHandle> GetAllHandles() const;
 
+	// ItemID로 인벤토리에서 첫 번째 매칭 핸들 검색 (없으면 InvalidHandle)
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	FInventoryItemHandle FindHandleByItemID(FName ItemID) const;
+
 	// 핸들로 아이템 크기 조회 (GridEntries 기반 — 회전 적용 시 Fragment 크기와 다를 수 있음)
 	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
 	FIntPoint GetItemSize(FInventoryItemHandle Handle) const;

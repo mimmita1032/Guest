@@ -2,13 +2,14 @@
 
 #include "GSpacetimeSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Guest/Utils/GLog.h"
 
 void UGSpacetimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	SpacetimeDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Core/Data/DT_SpacetimeData")));    
+	SpacetimeDataTable = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, TEXT("/Game/Data/DT_SpacetimeData")));
 	if (SpacetimeDataTable)
 	{
 		G_LOG(TEXT("시공간 데이터 테이블 로드 성공"));
@@ -59,6 +60,10 @@ void UGSpacetimeSubsystem::ExecuteTravel(const FSpacetimeData& TargetData)
 
 void UGSpacetimeSubsystem::DoTravel()
 {
+	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
+	{
+		GI->CarryPlayerStateAcrossTravel();
+	}
 	UGameplayStatics::OpenLevel(GetWorld(), PendingTravelData.LevelName);
 }
 
@@ -67,6 +72,10 @@ void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)
 	if (BaseLevelName.IsNone()) return;
 
 	G_LOG(TEXT("기지로 귀가 시작"));
+	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
+	{
+		GI->CarryPlayerStateAcrossTravel();
+	}
 	UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
 }
 #pragma endregion

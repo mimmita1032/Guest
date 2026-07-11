@@ -235,6 +235,21 @@ TArray<FInventoryItemHandle> UGInventoryComponent::GetAllHandles() const
 	return Handles;
 }
 
+FInventoryItemHandle UGInventoryComponent::FindHandleByItemID(FName ItemID) const
+{
+	if (ItemID.IsNone()) return FInventoryItemHandle();
+
+	for (const TPair<FInventoryItemHandle, TObjectPtr<UGItemInstance>>& Pair : InventoryMap)
+	{
+		const UGItemDefinition* Definition = Pair.Value ? Pair.Value->GetItemDef() : nullptr;
+		if (Definition && Definition->ItemID == ItemID)
+		{
+			return Pair.Key;
+		}
+	}
+	return FInventoryItemHandle();
+}
+
 FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemHandle Handle) const
 {
 	FInventoryItemRenderData RenderData;
