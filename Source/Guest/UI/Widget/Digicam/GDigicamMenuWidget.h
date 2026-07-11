@@ -14,6 +14,8 @@ class GUEST_API UGDigicamMenuWidget : public UGuestActivatableBase
 	GENERATED_BODY()
 
 public:
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+
 	// 탭 버튼에서 BP로 호출
 	UFUNCTION(BlueprintCallable, Category = "Digicam")
 	void SwitchTab(int32 TabIndex);

@@ -27,6 +27,7 @@ protected:
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UFUNCTION()
 	void OnRefreshInventory();

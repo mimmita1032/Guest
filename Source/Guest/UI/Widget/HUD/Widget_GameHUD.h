@@ -15,6 +15,7 @@ class GUEST_API UWidget_GameHUD : public UGuestActivatableBase
 
 protected:
 	virtual void NativeOnInitialized() override;
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 protected:
 	// WBP에서 Progress Bar 등을 갱신 — BlueprintImplementableEvent는 protected 이상이어야 함
