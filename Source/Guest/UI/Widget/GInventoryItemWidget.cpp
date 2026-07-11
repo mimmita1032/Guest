@@ -30,6 +30,17 @@ FReply UGInventoryItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometr
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 
+	if (bInteractionLocked) return Reply;
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		if (ItemHandle.IsValid())
+		{
+			OnItemRightClicked.Broadcast(ItemHandle, InMouseEvent.GetScreenSpacePosition());
+		}
+		return Reply.Handled();
+	}
+
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
 		return Reply.Handled().DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
@@ -42,7 +53,7 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	if (!ItemHandle.IsValid()) return;
+	if (!ItemHandle.IsValid() || bInteractionLocked) return;
 
 	// 사운드: 아이템을 클릭해서 집어들 때 (드래그 시작)
 	if (UGuestSoundSubsystem* SoundSys = GetOwningPlayer()->GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())

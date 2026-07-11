@@ -27,6 +27,7 @@
 #include "Guest/Data/Input/GInputConfigData.h"
 #include "Guest/Components/Input/GuestInputComponent.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Components/CharacterComponents/GItemPlacementComponent.h"
 #include "Guest/Components/CharacterComponents/GuestPawnUIComponent.h"
 
 // Sets default values
@@ -62,6 +63,7 @@ AGuestCharacter::AGuestCharacter()
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
     InventoryComponent   = CreateDefaultSubobject<UGInventoryComponent>(TEXT("InventoryComponent"));
+    ItemPlacementComponent = CreateDefaultSubobject<UGItemPlacementComponent>(TEXT("ItemPlacementComponent"));
     InteractionComponent = CreateDefaultSubobject<UGInteractionComponent>(TEXT("InteractionComponent"));
     DigicamComponent = CreateDefaultSubobject<UGDigicamComponent>(TEXT("DigicamComponent"));
     CameraComponent = CreateDefaultSubobject<UGCameraComponent>(TEXT("CameraComponent"));

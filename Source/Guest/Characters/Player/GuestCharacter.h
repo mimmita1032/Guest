@@ -21,6 +21,7 @@ class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
 class UGInventoryComponent;
+class UGItemPlacementComponent;
 class UGuestPawnUIComponent;
 
 UCLASS()
@@ -194,9 +195,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "Inventory")
     UGInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    UGItemPlacementComponent* GetItemPlacementComponent() const { return ItemPlacementComponent; }
+
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGInventoryComponent> InventoryComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGItemPlacementComponent> ItemPlacementComponent;
 #pragma endregion
 
 #pragma region PawnUI
