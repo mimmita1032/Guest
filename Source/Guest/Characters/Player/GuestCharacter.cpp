@@ -344,18 +344,16 @@ void AGuestCharacter::DigicamToggleAction(const FInputActionValue& Value)
 {
     if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
     {
-        if (bIsDigicamOpen)
+        if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam))
         {
             UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
             DigicamComponent->DeactivateDigicam();
-            bIsDigicamOpen = false;
             G_LOG(TEXT("디지캠 닫기"));
         }
         else
         {
             UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_Digicam);
             DigicamComponent->ActivateDigicam();
-            bIsDigicamOpen = true;
             G_LOG(TEXT("디지캠 열기"));
         }
     }
