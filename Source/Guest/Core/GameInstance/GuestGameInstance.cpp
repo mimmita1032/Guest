@@ -149,50 +149,81 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 
 void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 {
-	if (!bPendingApplyPlayerWorld || !LoadedWorld || !LoadedWorld->IsGameWorld())
+	if ((!bPendingApplyPlayerWorld && !PendingSaveObject) || !LoadedWorld || !LoadedWorld->IsGameWorld())
 	{
 		return;
 	}
-	
+
 	FTimerHandle TimerHandle;
 	LoadedWorld->GetTimerManager().SetTimer(
 		TimerHandle,
 		[this, LoadedWorld]()
 		{
-			if(!bPendingApplyPlayerWorld)
+			if (!bPendingApplyPlayerWorld && !PendingSaveObject)
 			{
 				return;
 			}
-		
+
 			APlayerController* PC = UGameplayStatics::GetPlayerController(LoadedWorld, 0);
 			if (!PC)
 			{
 				return;
 			}
-		
+
 			APawn* Pawn = PC ->GetPawn();
 			if (!Pawn)
 			{
 				return;
 			}
-		
-			Pawn->SetActorLocation(PendingPlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
-			Pawn->SetActorRotation(PendingPlayerWorld.Rotation, ETeleportType::TeleportPhysics);
-		
-			// ── 맵 전환 후 GAS 어트리뷰트 복원 ──
-			RestoreGASAttributes(Pawn, PendingSaveObject);
+
+			// 세이브 로드 시에만 위치 복원 — 시공간 이동(CarryPlayerStateAcrossTravel)은 새 레벨의 기본 스폰 위치를 그대로 씀
+			if (bPendingApplyPlayerWorld)
+			{
+				Pawn->SetActorLocation(PendingPlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
+				Pawn->SetActorRotation(PendingPlayerWorld.Rotation, ETeleportType::TeleportPhysics);
+				bPendingApplyPlayerWorld = false;
+			}
+
+			// ── 맵 전환 후 GAS 어트리뷰트/인벤토리 복원 ──
 			if (PendingSaveObject)
 			{
+				RestoreGASAttributes(Pawn, PendingSaveObject);
 				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
 				{
 					Inv->ImportInventorySaveData(PendingSaveObject->SavedInventory);
 				}
+				PendingSaveObject = nullptr;
 			}
-			PendingSaveObject = nullptr;
-		
-			bPendingApplyPlayerWorld = false;
 		},
 		0.05f, false);
+}
+
+void UGuestGameInstance::CarryPlayerStateAcrossTravel()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+	if (!Pawn) return;
+
+	UGuestSaveGame* Snapshot = NewObject<UGuestSaveGame>(this);
+
+	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Pawn))
+	{
+		if (UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent())
+		{
+			Snapshot->SavedCurrentHealth  = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentHealthAttribute());
+			Snapshot->SavedCurrentBattery = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentBatteryAttribute());
+		}
+	}
+
+	if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+	{
+		Inv->ExportInventorySaveData(Snapshot->SavedInventory);
+	}
+
+	PendingSaveObject = Snapshot;
 }
 
 void UGuestGameInstance::RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject)

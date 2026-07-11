@@ -16,7 +16,10 @@ public:
 	
 	/** 슬롯에서 읽고, 같은 맵이면 즉시 적용 / 다른 맵이면 OpenLevel 후 적용 */
 	void RequestLoadFromSlot(const FString& SlotName, int32 UserIndex = 0);
-	
+
+	/** 세이브/로드가 아닌 레벨 전환(디지캠 시공간 이동 등) 직전에 호출 — 위치는 새 레벨 기준 그대로 두고 인벤토리/GAS만 다음 맵으로 이어붙임 */
+	void CarryPlayerStateAcrossTravel();
+
 protected:
 	void OnPostLoadMapWithWorld(UWorld* LoadedWorld);
 	
