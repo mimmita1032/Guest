@@ -20,8 +20,3 @@ void UGDigicamMenuWidget::SwitchTab(int32 TabIndex)
 		NewTab->OnTabActivated();
 	}
 }
-
-TOptional<FUIInputConfig> UGDigicamMenuWidget::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
-}
