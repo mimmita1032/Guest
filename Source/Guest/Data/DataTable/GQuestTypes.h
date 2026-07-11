@@ -20,7 +20,8 @@ enum class EQuestObjectiveType : uint8
 {
 	Talk,
 	Collect,
-	Reach
+	Reach,
+	Place
 };
 
 // 퀘스트가 활성화되는 시간대 조건
