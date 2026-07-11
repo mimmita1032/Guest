@@ -3,6 +3,7 @@
 #include "GDigicamMenuWidget.h"
 #include "Components/WidgetSwitcher.h"
 #include "GDigicamTabBase.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 
 void UGDigicamMenuWidget::SwitchTab(int32 TabIndex)
 {
@@ -23,5 +24,9 @@ void UGDigicamMenuWidget::SwitchTab(int32 TabIndex)
 
 TOptional<FUIInputConfig> UGDigicamMenuWidget::GetDesiredInputConfig() const
 {
+	if (const UGuestUISubsystem* UISys = GetUISubsystem())
+	{
+		return UISys->GetDesiredUIInputConfig();
+	}
 	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
 }

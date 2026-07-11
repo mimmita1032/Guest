@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "CommonUITypes.h"
 #include "GuestUIInputConfig.h"
 #include "Guest/UI/Subsystems/GuestUIInputConfig.h"
 #include "Guest/UI/Types/GuestUITypes.h"
@@ -80,6 +81,14 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Guest|UI")
 	EGuestInputMode GetCurrentInputMode() const { return CurrentInputMode; }
+
+	/**
+	 * 현재 GuestUISubsystem이 적용 중인 입력모드를 CommonUI의 FUIInputConfig로 변환해 반환.
+	 * 각 UGuestActivatableBase 파생 위젯의 GetDesiredInputConfig()는 이 값을 그대로 반환해야 한다 —
+	 * CommonUI ActionRouter와 GuestUISubsystem이 서로 다른 입력모드를 주장하는 상황을 방지하기 위함.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Guest|UI")
+	FUIInputConfig GetDesiredUIInputConfig() const;
 
 	UFUNCTION(BlueprintPure, Category = "Guest|UI")
 	FGameplayTag GetCurrentStackTag() const { return CurrentStackTag; }
