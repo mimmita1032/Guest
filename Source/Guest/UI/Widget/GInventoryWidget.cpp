@@ -70,6 +70,11 @@ void UGInventoryWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
+{
+	return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+}
+
 void UGInventoryWidget::OnRefreshInventory()
 {
 	if (!InventoryComponent || !Grid_Inventory || !SlotWidgetClass || !Canvas_Items || !ItemWidgetClass)
