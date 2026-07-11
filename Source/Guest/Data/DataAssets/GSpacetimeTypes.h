@@ -55,8 +55,13 @@ struct FPhotoData
 	GENERATED_BODY()
 
 	// 촬영된 이미지 스냅샷 (GameInstance outer — 레벨 전환 후에도 유지)
+	// 런타임 전용 텍스처라 세이브에 직렬화되지 않음 — 로드 시 CompressedImage에서 재생성
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")
 	TObjectPtr<UTexture2D> Snapshot = nullptr;
+
+	// 세이브 보존용 PNG 압축 데이터 (촬영 시점에 1회 생성)
+	UPROPERTY()
+	TArray<uint8> CompressedImage;
 
 	// 이동한 in-game 연도
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")

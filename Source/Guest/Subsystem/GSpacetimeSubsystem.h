@@ -60,6 +60,12 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Spacetime|Time")
 	FOnTimeChanged OnTimeChanged;
 
+	// 세이브용: 현재 세계 시간 내보내기
+	void ExportTimeSaveData(float& OutCurrentHour) const;
+
+	// 세이브용: 세계 시간 복원 (음수 = 저장된 적 없는 세이브 → 무시)
+	void ImportTimeSaveData(float InCurrentHour);
+
 protected:
 	// 현재 시간 (0.0 ~ 24.0)
 	UPROPERTY(VisibleInstanceOnly, Category = "Spacetime|Time")

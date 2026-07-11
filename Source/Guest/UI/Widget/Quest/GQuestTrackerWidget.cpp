@@ -32,19 +32,17 @@ void UGQuestTrackerWidget::RefreshQuestList()
 		const FQuestData* Data = QuestSys->FindQuestDataPublic(QuestID);
 		FQuestRuntimeData Runtime;
 		if (!Data || !QuestSys->GetQuestRuntimeData(QuestID, Runtime)) continue;
-		if (!Data->Steps.IsValidIndex(Runtime.CurrentStep)) continue;
+		const FQuestStepData* CurrentStep = Data->FindStepByID(Runtime.CurrentStepID);
+		if (!CurrentStep) continue;
 
-		const FQuestStepData& CurrentStep = Data->Steps[Runtime.CurrentStep];
-
-		for (int32 i = 0; i < CurrentStep.Objectives.Num(); ++i)
+		for (const FQuestObjectiveData& Objective : CurrentStep->Objectives)
 		{
 			UGObjectiveEntryWidget* Entry = CreateWidget<UGObjectiveEntryWidget>(this, ObjectiveEntryClass);
 			if (!Entry) continue;
 
-			const bool bDone = Runtime.ObjectiveCounts.IsValidIndex(i)
-				&& Runtime.ObjectiveCounts[i] >= CurrentStep.Objectives[i].RequiredAmount;
+			const bool bDone = Runtime.GetObjectiveCount(Objective.ObjectiveID) >= Objective.RequiredAmount;
 
-			Entry->Setup(CurrentStep.Objectives[i].ObjectiveText, bDone);
+			Entry->Setup(Objective.ObjectiveText, bDone);
 			Box_QuestList->AddChild(Entry);
 		}
 	}

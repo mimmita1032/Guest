@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "Guest/Data/DataTable/GQuestTypes.h"
+#include "Guest/Data/DataAssets/GSpacetimeTypes.h"
 #include "GuestSaveGame.generated.h"
 
 
@@ -24,12 +26,12 @@ struct FGuestSavedActiveQuestEntry
 	// 예: Q_Main_001
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	FName QuestID = NAME_None;
-	// 현재 진행 단계 인덱스
+	// 현재 진행 단계 ID — DataTable 단계 순서 변경/삽입에도 안전하도록 인덱스 대신 ID 저장
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
-	int32 CurrentStep = 0;
-	// 각 목표 누적 수치 (Objectives와 인덱스 대응)
+	FName CurrentStepID = NAME_None;
+	// 각 목표 누적 수치 (ObjectiveID로 매칭)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
-	TArray<int32> ObjectiveCounts;
+	TArray<FQuestObjectiveProgress> ObjectiveProgress;
 };
 
 USTRUCT(BlueprintType)
@@ -58,7 +60,7 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	GENERATED_BODY()
 	
 	public:
-	static constexpr int32 CurrentSaveVersion = 4;
+	static constexpr int32 CurrentSaveVersion = 5;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Save|Meta")
 	int32 SaveVersion = CurrentSaveVersion;
@@ -94,4 +96,12 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	//인벤토리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
 	TArray<FGuestSavedInventoryEntry> SavedInventory;
+
+	// 세계 시간 (0.0~24.0시). 저장된 적 없는 구버전 세이브 구분용 기본값 -1
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	float SavedWorldHour = -1.f;
+
+	// 디지캠으로 촬영한 사진 (Snapshot 텍스처는 직렬화되지 않고 CompressedImage에서 재생성)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Photo")
+	TArray<FPhotoData> SavedPhotos;
 };

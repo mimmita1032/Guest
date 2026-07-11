@@ -26,6 +26,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Photo")
 	FOnPhotoTaken OnPhotoAdded;
 
+	UFUNCTION(BlueprintCallable, Category = "Photo|Save")
+	void ExportPhotoSaveData(TArray<FPhotoData>& OutPhotos) const;
+
+	// Snapshot 텍스처는 세이브에 직렬화되지 않으므로 CompressedImage(PNG)에서 재생성해 복원
+	UFUNCTION(BlueprintCallable, Category = "Photo|Save")
+	void ImportPhotoSaveData(const TArray<FPhotoData>& InPhotos);
+
 private:
 	UPROPERTY()
 	TArray<FPhotoData> Photos;

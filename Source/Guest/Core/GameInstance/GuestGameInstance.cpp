@@ -11,6 +11,8 @@
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 void UGuestGameInstance::Init()
@@ -76,7 +78,18 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 			SaveObject->SavedCompletedQuestIDs);
 		QuestSys->SetStoryProgress(SaveObject->SavedStoryProgress);
 	}
-	
+
+	// ── 세계 시간/사진 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 즉시 적용) ──
+	if (UGSpacetimeSubsystem* SpacetimeSys = GetSubsystem<UGSpacetimeSubsystem>())
+	{
+		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour);
+	}
+
+	if (UGPhotoLibrarySubsystem* PhotoLib = GetSubsystem<UGPhotoLibrarySubsystem>())
+	{
+		PhotoLib->ImportPhotoSaveData(SaveObject->SavedPhotos);
+	}
+
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
 	const FString SavedPackage = SaveObject->MapPackageName;
 

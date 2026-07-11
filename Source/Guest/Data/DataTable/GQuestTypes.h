@@ -40,6 +40,11 @@ struct FQuestObjectiveData
 {
 	GENERATED_BODY()
 
+	// 단계 내에서 이 목표를 식별하는 고유 ID (기획자가 DataTable에 직접 입력)
+	// 진행도를 인덱스 대신 이 ID로 저장/복원 — 목표 순서 변경/삽입에도 세이브가 깨지지 않음
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Objective")
+	FName ObjectiveID = NAME_None;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Objective")
 	EQuestObjectiveType ObjectiveType = EQuestObjectiveType::Collect;
 
@@ -64,8 +69,24 @@ struct FQuestStepData
 {
 	GENERATED_BODY()
 
+	// 퀘스트 내에서 이 단계를 식별하는 고유 ID (기획자가 DataTable에 직접 입력)
+	// 진행 단계를 인덱스 대신 이 ID로 저장/복원 — 단계 순서 변경/삽입에도 세이브가 깨지지 않음
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+	FName StepID = NAME_None;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
 	TArray<FQuestObjectiveData> Objectives;
+
+	// ID로 목표 조회 (없으면 nullptr)
+	const FQuestObjectiveData* FindObjectiveByID(FName InObjectiveID) const
+	{
+		if (InObjectiveID.IsNone()) return nullptr;
+		for (const FQuestObjectiveData& Obj : Objectives)
+		{
+			if (Obj.ObjectiveID == InObjectiveID) return &Obj;
+		}
+		return nullptr;
+	}
 };
 
 /*=================
@@ -112,6 +133,39 @@ struct FQuestData : public FTableRowBase
 	// 완료 시 스토리 진행도를 이 값으로 올림 (0 = 변화 없음, 현재 진행도보다 낮으면 무시)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
 	int32 StoryProgressOnComplete = 0;
+
+	// StepID로 단계 인덱스 조회 (없으면 INDEX_NONE)
+	int32 FindStepIndexByID(FName InStepID) const
+	{
+		if (InStepID.IsNone()) return INDEX_NONE;
+		for (int32 Index = 0; Index < Steps.Num(); ++Index)
+		{
+			if (Steps[Index].StepID == InStepID) return Index;
+		}
+		return INDEX_NONE;
+	}
+
+	// StepID로 단계 조회 (없으면 nullptr)
+	const FQuestStepData* FindStepByID(FName InStepID) const
+	{
+		const int32 Index = FindStepIndexByID(InStepID);
+		return Steps.IsValidIndex(Index) ? &Steps[Index] : nullptr;
+	}
+};
+
+/*=================
+목표 하나의 진행 수량 (런타임/세이브 공용 — 인덱스 대신 ObjectiveID로 매칭)
+=================*/
+USTRUCT(BlueprintType)
+struct FQuestObjectiveProgress
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Runtime")
+	FName ObjectiveID = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Runtime")
+	int32 Count = 0;
 };
 
 /*=================
@@ -122,11 +176,45 @@ struct FQuestRuntimeData
 {
 	GENERATED_BODY()
 
-	// 현재 진행 중인 단계 인덱스
+	// 현재 진행 중인 단계 ID
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Runtime")
-	int32 CurrentStep = 0;
+	FName CurrentStepID = NAME_None;
 
-	// 현재 단계 내 각 목표의 달성 수량 (Steps[CurrentStep].Objectives와 인덱스 1:1 대응)
+	// 현재 단계 내 각 목표의 달성 수량 (ObjectiveID로 매칭)
 	UPROPERTY(BlueprintReadOnly, Category = "Quest|Runtime")
-	TArray<int32> ObjectiveCounts;
+	TArray<FQuestObjectiveProgress> ObjectiveProgress;
+
+	// 단계 진입 시 진행 장부를 해당 단계의 목표들로 초기화 (수량 0)
+	void InitializeForStep(const FQuestStepData& Step)
+	{
+		CurrentStepID = Step.StepID;
+		ObjectiveProgress.Reset();
+		ObjectiveProgress.Reserve(Step.Objectives.Num());
+		for (const FQuestObjectiveData& Obj : Step.Objectives)
+		{
+			FQuestObjectiveProgress Progress;
+			Progress.ObjectiveID = Obj.ObjectiveID;
+			ObjectiveProgress.Add(Progress);
+		}
+	}
+
+	// ID로 진행 항목 조회 (없으면 nullptr)
+	FQuestObjectiveProgress* FindObjectiveProgress(FName InObjectiveID)
+	{
+		for (FQuestObjectiveProgress& Progress : ObjectiveProgress)
+		{
+			if (Progress.ObjectiveID == InObjectiveID) return &Progress;
+		}
+		return nullptr;
+	}
+
+	// ID에 해당하는 목표의 달성 수량 (없으면 0)
+	int32 GetObjectiveCount(FName InObjectiveID) const
+	{
+		for (const FQuestObjectiveProgress& Progress : ObjectiveProgress)
+		{
+			if (Progress.ObjectiveID == InObjectiveID) return Progress.Count;
+		}
+		return 0;
+	}
 };
