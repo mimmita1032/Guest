@@ -14,6 +14,7 @@
 #include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameViewportClient.h"
 
 // ─────────────────────────────────────────────────────────
 // 1. USubsystem 인터페이스
@@ -283,6 +284,19 @@ void UGuestUISubsystem::ApplyInputMode(EGuestInputMode InputMode, APlayerControl
             Mode.SetHideCursorDuringCapture(false);
             PC->SetInputMode(Mode);
             PC->SetShowMouseCursor(true);
+
+            // FInputModeGameAndUI::ApplyInputMode가 뷰포트 캡처 모드를 무조건 CaptureDuringMouseDown으로
+            // 강제 설정함(엔진 내부 동작, FInputModeGameAndUI에 끄는 옵션 없음). 이 상태에서는 UI 위젯을
+            // 클릭한 직후의 첫 마우스다운이 "뷰포트에 마우스 캡처 확립"에 소모되어 게임 입력(Enhanced Input
+            // 마우스 버튼 액션 등)으로 전달되지 않음 — 아이템 배치 확정이 항상 두 번째 클릭에서만 되던 원인.
+            // SetInputMode 직후 캡처 모드를 NoCapture로 재설정해서 이 소모를 없앰.
+            if (UWorld* World = PC->GetWorld())
+            {
+                if (UGameViewportClient* ViewportClient = World->GetGameViewport())
+                {
+                    ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::NoCapture);
+                }
+            }
         }
         break;
     }

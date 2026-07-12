@@ -276,6 +276,16 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
        {
           GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
+
+       if (IA_ConfirmPlacement)
+       {
+          GIC->BindAction(IA_ConfirmPlacement, ETriggerEvent::Started, this, &AGuestCharacter::ConfirmPlacementAction);
+       }
+
+       if (IA_CancelPlacement)
+       {
+          GIC->BindAction(IA_CancelPlacement, ETriggerEvent::Started, this, &AGuestCharacter::CancelPlacementAction);
+       }
        ensureMsgf(GAbilityInputConfigData, TEXT("캐릭터에 어빌리티 인풋 구성 데이터 할당 안됨"));
        
        GIC->BindAbilityInputAction(GAbilityInputConfigData,this, &ThisClass::AbilityInputPressed, &ThisClass::AbilityInputReleased);
@@ -455,6 +465,22 @@ void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
 
          G_LOG(TEXT("캐릭터 입력: 인벤토리 열기 실행"));
       }
+   }
+}
+
+void AGuestCharacter::ConfirmPlacementAction(const FInputActionValue& Value)
+{
+   if (ItemPlacementComponent && ItemPlacementComponent->IsPlacementActive())
+   {
+      ItemPlacementComponent->ConfirmPlacement();
+   }
+}
+
+void AGuestCharacter::CancelPlacementAction(const FInputActionValue& Value)
+{
+   if (ItemPlacementComponent && ItemPlacementComponent->IsPlacementActive())
+   {
+      ItemPlacementComponent->CancelPlacement();
    }
 }
 #pragma endregion

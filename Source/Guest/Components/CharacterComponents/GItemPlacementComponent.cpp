@@ -68,7 +68,20 @@ void UGItemPlacementComponent::UpdateGhostTransform()
 	FHitResult Hit;
 	bIsValidPlacement = GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEnd, TraceChannel, Params);
 
-	GhostActor->SetActorLocation(bIsValidPlacement ? Hit.Location : TraceEnd);
+	FVector TargetLocation = bIsValidPlacement ? Hit.Location : TraceEnd;
+
+	// 캐릭터 기준 MaxPlacementRange를 벗어나면 그 방향으로 최대거리까지만 당겨오고 배치 불가 처리 —
+	// 배치 모드 중에도 캐릭터가 이동 가능해서, 너무 먼 곳에 마우스를 갖다 대는 것만으로 배치되는 걸 막음
+	const FVector OwnerLocation = OwnerPawn->GetActorLocation();
+	const FVector Offset = TargetLocation - OwnerLocation;
+	const float Distance = Offset.Size();
+	if (Distance > MaxPlacementRange)
+	{
+		TargetLocation = OwnerLocation + Offset.GetSafeNormal() * MaxPlacementRange;
+		bIsValidPlacement = false;
+	}
+
+	GhostActor->SetActorLocation(TargetLocation);
 	GhostActor->SetValidState(bIsValidPlacement);
 }
 
@@ -78,6 +91,7 @@ void UGItemPlacementComponent::ConfirmPlacement()
 
 	if (!bIsValidPlacement || !PendingItemDef || !GhostActor)
 	{
+		G_WARN(TEXT("아이템 배치 확정 실패: 현재 고스트 위치가 유효하지 않습니다(트레이스가 바닥/벽을 못 찾음)."));
 		CancelPlacement();
 		return;
 	}

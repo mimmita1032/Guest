@@ -137,6 +137,11 @@ void UGInventoryWidget::HandlePlacementStateChanged(bool bActive)
 	bPlacementModeActive = bActive;
 	SetRenderOpacity(bActive ? 0.3f : 1.0f);
 
+	// 배치 모드 중엔 인벤토리 패널이 클릭을 가로채지 않도록 완전히 클릭 통과 상태로 전환.
+	// 그냥 SetInteractionLocked만으로는 그리드/슬롯 패널 자체가 여전히 히트테스트를 먹어서
+	// 확정 클릭이 PlayerController까지 안 닿는 문제가 있었음
+	SetVisibility(bActive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Visible);
+
 	for (const TObjectPtr<UGInventoryItemWidget>& ItemWidget : SpawnedItemWidgets)
 	{
 		if (ItemWidget)

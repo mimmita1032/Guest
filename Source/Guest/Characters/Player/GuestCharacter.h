@@ -77,7 +77,17 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_ToggleInventory;
-    
+
+    // 아이템 배치 모드 확정/취소 — UMG 위젯 히트테스트에 기대지 않고 Enhanced Input으로 직접 처리
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_ConfirmPlacement;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_CancelPlacement;
+
+    void ConfirmPlacementAction(const FInputActionValue& Value);
+    void CancelPlacementAction(const FInputActionValue& Value);
+
     //카메라
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     TObjectPtr<USpringArmComponent> SpringArmComp;

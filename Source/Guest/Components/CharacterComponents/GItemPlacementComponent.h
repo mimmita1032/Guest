@@ -46,7 +46,11 @@ protected:
 
 	// 배치 가능 표면을 찾는 트레이스 최대 거리
 	UPROPERTY(EditDefaultsOnly, Category = "Placement")
-	float TraceDistance = 500.f;
+	float TraceDistance = 3000.f;
+
+	// 캐릭터 기준 배치 가능한 최대 거리 (cm) — 넘어서면 이 거리로 당겨오고 배치 불가 처리
+	UPROPERTY(EditDefaultsOnly, Category = "Placement")
+	float MaxPlacementRange = 200.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Placement")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
