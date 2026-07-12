@@ -3,6 +3,7 @@
 #include "GItemPlacementPoint.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
@@ -26,6 +27,37 @@ AGItemPlacementPoint::AGItemPlacementPoint()
 	PlacedMeshComp->SetVisibility(false);
 }
 
+void AGItemPlacementPoint::BeginPlay()
+{
+	Super::BeginPlay();
+	UpdatePreviewVisuals();
+}
+
+void AGItemPlacementPoint::UpdatePreviewVisuals()
+{
+	if (bIsPlaced || !RequiredItem || !PlacedMeshComp) return;
+
+	if (const UGItemFragmentVisuals* Visuals = RequiredItem->FindFragmentByClass<UGItemFragmentVisuals>())
+	{
+		if (!Visuals->ItemMesh.IsNull())
+		{
+			PlacedMeshComp->SetStaticMesh(Visuals->ItemMesh.LoadSynchronous());
+		}
+	}
+
+	if (GhostMaterial)
+	{
+		const int32 NumMaterials = PlacedMeshComp->GetNumMaterials();
+		DynamicGhostMaterial = UMaterialInstanceDynamic::Create(GhostMaterial, this);
+		for (int32 Index = 0; Index < NumMaterials; ++Index)
+		{
+			PlacedMeshComp->SetMaterial(Index, DynamicGhostMaterial);
+		}
+	}
+
+	PlacedMeshComp->SetVisibility(true);
+}
+
 void AGItemPlacementPoint::Interact_Implementation(AActor* Interactor)
 {
 	if (bIsPlaced || !RequiredItem) return;
@@ -47,14 +79,13 @@ void AGItemPlacementPoint::Interact_Implementation(AActor* Interactor)
 
 	bIsPlaced = true;
 
-	if (const UGItemFragmentVisuals* Visuals = RequiredItem->FindFragmentByClass<UGItemFragmentVisuals>())
+	// 미리보기용 반투명 머티리얼을 걷어내고 메시 원래 머티리얼로 복원 (SetMaterial(nullptr) = 에셋 기본값으로 복귀)
+	const int32 NumMaterials = PlacedMeshComp->GetNumMaterials();
+	for (int32 Index = 0; Index < NumMaterials; ++Index)
 	{
-		if (!Visuals->ItemMesh.IsNull())
-		{
-			PlacedMeshComp->SetStaticMesh(Visuals->ItemMesh.LoadSynchronous());
-		}
+		PlacedMeshComp->SetMaterial(Index, nullptr);
 	}
-	PlacedMeshComp->SetVisibility(true);
+	DynamicGhostMaterial = nullptr;
 
 	G_LOG(TEXT("[%s]를 배치했습니다."), *RequiredItem->ItemID.ToString());
 

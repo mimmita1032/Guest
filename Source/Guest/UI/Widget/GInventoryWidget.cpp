@@ -8,6 +8,9 @@
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Components/CharacterComponents/GItemPlacementComponent.h"
+#include "Guest/Items/Definition/GItemDefinition.h"
+#include "Guest/Items/Instance/GItemInstance.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/Utils/GLog.h"
@@ -43,6 +46,14 @@ void UGInventoryWidget::NativeOnActivated()
 		InventoryComponent->OnInventoryChanged.AddDynamic(this, &UGInventoryWidget::OnRefreshInventory);
 	}
 
+	if (APawn* OwningPawn = GetOwningPlayerPawn())
+	{
+		if (UGItemPlacementComponent* PlacementComp = OwningPawn->FindComponentByClass<UGItemPlacementComponent>())
+		{
+			PlacementComp->OnPlacementStateChanged.AddDynamic(this, &UGInventoryWidget::HandlePlacementStateChanged);
+		}
+	}
+
 	OnRefreshInventory();
 }
 
@@ -55,9 +66,88 @@ void UGInventoryWidget::NativeOnDeactivated()
 		InventoryComponent->OnInventoryChanged.RemoveDynamic(this, &UGInventoryWidget::OnRefreshInventory);
 	}
 
+	if (APawn* OwningPawn = GetOwningPlayerPawn())
+	{
+		if (UGItemPlacementComponent* PlacementComp = OwningPawn->FindComponentByClass<UGItemPlacementComponent>())
+		{
+			PlacementComp->OnPlacementStateChanged.RemoveDynamic(this, &UGInventoryWidget::HandlePlacementStateChanged);
+
+			// 인벤토리를 닫는 순간 배치 모드가 남아있으면 취소 — 고스트가 유령처럼 남는 것 방지
+			if (PlacementComp->IsPlacementActive())
+			{
+				PlacementComp->CancelPlacement();
+			}
+		}
+	}
+
 	if (UGuestUISubsystem* UISys = GetUISubsystem())
 	{
 		UISys->NotifyWidgetDeactivated(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+	}
+}
+
+FReply UGInventoryWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonUp(InGeometry, InMouseEvent);
+
+	if (!bPlacementModeActive) return Reply;
+
+	APawn* OwningPawn = GetOwningPlayerPawn();
+	UGItemPlacementComponent* PlacementComp = OwningPawn ? OwningPawn->FindComponentByClass<UGItemPlacementComponent>() : nullptr;
+	if (!PlacementComp) return Reply;
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		PlacementComp->ConfirmPlacement();
+		return Reply.Handled();
+	}
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		PlacementComp->CancelPlacement();
+		return Reply.Handled();
+	}
+
+	return Reply;
+}
+
+void UGInventoryWidget::RequestPlaceItem(FInventoryItemHandle Handle)
+{
+	if (!InventoryComponent) return;
+
+	const UGItemInstance* Instance = InventoryComponent->GetItemByHandle(Handle);
+	const UGItemDefinition* ItemDef = Instance ? Instance->GetItemDef() : nullptr;
+	if (!ItemDef) return;
+
+	APawn* OwningPawn = GetOwningPlayerPawn();
+	UGItemPlacementComponent* PlacementComp = OwningPawn ? OwningPawn->FindComponentByClass<UGItemPlacementComponent>() : nullptr;
+	if (!PlacementComp) return;
+
+	PlacementComp->BeginPlacement(ItemDef, Handle);
+}
+
+void UGInventoryWidget::HandleItemRightClicked(FInventoryItemHandle Handle, FVector2D ScreenPosition)
+{
+	if (bPlacementModeActive) return;
+	BP_ShowItemContextMenu(Handle, ScreenPosition);
+}
+
+void UGInventoryWidget::HandlePlacementStateChanged(bool bActive)
+{
+	bPlacementModeActive = bActive;
+	SetRenderOpacity(bActive ? 0.3f : 1.0f);
+
+	// 배치 모드 중엔 인벤토리 패널이 클릭을 가로채지 않도록 완전히 클릭 통과 상태로 전환.
+	// 그냥 SetInteractionLocked만으로는 그리드/슬롯 패널 자체가 여전히 히트테스트를 먹어서
+	// 확정 클릭이 PlayerController까지 안 닿는 문제가 있었음
+	SetVisibility(bActive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Visible);
+
+	for (const TObjectPtr<UGInventoryItemWidget>& ItemWidget : SpawnedItemWidgets)
+	{
+		if (ItemWidget)
+		{
+			ItemWidget->SetInteractionLocked(bActive);
+		}
 	}
 }
 
@@ -91,6 +181,7 @@ void UGInventoryWidget::OnRefreshInventory()
 
 	Grid_Inventory->ClearChildren();
 	Canvas_Items->ClearChildren();
+	SpawnedItemWidgets.Reset();
 
 	const int32 Columns   = InventoryComponent->Columns;
 	const int32 Rows      = InventoryComponent->Rows;
@@ -128,6 +219,9 @@ void UGInventoryWidget::OnRefreshInventory()
 		{
 			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize);
 			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
+			ItemWidget->OnItemRightClicked.AddDynamic(this, &UGInventoryWidget::HandleItemRightClicked);
+			ItemWidget->SetInteractionLocked(bPlacementModeActive);
+			SpawnedItemWidgets.Add(ItemWidget);
 
 			if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
 			{

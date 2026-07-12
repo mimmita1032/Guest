@@ -12,6 +12,7 @@ class UTexture2D;
 class UGuestAudioDataAsset; 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemDroppedOutside, FInventoryItemHandle, Handle);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemRightClicked, FInventoryItemHandle, Handle, FVector2D, ScreenPosition);
 
 UCLASS(Abstract)
 class GUEST_API UGInventoryItemWidget : public UCommonUserWidget
@@ -24,6 +25,14 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDroppedOutside OnItemDroppedOutside;
+
+	// 우클릭 시 브로드캐스트 — GInventoryWidget이 받아 컨텍스트 메뉴 표시에 사용
+	UPROPERTY(BlueprintAssignable)
+	FOnItemRightClicked OnItemRightClicked;
+
+	// 배치 모드 등 다른 상호작용이 진행 중일 때 드래그 시작을 막기 위한 잠금
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Item")
+	void SetInteractionLocked(bool bLocked) { bInteractionLocked = bLocked; }
 
 protected:
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -49,4 +58,6 @@ private:
 	TSoftObjectPtr<UTexture2D> CachedIcon;
 
 	float CachedSlotSize = 60.0f;
+
+	bool bInteractionLocked = false;
 };
