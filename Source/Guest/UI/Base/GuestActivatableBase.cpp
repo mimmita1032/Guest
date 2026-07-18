@@ -88,3 +88,13 @@ UGuestSoundSubsystem* UGuestActivatableBase::GetSoundSubsystem() const
     }
     return nullptr;
 }
+
+// ★ 추가: CommonUI ActionRouter와 GuestUISubsystem의 의견 충돌 방지
+TOptional<FUIInputConfig> UGuestActivatableBase::GetDesiredInputConfig() const
+{
+    if (UGuestUISubsystem* UISys = GetUISubsystem())
+    {
+        return UISys->GetDesiredUIInputConfig();
+    }
+    return Super::GetDesiredInputConfig();
+}
