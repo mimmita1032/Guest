@@ -11,6 +11,7 @@ class GUEST_API UGuestSaveSlotBoardBase : public UGuestActivatableBase
 	GENERATED_BODY()
 	
 protected:
+	virtual void NativeOnActivated() override;
 	virtual void NativeOnInitialized() override;
 	
 	UPROPERTY(meta = (BindWidget))

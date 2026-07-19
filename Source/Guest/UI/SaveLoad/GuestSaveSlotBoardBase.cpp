@@ -20,6 +20,17 @@ void UGuestSaveSlotBoardBase::NativeOnInitialized()
 	PopulateSlots();
 	
 }
+
+void UGuestSaveSlotBoardBase::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+
+	if (Btn_close)
+	{
+		Btn_close->SetFocus();
+	}
+}
+
 void UGuestSaveSlotBoardBase::OnCloseClicked()
 {
 	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
