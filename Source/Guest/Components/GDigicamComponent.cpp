@@ -89,13 +89,14 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 
 void UGDigicamComponent::HandleShutter()
 {
-	if (CurrentState != EDigicamState::ReadyToSnap)
+	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
+
+	if (CurrentState != EDigicamState::ReadyToSnap || (SpacetimeSS && SpacetimeSS->IsTravelInProgress()))
 	{
-		G_WARN(TEXT("좌표 불일치 — 이동 불가"));
+		G_WARN(TEXT("좌표 불일치 또는 이동 중 — 이동 불가"));
+		OnShutterDenied.Broadcast(LastSearchResult);
 		return;
 	}
-
-	// TODO: 스토리 연출용 이동 잠금이 필요하면 여기서 조건 추가 (bTravelLocked 등)
 
 	// 이동 전 현재 장면 촬영
 	if (AActor* Owner = GetOwner())
@@ -111,7 +112,6 @@ void UGDigicamComponent::HandleShutter()
 		}
 	}
 
-	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
 	if (!SpacetimeSS) return;
 
 	G_LOG(TEXT("시공간 이동: %s"), *CurrentMatchedData.PlaceName.ToString());
@@ -127,9 +127,9 @@ void UGDigicamComponent::UpdateSearch()
 	if (SpacetimeSS)
 	{
 		// 서브시스템에 검색 위임 및 결과 저장
-		bool bFound = SpacetimeSS->SearchSpacetime(SelectedYear, SelectedAreaCode, CurrentMatchedData);
+		LastSearchResult = SpacetimeSS->SearchSpacetime(SelectedYear, SelectedAreaCode, CurrentMatchedData);
 
-		if (bFound)
+		if (LastSearchResult == ESpacetimeSearchResult::Found)
 		{
 			CurrentState = EDigicamState::ReadyToSnap;
 		}
@@ -144,6 +144,6 @@ void UGDigicamComponent::UpdateSearch()
 
 void UGDigicamComponent::BroadcastSearchState()
 {
-	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState);
+	OnDigicamSearchUpdated.Broadcast(SelectedYear, SelectedAreaCode, CurrentMatchedData, CurrentState, LastSearchResult);
 }
 
