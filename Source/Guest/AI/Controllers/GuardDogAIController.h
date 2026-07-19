@@ -41,6 +41,9 @@ protected:
 	bool bDrawDebugSight = true;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|AI")
 	TObjectPtr<UBlackboardData> BlackboardAsset;
 
 	/** 지정하지 않으면 생성자의 기본 시야 설정을 사용한다. */
