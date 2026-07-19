@@ -17,6 +17,15 @@ enum class EDigicamState : uint8
 	ReadyToSnap    // 수거 준비 완료 (셔터 대기)
 };
 
+// 시공간 검색 결과 — UI 피드백 분기용 (일치하는 좌표 없음 / 스토리 잠김 / 이동 가능)
+UENUM(BlueprintType)
+enum class ESpacetimeSearchResult : uint8
+{
+	NoMatch,
+	Locked,
+	Found
+};
+
 // 수거지(저기) 좌표 데이터 구조체
 USTRUCT(BlueprintType)
 struct FSpacetimeData : public FTableRowBase
@@ -46,6 +55,10 @@ struct FSpacetimeData : public FTableRowBase
 	// 스토리상 날짜 (예: "1998년 3월 15일") — 기획 확정 전 임시값
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
 	FText StoryDate;
+
+	// 이 좌표가 열리는 최소 스토리 진행도 (0 = 처음부터 열림)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
+	int32 RequiredStoryProgress = 0;
 };
 
 // 촬영된 사진 한 장의 데이터
