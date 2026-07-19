@@ -1,10 +1,11 @@
 #include "GuestSaveSlotBoardBase.h"
 #include "Components/ScrollBox.h"
 #include "Components/Button.h"
-#include "GameFramework/PlayerController.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/Save/GuestSaveGame.h"
 #include "Guest/Save/GuestSaveSlotNames.h"
 #include "Guest/UI/SaveLoad/GuestSaveSlotWidget.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -21,12 +22,9 @@ void UGuestSaveSlotBoardBase::NativeOnInitialized()
 }
 void UGuestSaveSlotBoardBase::OnCloseClicked()
 {
-	RemoveFromParent();
-	if (APlayerController* PC = GetOwningPlayer())
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
-		PC->bShowMouseCursor = false;
+		UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
 	}
 }
 

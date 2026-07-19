@@ -1,12 +1,12 @@
 ﻿#pragma once
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "Guest/UI/Base/GuestActivatableBase.h"
 #include "GuestSaveSlotBoardBase.generated.h"
 
 class UGuestSaveSlotWidget;
 
 UCLASS()
-class GUEST_API UGuestSaveSlotBoardBase:public UUserWidget
+class GUEST_API UGuestSaveSlotBoardBase : public UGuestActivatableBase
 {
 	GENERATED_BODY()
 	

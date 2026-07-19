@@ -101,14 +101,6 @@ void AGuestPlayerController::SetupInputComponent()
 		{
 			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
 		}
-		if (IA_SaveGame)
-		{
-			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
-		}
-		if (IA_LoadGame)
-		{
-			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
-		}
 		// IA_ToggleInventory는 AGuestCharacter::SetupPlayerInputComponent에서 바인딩
 	}
 }
@@ -432,45 +424,40 @@ void AGuestPlayerController::ShowSaveBoard()
 {
 	G_LOG(TEXT("Show save"))
 	// 로드 보드가 열려있으면 먼저 닫기
-	if (LoadBoardWidget && LoadBoardWidget->IsInViewport())
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
-		LoadBoardWidget->RemoveFromParent();
-	}
-	
-	if (!SaveBoardWidget && SaveBoardClass)
-	{
-		SaveBoardWidget = CreateWidget<UGuestSaveBoardWidget>(this, SaveBoardClass);
-	}
-    
-	if (SaveBoardWidget && !SaveBoardWidget->IsInViewport())
-	{
-		SaveBoardWidget->AddToViewport();
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(SaveBoardWidget->TakeWidget());
-		SetInputMode(InputMode);
-		bShowMouseCursor = true;
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+			return;
+		}
+
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+		}
+
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard);
 	}
 }
 
 void AGuestPlayerController::ShowLoadBoard()
 {
 	G_LOG(TEXT("Show Load"))
-	if (SaveBoardWidget && SaveBoardWidget->IsInViewport())
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
-		SaveBoardWidget->RemoveFromParent();
-	}
-	
-	if (!LoadBoardWidget&&LoadBoardClass)
-	{
-		LoadBoardWidget = CreateWidget<UGuestLoadBoardWidget>(this, LoadBoardClass);
-	}
-	if (LoadBoardWidget && !LoadBoardWidget->IsInViewport())
-	{
-		LoadBoardWidget->AddToViewport();
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(LoadBoardWidget->TakeWidget());
-		SetInputMode(InputMode);
-		bShowMouseCursor = true;
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+			return;
+		}
+
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+		}
+
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard);
 	}
 }
 

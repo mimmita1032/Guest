@@ -23,6 +23,10 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Inventory, "Guest.Widget.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Digicam, "Guest.Widget.Digicam");
 
+	//세이브/ 로드 위젯 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_SaveBoard, "Guest.Widget.SaveBoard");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_LoadBoard, "Guest.Widget.LoadBoard");
+	
 	// NPC 대화 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_NPCDialogue, "Guest.Widget.NPCDialogue");
 

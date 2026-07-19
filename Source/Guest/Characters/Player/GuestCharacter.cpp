@@ -277,6 +277,16 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(IA_ToggleInventory, ETriggerEvent::Started, this, &AGuestCharacter::ToggleInventoryAction);
        }
 
+       if (IA_SaveGame)
+       {
+          GIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestCharacter::ToggleSaveBoardAction);
+       }
+
+       if (IA_LoadGame)
+       {
+          GIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestCharacter::ToggleLoadBoardAction);
+       }
+
        if (IA_ConfirmPlacement)
        {
           GIC->BindAction(IA_ConfirmPlacement, ETriggerEvent::Started, this, &AGuestCharacter::ConfirmPlacementAction);
@@ -465,6 +475,48 @@ void AGuestCharacter::ToggleInventoryAction(const FInputActionValue& Value)
 
          G_LOG(TEXT("캐릭터 입력: 인벤토리 열기 실행"));
       }
+   }
+}
+
+void AGuestCharacter::ToggleSaveBoardAction(const FInputActionValue& Value)
+{
+   if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+   {
+      if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+         G_LOG(TEXT("캐릭터 입력: 세이브 보드 닫기 실행"));
+         return;
+      }
+
+      if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+      }
+
+      UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard);
+      G_LOG(TEXT("캐릭터 입력: 세이브 보드 열기 실행"));
+   }
+}
+
+void AGuestCharacter::ToggleLoadBoardAction(const FInputActionValue& Value)
+{
+   if (UGuestUISubsystem* UISubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UGuestUISubsystem>())
+   {
+      if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+         G_LOG(TEXT("캐릭터 입력: 로드 보드 닫기 실행"));
+         return;
+      }
+
+      if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+      {
+         UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+      }
+
+      UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard);
+      G_LOG(TEXT("캐릭터 입력: 로드 보드 열기 실행"));
    }
 }
 
