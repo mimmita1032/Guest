@@ -20,14 +20,22 @@ public:
 
 #pragma region Space
 public:
-	// 데이터 테이블 기반 검색
-	bool SearchSpacetime(int32 Year, int32 AreaCode, FSpacetimeData& OutData);
+	// 데이터 테이블 기반 검색 + 스토리 잠금 판정 (단일 진실 공급원)
+	// Locked일 때도 OutData는 채워짐 — 티저 노출 여부는 UI가 결정
+	UFUNCTION(BlueprintCallable, Category = "Spacetime")
+	ESpacetimeSearchResult SearchSpacetime(int32 Year, int32 AreaCode, FSpacetimeData& OutData) const;
 
-	// 실제 레벨 이동 명령
+	// 스토리 진행도 대비 해금 여부 (GQuestSubsystem::GetStoryProgress()와 대조)
+	UFUNCTION(BlueprintPure, Category = "Spacetime")
+	bool IsSpacetimeUnlocked(const FSpacetimeData& Data) const;
+
+	// 실제 레벨 이동 명령 — 잠금 재검증 + 이동 중 재진입 차단
+	UFUNCTION(BlueprintCallable, Category = "Spacetime")
 	void ExecuteTravel(const FSpacetimeData& TargetData);
 
-	// 귀가 명령
-	void ReturnToBase(FName BaseLevelName);
+	// 이동 진행 중 여부 (페이드 중 셔터 연타 등 중복 이동 방지, UI 조회용)
+	UFUNCTION(BlueprintPure, Category = "Spacetime")
+	bool IsTravelInProgress() const { return bTravelInProgress; }
 
 	// 이동 시작 시 발생하는 이벤트 (페이드 연출용 — OpenLevel보다 TravelFadeDelay초 먼저 발생)
 	UPROPERTY(BlueprintAssignable, Category = "Spacetime")
@@ -42,6 +50,7 @@ private:
 
 	FSpacetimeData PendingTravelData;
 	FTimerHandle TravelTimerHandle;
+	bool bTravelInProgress = false;
 #pragma endregion
 
 #pragma region Time

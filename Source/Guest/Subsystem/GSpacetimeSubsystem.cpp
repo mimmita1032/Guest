@@ -3,6 +3,7 @@
 #include "GSpacetimeSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Guest/Core/GameInstance/GuestGameInstance.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 void UGSpacetimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -20,9 +21,9 @@ void UGSpacetimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 }
 #pragma region Space
-bool UGSpacetimeSubsystem::SearchSpacetime(int32 Year, int32 AreaCode, FSpacetimeData& OutData)
+ESpacetimeSearchResult UGSpacetimeSubsystem::SearchSpacetime(int32 Year, int32 AreaCode, FSpacetimeData& OutData) const
 {
-	if (!SpacetimeDataTable) return false;
+	if (!SpacetimeDataTable) return ESpacetimeSearchResult::NoMatch;
 
 	TArray<FSpacetimeData*> AllRows;
 	SpacetimeDataTable->GetAllRows<FSpacetimeData>(TEXT("SpacetimeSearch"), AllRows);
@@ -32,18 +33,37 @@ bool UGSpacetimeSubsystem::SearchSpacetime(int32 Year, int32 AreaCode, FSpacetim
 		if (Row->TargetYear == Year && Row->AreaCode == AreaCode)
 		{
 			OutData = *Row;
-			return true;
+			return IsSpacetimeUnlocked(OutData) ? ESpacetimeSearchResult::Found : ESpacetimeSearchResult::Locked;
 		}
 	}
-	return false;
+	return ESpacetimeSearchResult::NoMatch;
+}
+
+bool UGSpacetimeSubsystem::IsSpacetimeUnlocked(const FSpacetimeData& Data) const
+{
+	if (const UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>())
+	{
+		return QuestSys->GetStoryProgress() >= Data.RequiredStoryProgress;
+	}
+
+	// 퀘스트 서브시스템을 못 얻는 비정상 상황 — 잠금 우선(안전 기본값)
+	return Data.RequiredStoryProgress <= 0;
 }
 
 void UGSpacetimeSubsystem::ExecuteTravel(const FSpacetimeData& TargetData)
 {
 	if (TargetData.LevelName.IsNone()) return;
+	if (bTravelInProgress) return;
+
+	if (!IsSpacetimeUnlocked(TargetData))
+	{
+		G_WARN(TEXT("시공간 이동 거부 — 아직 해금되지 않은 좌표: %s"), *TargetData.PlaceName.ToString());
+		return;
+	}
 
 	G_LOG(TEXT("시공간 이동 시작: %s (%.1f초 후 전환)"), *TargetData.PlaceName.ToString(), TravelFadeDelay);
 
+	bTravelInProgress = true;
 	PendingTravelData = TargetData;
 
 	// 페이드 연출 시작 신호 — Blueprint에서 이 시점에 페이드 아웃 재생
@@ -60,23 +80,15 @@ void UGSpacetimeSubsystem::ExecuteTravel(const FSpacetimeData& TargetData)
 
 void UGSpacetimeSubsystem::DoTravel()
 {
+	// bTravelInProgress는 페이드 딜레이 동안의 재진입만 막으면 되므로 여기서 해제.
+	// 이 서브시스템은 GameInstance 스코프라 OpenLevel로 월드가 바뀌어도 살아남아 리셋 없이는 이후 이동이 영구히 막힘.
+	bTravelInProgress = false;
+
 	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
 	{
 		GI->CarryPlayerStateAcrossTravel();
 	}
 	UGameplayStatics::OpenLevel(GetWorld(), PendingTravelData.LevelName);
-}
-
-void UGSpacetimeSubsystem::ReturnToBase(FName BaseLevelName)
-{
-	if (BaseLevelName.IsNone()) return;
-
-	G_LOG(TEXT("기지로 귀가 시작"));
-	if (UGuestGameInstance* GI = Cast<UGuestGameInstance>(GetGameInstance()))
-	{
-		GI->CarryPlayerStateAcrossTravel();
-	}
-	UGameplayStatics::OpenLevel(GetWorld(), BaseLevelName);
 }
 #pragma endregion
 #pragma region Time

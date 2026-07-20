@@ -50,6 +50,8 @@ protected:
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
     void ToggleInventoryAction(const FInputActionValue& Value);
+    void ToggleSaveBoardAction(const FInputActionValue& Value);
+    void ToggleLoadBoardAction(const FInputActionValue& Value);
 
     // 기획 데이터 에셋 참조
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
@@ -77,6 +79,12 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_ToggleInventory;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_SaveGame;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_LoadGame;
 
     // 아이템 배치 모드 확정/취소 — UMG 위젯 히트테스트에 기대지 않고 Enhanced Input으로 직접 처리
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
