@@ -45,11 +45,31 @@ void AGuestEnemyCharacter::BeginPlay()
 	{
 		GuestASC->AddLooseGameplayTag(EnemyIdentityTag);
 	}
+
+	// 잔상은 CharacterMovement/Controller가 아닌 BTS_RotateToTarget 서비스가 Actor Rotation을 직접 제어하므로
+	// 두 시스템이 동시에 회전을 갱신하지 않도록 관련 자동 회전 로직을 모두 꺼둔다.
+	// NPC 및 현실(Reality) 적의 회전 설정은 변경하지 않는다
+	if (IsAfterimageEnemy())
+	{
+		bUseControllerRotationYaw = false;
+
+		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+		{
+			MoveComp->bOrientRotationToMovement     = false;
+			MoveComp->bUseControllerDesiredRotation = false;
+			MoveComp->bUseRVOAvoidance              = false; // CrowdFollowingComponent와 동시 사용 방지
+		}
+	}
 }
 
 UAbilitySystemComponent* AGuestEnemyCharacter::GetAbilitySystemComponent() const
 {
 	return GuestASC;
+}
+
+bool AGuestEnemyCharacter::IsAfterimageEnemy() const
+{
+	return EnemyIdentityTag == GuestGameplayTags::TAG_Enemy_Type_AfterImage;
 }
 
 void AGuestEnemyCharacter::OnDeadTagChanged(const FGameplayTag Tag, int32 NewCount)

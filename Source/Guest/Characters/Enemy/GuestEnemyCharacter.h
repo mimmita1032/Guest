@@ -37,6 +37,10 @@ public:
 	// IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	// EnemyIdentityTag가 잔상(AfterImage) 타입인지 여부 — AGuestAfterimageAIController 등 외부에서 검증에 사용
+	UFUNCTION(BlueprintPure, Category = "Enemy")
+	bool IsAfterimageEnemy() const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "GAS")
 	TObjectPtr<UGuestAbilitySystemComponent> GuestASC;
