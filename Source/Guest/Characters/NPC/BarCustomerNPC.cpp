@@ -27,6 +27,34 @@ ABarCustomerNPC::ABarCustomerNPC()
 	DialogueTrigger->OnComponentBeginOverlap.AddDynamic(this, &ABarCustomerNPC::OnTriggerBeginOverlap);
 }
 
+void ABarCustomerNPC::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>())
+	{
+		QuestSys->OnQuestListChanged.AddDynamic(this, &ABarCustomerNPC::HandleQuestListChanged);
+	}
+	ApplyStoryProgressVisibility();
+}
+
+void ABarCustomerNPC::HandleQuestListChanged()
+{
+	ApplyStoryProgressVisibility();
+}
+
+void ABarCustomerNPC::ApplyStoryProgressVisibility()
+{
+	// 0이면 게이팅 없음 — 항상 등장 상태 유지
+	if (RequiredStoryProgress <= 0) return;
+
+	const UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>();
+	const bool bUnlocked = QuestSys && QuestSys->GetStoryProgress() >= RequiredStoryProgress;
+
+	SetActorHiddenInGame(!bUnlocked);
+	SetActorEnableCollision(bUnlocked);
+}
+
 void ABarCustomerNPC::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)

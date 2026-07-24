@@ -29,6 +29,8 @@ class GUEST_API ABarCustomerNPC : public ACharacter, public IGInteractableInterf
 public:
 	ABarCustomerNPC();
 
+	virtual void BeginPlay() override;
+
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual FText GetInteractText_Implementation() const override;
 
@@ -70,6 +72,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Quest")
 	FName TalkObjectiveID;
 
+	/** 이 값 이상으로 스토리 진행도가 올라야 맵에 등장 (0이면 항상 등장) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Quest")
+	int32 RequiredStoryProgress = 0;
+
 	/** 카메라 전환 블렌드 시간 (초). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bar|Camera")
 	float CameraBlendTime = 0.5f;
@@ -81,4 +87,11 @@ private:
 	void OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 		bool bFromSweep, const FHitResult& SweepResult);
+
+	// GQuestSubsystem::OnQuestListChanged 수신 → 진행도 재확인
+	UFUNCTION()
+	void HandleQuestListChanged();
+
+	// RequiredStoryProgress 대비 현재 스토리 진행도를 비교해 등장/숨김 적용
+	void ApplyStoryProgressVisibility();
 };

@@ -8,6 +8,7 @@
 #include "Guest/Data/DataAssets/GDialogueDataAsset.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 AGuestNPCBase::AGuestNPCBase()
@@ -24,6 +25,12 @@ AGuestNPCBase::AGuestNPCBase()
 void AGuestNPCBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>())
+	{
+		QuestSys->OnQuestListChanged.AddDynamic(this, &AGuestNPCBase::HandleQuestListChanged);
+	}
+	ApplyStoryProgressVisibility();
 
 	if (!ScheduleDataAsset) return;
 
@@ -54,6 +61,23 @@ void AGuestNPCBase::Interact_Implementation(AActor* Interactor)
 void AGuestNPCBase::HandleTimeChanged(float CurrentHour)
 {
 	ApplySchedule(CurrentHour);
+}
+
+void AGuestNPCBase::HandleQuestListChanged()
+{
+	ApplyStoryProgressVisibility();
+}
+
+void AGuestNPCBase::ApplyStoryProgressVisibility()
+{
+	// 0이면 게이팅 없음 — 항상 등장 상태 유지
+	if (RequiredStoryProgress <= 0) return;
+
+	const UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>();
+	const bool bUnlocked = QuestSys && QuestSys->GetStoryProgress() >= RequiredStoryProgress;
+
+	SetActorHiddenInGame(!bUnlocked);
+	SetActorEnableCollision(bUnlocked);
 }
 
 void AGuestNPCBase::ApplySchedule(float CurrentHour)
