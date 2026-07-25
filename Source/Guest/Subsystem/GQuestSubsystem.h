@@ -10,12 +10,16 @@
 
 class UGuestSaveGame;
 struct FGuestSavedActiveQuestEntry;
+class UGNarrationDataAsset;
 
 // 아이템 획득 / NPC 대화 / 구역 진입 시 Broadcast → 서브시스템이 수신하여 장부 갱신
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestObjectiveUpdated, FName, TargetID, int32, Amount);
 
 // 퀘스트 수락/완료/목표 진행 시 Broadcast → UI 트래커가 구독하여 갱신
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestListChanged);
+
+// 퀘스트 완료 시 NarrationOnComplete가 지정돼 있으면 Broadcast → UI가 구독해 나레이션 연출 재생
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNarrationRequested, UGNarrationDataAsset*, NarrationAsset);
 
 UCLASS()
 class GUEST_API UGQuestSubsystem : public UGameInstanceSubsystem
@@ -34,6 +38,10 @@ public:
 	// 퀘스트 상태 변경 시 Broadcast (수락/완료/목표 진행) → UI 트래커용
 	UPROPERTY(BlueprintAssignable, Category = "Quest")
 	FOnQuestListChanged OnQuestListChanged;
+
+	// 퀘스트 완료 + NarrationOnComplete 지정 시 Broadcast → UI가 구독해 나레이션 위젯 오픈
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnNarrationRequested OnNarrationRequested;
 #pragma endregion
 
 #pragma region Quest Flow

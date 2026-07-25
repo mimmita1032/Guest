@@ -15,6 +15,7 @@ class UCommonActivatableWidgetContainerBase;
 class UInputMappingContext;
 class APlayerController;
 class UGDialogueDataAsset;
+class UGNarrationDataAsset;
 
 /** 위젯이 푸시되었을 때 알림을 주는 델리게이트 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWidgetPushed, UCommonActivatableWidget*, Widget);
@@ -32,6 +33,7 @@ public:
 
 	//~ Begin USubsystem Interface
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	//~ End USubsystem Interface
 
@@ -74,6 +76,16 @@ public:
 
 	/** 현재 대화 중인 NPC 액터 반환. 카메라 블렌드에 사용. */
 	AActor* GetPendingDialogueNPCActor() const { return PendingDialogueNPCActor.Get(); }
+
+	/**
+	 * 나레이션(정지 일러스트 슬라이드쇼)을 Narration 스택에 열고 재생을 시작한다.
+	 * GQuestSubsystem::OnNarrationRequested를 구독해 자동으로 호출되며, 필요 시 직접 호출도 가능.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "UI|Narration")
+	void OpenNarration(UGNarrationDataAsset* NarrationAsset);
+
+	/** 위젯 NativeOnActivated에서 나레이션 에셋을 가져올 때 사용. */
+	UGNarrationDataAsset* GetPendingNarrationAsset() const { return PendingNarrationAsset.Get(); }
 
 	/** 전역 알림용 델리게이트 */
 	UPROPERTY(BlueprintAssignable, Category = "UI")
@@ -123,4 +135,12 @@ private:
 
 	UPROPERTY()
 	TWeakObjectPtr<AActor> PendingDialogueNPCActor;
+
+	// ── 나레이션 세션 ──
+	UPROPERTY()
+	TObjectPtr<UGNarrationDataAsset> PendingNarrationAsset;
+
+	// GQuestSubsystem::OnNarrationRequested 수신 → OpenNarration 호출
+	UFUNCTION()
+	void HandleNarrationRequested(UGNarrationDataAsset* NarrationAsset);
 };
