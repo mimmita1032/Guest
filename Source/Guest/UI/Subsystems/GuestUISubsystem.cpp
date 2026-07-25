@@ -4,6 +4,8 @@
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/Data/DataAssets/GDialogueDataAsset.h"
+#include "Guest/Data/DataAssets/GNarrationDataAsset.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -31,6 +33,16 @@ bool UGuestUISubsystem::ShouldCreateSubsystem(UObject* Outer) const
     return true;
 }
 
+void UGuestUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+
+    if (UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>())
+    {
+        QuestSys->OnNarrationRequested.AddDynamic(this, &UGuestUISubsystem::HandleNarrationRequested);
+    }
+}
+
 void UGuestUISubsystem::Deinitialize()
 {
     StackMap.Empty();
@@ -39,6 +51,7 @@ void UGuestUISubsystem::Deinitialize()
     CurrentIMC = nullptr;
     PendingDialogueAsset = nullptr;
     PendingDialogueNPCActor = nullptr;
+    PendingNarrationAsset = nullptr;
     Super::Deinitialize();
 }
 
@@ -173,6 +186,18 @@ void UGuestUISubsystem::OpenNPCDialogue(UGDialogueDataAsset* DialogueAsset)
     PendingDialogueAsset = DialogueAsset;
     PendingDialogueNPCActor = nullptr;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
+}
+
+void UGuestUISubsystem::OpenNarration(UGNarrationDataAsset* NarrationAsset)
+{
+    if (!NarrationAsset || NarrationAsset->Beats.IsEmpty()) return;
+    PendingNarrationAsset = NarrationAsset;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_Narration, GuestGameplayTags::TAG_Widget_Narration);
+}
+
+void UGuestUISubsystem::HandleNarrationRequested(UGNarrationDataAsset* NarrationAsset)
+{
+    OpenNarration(NarrationAsset);
 }
 
 void UGuestUISubsystem::PopWidget(FGameplayTag StackTag)

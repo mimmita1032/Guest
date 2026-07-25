@@ -17,6 +17,7 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_GameMenu); //3 수거 일지, 인벤토리, NPC 대화
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Modal); //최상단 확인창, 아이템 발견 연출
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_BarDialogue); //바 모드 전체화면 대화 (VA-11 HALL-A 스타일)
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_WidgetStack_Narration); //퀘스트 완료 등 스토리 분기 전환 나레이션 (전체화면)
 
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PressAnyKey);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_PauseMenu);
@@ -37,6 +38,9 @@ namespace GuestGameplayTags
 
 	// 바 모드 대화 위젯 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_BarDialogue);
+
+	// 나레이션 위젯 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Narration);
 
 	//아이템 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
