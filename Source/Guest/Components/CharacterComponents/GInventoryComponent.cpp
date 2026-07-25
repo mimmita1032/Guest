@@ -241,7 +241,8 @@ bool UGInventoryComponent::DropItem(FInventoryItemHandle Handle)
 	}
 
 	// TODO: 추후 스택 아이템 대응 시 Quantity 전달 구조 필요
-	Pickup->InitializePickup(Definition, 1);
+	// 개체별 데이터를 함께 실어야 드롭했다 다시 주웠을 때 내용이 유지된다
+	Pickup->InitializePickup(Definition, 1, (*InstancePtr)->GetInstanceDataStruct());
 	Pickup->FinishSpawning(SpawnTransform);
 
 	// 스폰 성공 후에만 인벤토리에서 제거

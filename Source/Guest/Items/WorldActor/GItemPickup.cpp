@@ -33,7 +33,8 @@ void AGItemPickup::Interact_Implementation(AActor* Interactor)
 	UGInventoryComponent* InvComp = Player->FindComponentByClass<UGInventoryComponent>();
 	if (!InvComp) return;
 
-	const FInventoryItemHandle Handle = InvComp->GrantItem(ItemDefinition);
+	// 개체별 데이터를 함께 넘겨야 드롭했다 다시 주운 사진의 내용이 유지된다
+	const FInventoryItemHandle Handle = InvComp->GrantItemWithData(ItemDefinition, InstanceData);
 	if (!Handle.IsValid())
 	{
 		G_WARN(TEXT("아이템 획득 실패: 인벤토리가 가득 찼습니다. [%s]"), *ItemDefinition->GetName());
@@ -84,9 +85,11 @@ void AGItemPickup::UpdatePickupVisuals() const
 	}
 }
 
-void AGItemPickup::InitializePickup(const UGItemDefinition* InDefinition, int32 InQuantity)
+void AGItemPickup::InitializePickup(const UGItemDefinition* InDefinition, int32 InQuantity,
+	const FInstancedStruct& InInstanceData)
 {
 	ItemDefinition = InDefinition;
 	Quantity = InQuantity;
+	InstanceData = InInstanceData;
 	UpdatePickupVisuals();
 }
