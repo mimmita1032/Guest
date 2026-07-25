@@ -44,7 +44,10 @@
 
 콘텐츠 배치보다 **먼저** 끝내야 하는 것들. 나중에 하면 이미 만든 퀘스트/세이브를 다시 손봐야 한다.
 
-### A. 인벤토리 개체별 데이터 (per-instance data) — 최우선
+> **진행 상황 (2026-07-26): A·B·C·D 코드 작업 완료.** 브랜치 `feat/item-instance-data`.
+> 남은 것은 **에디터 작업**(맨 아래 「에디터에서 해야 할 일」)과 **E(데모 엔딩 화면)**.
+
+### A. 인벤토리 개체별 데이터 (per-instance data) — ✅ 완료
 
 현재 구조는 **"같은 종류면 완전히 동일한 아이템"** 을 전제한다.
 
@@ -65,11 +68,13 @@ struct FGuestSavedInventoryEntry {
 
 사진은 한 장 한 장이 다르므로 이 전제를 깬다. `UGItemDefinition`의 `Fragments`(설계도 조립)에 대응하는 **런타임 짝**이 비어 있는 상태이며, 이는 사진만의 문제가 아니다 — 내구도, 각인, 수집 시각, 입수 경위 등 앞으로 필요한 모든 개체별 상태가 같은 빈칸을 쓴다.
 
-- ⬜ `UGItemInstance`에 개체별 데이터 확장 지점 추가
-- ⬜ `FGuestSavedInventoryEntry`에 개체별 데이터 직렬화 추가
-- ⬜ 기존 세이브 호환 처리 (개체 데이터 없는 구버전 엔트리 허용)
+- ✅ `FGItemInstanceData` — 개체별 데이터의 조상. `UGItemInstance`가 `FInstancedStruct`로 보유
+- ✅ `SetInstanceData`는 계보를 검사해 거부하고, `GetInstanceData<T>`는 `static_assert`로 잘못된 타입을 컴파일 단계에서 차단
+- ✅ `GrantItemWithData` / `PlaceItemAt` 경로 추가 (기존 `GrantItem`은 위임만 하므로 호출부 불변)
+- ✅ `FGuestSavedInventoryEntry::InstanceData` 세이브 왕복
+- ✅ 구버전 세이브는 빈 값으로 로드되어 그대로 동작 — 마이그레이션 불필요
 
-### B. 사진의 아이템화
+### B. 사진의 아이템화 — ✅ 완료
 
 **목표: 촬영하면 사진이 인벤토리 아이템으로 들어가고, 디지캠 「찍은 사진」 메뉴에서도 확인된다.**
 
@@ -82,10 +87,13 @@ struct FGuestSavedInventoryEntry {
 | 세이브 | `SavedPhotos` 별도 배열 | `SavedInventory` |
 | UI | 디지캠 갤러리 탭 | 인벤토리 그리드 |
 
-- ⬜ 사진 설계도 `DA_Item_Photo` 1개 생성 (모든 사진이 공유)
-- ⬜ 촬영 시 `FPhotoData`를 개체 데이터로 들고 있는 인스턴스를 인벤토리에 생성
-- ⬜ 디지캠 갤러리를 **인벤토리에서 사진 태그만 필터링한 뷰**로 전환
-- ⬜ `SavedPhotos` 별도 배열 제거 (인벤토리 세이브로 일원화)
+- ✅ `FGPhotoItemInstanceData` — 사진 개체 데이터
+- ✅ 촬영 시 인벤토리에 사진 아이템 지급. 공간이 없으면 픽셀 읽기·PNG 압축 **전에** 취소하고 `TakePhoto`가 `false` 반환 (디지캠 이동 자체는 막지 않음)
+- ✅ `GPhotoLibrarySubsystem`을 자체 배열에서 **인벤토리 조회 뷰**로 전환
+- ✅ `SavedPhotos` 별도 배열 제거 (인벤토리 세이브로 일원화)
+- ✅ `RestorePhotoSnapshots` — 세이브 로드 시 PNG에서 텍스처 복원. 레벨 전환처럼 텍스처가 살아 있으면 재디코딩을 건너뛴다
+- ✅ 인벤토리 복원과 사진 복원을 `GuestGameInstance::RestoreInventory`로 묶음 (호출부 3곳 중복 제거)
+- ⬜ **(에디터)** `DA_Item_Photo` 생성 + 카메라 컴포넌트에 지정 — 아래 「에디터에서 해야 할 일」 참고
 
 `FPhotoData`에는 이미 촬영 장소·시간이 들어 있다 — `InGameYear` / `AreaCode` / `PlaceName` / `StoryDate` / 촬영 시각. 별도 추가 불필요.
 
@@ -100,31 +108,33 @@ struct FGuestSavedInventoryEntry {
 >
 > 이렇게 해두면 DSLR 기능 추가가 "기존 구조에 파라미터를 얹는 일"이 되고, 인벤토리·세이브를 다시 건드릴 필요가 없다.
 
-### C. Photo 퀘스트 목표 타입
+### C. Photo 퀘스트 목표 타입 — ✅ 완료
 
-스미스 체인 3개가 전부 사진 수집인데 현재 목표 타입에 사진이 없다.
+- ✅ `EQuestObjectiveType::Photo` 추가
+- ✅ `FPhotoData::SubjectID` — 무엇을 찍었는가. 퀘스트 목표의 `TargetID`와 대조
+- ✅ `FSpacetimeData::PhotoSubjectID` — 그 좌표에서 찍은 사진에 기록될 촬영 대상 식별자
+- ✅ 촬영 시 `SubjectID`가 지정돼 있으면 `OnObjectiveUpdated` 브로드캐스트
 
-```cpp
-enum class EQuestObjectiveType : uint8 { Talk, Collect, Reach, Place };  // Photo 없음
-```
+**판정 방식 (확정):** 지금은 **장소 단위**로 동작한다 — 한 좌표 = 한 피사체.
+현재 촬영이 시공간 이동 직전 자동 촬영이라 "피사체를 조준한다"는 개념 자체가 없기 때문이다.
 
-- ⬜ `EQuestObjectiveType::Photo` 추가
-- ⬜ 촬영 시 `GQuestSubsystem::OnObjectiveUpdated` 브로드캐스트 연결
-- ⬜ **판정 기준 TBD** — 아래 참고
+`SubjectID`라는 한 겹을 둔 덕분에, 추후 카메라에 트레이스가 생기면 **그 필드를 실제 피사체로 채우기만 하면 되고** `DT_QuestData`의 목표 데이터와 판정 로직은 그대로 둘 수 있다.
 
-**판정 기준 미결:** `FPhotoData`는 "어디서 찍었는지"만 기록하고 "무엇을 찍었는지"는 모른다. `GCameraComponent`도 렌더타겟만 다루고 조준 대상 감지가 없다.
-- 장소 기준으로 가면 → 아파트/주택가/달동네를 **각각 다른 `AreaCode`로 분리**해야 구분된다 (한 레벨 안에 3개를 두면 판정 불가)
-- 피사체 기준으로 가면 → 카메라에 트레이스 + 피사체 ID + 조준 UI 신규 작업
+> 따라서 아파트/주택가/달동네는 현재 구조에서 **각각 다른 좌표(`DT_SpacetimeData` 행)** 로 두어야 구분된다.
+> 능동 촬영이 생기면 한 레벨 안에 세 피사체를 두는 방식으로 바꿀 수 있다.
 
-사진이 아이템이 되면 개체 데이터에 피사체 ID를 넣는 것 자체는 자연스러워지므로, **B 작업 후 다시 판단한다.**
+### D. 날짜 시스템 — ✅ 완료
 
-### D. 날짜 시스템
+- ✅ `GSpacetimeSubsystem::CurrentDay` (1일차부터)
+- ✅ 자정 경과 시 자동 진행. 히치로 하루를 여러 번 넘겨도 넘긴 만큼 정확히 센다
+- ✅ `AdvanceDay(NumDays, NewHour)` — 시각을 함께 지정할 수 있어 "다음 날 아침 9시"를 한 번에 표현
+- ✅ `OnDayChanged` 델리게이트
+- ✅ 세이브 연동 (`SavedWorldDay`, 구버전은 -1 센티널로 1일차 유지)
 
-Stage 1→2의 "하루 후"를 표현할 날짜 개념이 없다. `GSpacetimeSubsystem`은 시각(`CurrentHour`)만 관리한다.
-
-- ⬜ `GSpacetimeSubsystem`에 날짜(Day) 카운터 추가
-- ⬜ 세이브 연동 (`SavedWorldHour`와 같은 방식)
-- ⬜ 날짜를 진행시키는 트리거 정의 (귀가 시? 취침? 퀘스트 완료 시?) — TBD
+**날짜 진행 트리거 (확정):** 자정 경과(자동) + 나레이션 종료(데이터 지정).
+`UGNarrationDataAsset::DaysToAdvanceOnFinish` / `HourOnFinish`를 채우면 나레이션이 끝날 때 날짜가 넘어간다.
+화면이 페이드아웃되는 동안 적용되므로, 나레이션이 걷히면 이미 다음 날이다.
+→ Stage 1의 "꽃 배치 → 나레이션 → 하루 뒤 스미스"가 **코드 수정 없이 데이터만으로** 완성된다.
 
 ### E. 데모 엔딩 화면
 
@@ -230,13 +240,43 @@ Stage 1→2의 "하루 후"를 표현할 날짜 개념이 없다. `GSpacetimeSub
 
 ---
 
+## 에디터에서 해야 할 일
+
+코드로는 만들 수 없어 에디터에서 직접 해야 하는 것들. **위쪽이 더 급하다.**
+
+### 1. 사진 아이템 설계도 — 이게 없으면 촬영이 아예 안 된다
+- ⬜ `DA_Item_Photo` 생성 (`UGItemDefinition`) — 위치는 `Content/Items/Definitions/` 권장
+  - `ItemID` 지정 (예: `Photo`)
+  - `UGItemFragmentInventory` 프래그먼트 추가 → `GridSize`(사진이 인벤토리에서 차지할 칸)와 `ItemIcon` 설정
+- ⬜ 플레이어 블루프린트의 **Camera 컴포넌트 → `Photo Item Definition`** 에 위 애셋 지정
+  - 미지정 시 촬영이 실패하고 `"PhotoItemDefinition 미설정"` 경고가 뜬다
+
+### 2. 촬영 대상 지정 (사진 퀘스트용)
+- ⬜ `DT_SpacetimeData`의 각 행에 **`PhotoSubjectID`** 입력
+  - 그 좌표에서 찍은 사진에 기록될 식별자. 비워두면 그 사진은 어떤 퀘스트도 진행시키지 않는다
+  - 스미스 1차 의뢰용으로 아파트/주택가/달동네를 **각각 다른 행**으로 만들고 서로 다른 ID를 줄 것
+
+### 3. 시간 경과 연출
+- ⬜ `DA_Narration`(꽃 배치 후 재생되는 것)의 **`Days To Advance On Finish`** 를 `1`로
+- ⬜ **`Hour On Finish`** 를 `9.0` 정도로 (다음 날 아침)
+
+### 4. 나머지 (기존 목록)
+- ⬜ `WBP_Narration`에 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut` (선택 — 없으면 컷 전환)
+- ⬜ `DT_QuestData`의 `Q_Field_001`에 Step02 추가 (Reach + Place)
+- ⬜ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
+- ⬜ `DT_SpacetimeData`에 주점 좌표 행 추가
+
+> ⚠️ **기존 세이브의 사진은 유실된다.** `SavedPhotos` 배열을 제거하고 인벤토리로 일원화했기 때문이다.
+> 개발 단계라 마이그레이션 코드는 넣지 않았다. 새로 시작하면 문제없다.
+
 ## 작업 순서 권고
 
-1. **선행 시스템** — A(개체별 데이터) → B(사진 아이템화) → C(Photo 목표) → D(날짜)
-2. **Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게
-3. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다
-4. **Stage 5~8** — 스미스 체인 나머지
-5. **Stage 9 + E** — 엔딩과 데모 종료 화면
+1. ~~**선행 시스템** — A(개체별 데이터) → B(사진 아이템화) → C(Photo 목표) → D(날짜)~~ ✅ 코드 완료
+2. **에디터 작업 1~3** — 특히 `DA_Item_Photo`가 없으면 촬영 자체가 동작하지 않는다
+3. **Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게
+4. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다
+5. **Stage 5~8** — 스미스 체인 나머지
+6. **Stage 9 + E** — 엔딩과 데모 종료 화면
 
 ## 데모 이후 예정
 - **DSLR 촬영 기능 본편** — 노출 보정, 조리개·셔터스피드·ISO, 초점/피사계심도, 뷰파인더 UI
