@@ -2,6 +2,8 @@
 
 #include "Guest/UI/Widget/GuestNarrationWidgetBase.h"
 #include "Guest/Data/DataAssets/GNarrationDataAsset.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/Image.h"
@@ -120,6 +122,25 @@ void UGuestNarrationWidgetBase::AdvanceBeat()
 
 void UGuestNarrationWidgetBase::FinishNarration()
 {
+	// 시간 경과 연출 — 위젯이 닫히기 전에 적용해 둔다.
+	// 화면이 페이드아웃되는 동안 세계 날짜가 이미 넘어가 있으므로,
+	// 나레이션이 걷히면 플레이어는 바뀐 날짜의 세계를 보게 된다.
+	if (CurrentNarrationAsset && CurrentNarrationAsset->DaysToAdvanceOnFinish > 0)
+	{
+		if (const UWorld* World = GetWorld())
+		{
+			if (UGameInstance* GI = World->GetGameInstance())
+			{
+				if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
+				{
+					SpacetimeSys->AdvanceDay(
+						CurrentNarrationAsset->DaysToAdvanceOnFinish,
+						CurrentNarrationAsset->HourOnFinish);
+				}
+			}
+		}
+	}
+
 	if (Anim_ScreenFadeOut)
 	{
 		PendingTransition = ENarrationTransition::ScreenFadeOut;
