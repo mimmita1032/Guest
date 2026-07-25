@@ -5,6 +5,10 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/Texture2D.h"
 #include "ImageUtils.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Items/Definition/GItemDefinition.h"
+#include "Guest/Items/Fragments/GItemFragmentInventory.h"
+#include "Guest/Items/Instance/GPhotoItemInstanceData.h"
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
@@ -30,12 +34,37 @@ void UGCameraComponent::SetupCapture(USceneCaptureComponent2D* InCapture, UTextu
 	}
 }
 
-void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
+bool UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 {
 	if (!CaptureComponent || !RenderTarget)
 	{
 		G_WARN(TEXT("카메라: CaptureComponent 또는 RenderTarget 미설정"));
-		return;
+		return false;
+	}
+
+	if (!PhotoItemDefinition)
+	{
+		G_WARN(TEXT("카메라: PhotoItemDefinition 미설정 — 사진을 아이템으로 만들 수 없습니다."));
+		return false;
+	}
+
+	UGInventoryComponent* InvComp = GetOwner() ? GetOwner()->FindComponentByClass<UGInventoryComponent>() : nullptr;
+	if (!InvComp)
+	{
+		G_WARN(TEXT("카메라: 오너에 인벤토리 컴포넌트가 없습니다."));
+		return false;
+	}
+
+	// 픽셀 읽기·PNG 압축은 무거우므로 인벤토리 공간부터 확인하고 시작한다
+	FIntPoint PhotoSize(1, 1);
+	if (const UGItemFragmentInventory* InvFrag = PhotoItemDefinition->FindFragmentByClass<UGItemFragmentInventory>())
+	{
+		PhotoSize = InvFrag->GridSize;
+	}
+	if (!InvComp->HasSpaceForItem(PhotoSize))
+	{
+		G_WARN(TEXT("카메라: 인벤토리에 공간이 없어 촬영을 취소합니다. (필요 %dx%d)"), PhotoSize.X, PhotoSize.Y);
+		return false;
 	}
 
 	CaptureComponent->CaptureScene();
@@ -46,7 +75,7 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	if (!RTResource || !RTResource->ReadPixels(Pixels))
 	{
 		G_WARN(TEXT("카메라: 픽셀 읽기 실패"));
-		return;
+		return false;
 	}
 
 	const int32 Width  = RenderTarget->SizeX;
@@ -58,7 +87,7 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	if (!Snapshot)
 	{
 		G_WARN(TEXT("카메라: 스냅샷 텍스처 생성 실패"));
-		return;
+		return false;
 	}
 
 	// Outer를 GameInstance로 변경 → 레벨 전환 후에도 GC되지 않음
@@ -86,12 +115,30 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	NewPhoto.CompressedImage.Reset();
 	NewPhoto.CompressedImage.Append(PngData.GetData(), static_cast<int32>(PngData.Num()));
 
-	UGameInstance* PhotoGI = GetWorld()->GetGameInstance();
-	if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
+	// 사진의 저장소는 인벤토리 하나뿐이다 — 갤러리는 이걸 읽어 보여주는 뷰일 뿐
+	FGPhotoItemInstanceData PhotoInstanceData;
+	PhotoInstanceData.PhotoData = NewPhoto;
+
+	const FInventoryItemHandle Handle =
+		InvComp->GrantItemWithData(PhotoItemDefinition, FInstancedStruct::Make(PhotoInstanceData));
+
+	if (!Handle.IsValid())
 	{
-		PhotoLib->AddPhoto(NewPhoto);
+		// 위에서 공간을 확인했으므로 정상적으로는 도달하지 않는다
+		G_WARN(TEXT("카메라: 사진 아이템 지급 실패"));
+		return false;
+	}
+
+	// 갤러리 실시간 갱신용 — 인벤토리를 다시 훑지 않고 방금 찍은 것만 밀어넣는다
+	if (UGameInstance* PhotoGI = GetWorld()->GetGameInstance())
+	{
+		if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
+		{
+			PhotoLib->NotifyPhotoTaken(NewPhoto);
+		}
 	}
 
 	OnPhotoTaken.Broadcast(NewPhoto);
 	G_LOG(TEXT("사진 촬영 완료: %d년 %s"), NewPhoto.InGameYear, *NewPhoto.PlaceName.ToString());
+	return true;
 }

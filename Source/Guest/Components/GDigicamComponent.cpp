@@ -108,7 +108,13 @@ void UGDigicamComponent::HandleShutter()
 			Meta.PlaceName   = CurrentMatchedData.PlaceName;
 			Meta.AreaCode    = CurrentMatchedData.AreaCode;
 			Meta.StoryDate   = CurrentMatchedData.StoryDate;
-			CamComp->TakePhoto(Meta);
+
+			// 사진은 인벤토리 아이템이라 공간이 없으면 실패할 수 있다.
+			// 사진을 못 남기더라도 시공간 이동 자체는 막지 않는다.
+			if (!CamComp->TakePhoto(Meta))
+			{
+				G_WARN(TEXT("디지캠: 사진을 남기지 못했습니다 — 이동은 계속합니다."));
+			}
 		}
 	}
 
