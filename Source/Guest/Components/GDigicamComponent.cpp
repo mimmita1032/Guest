@@ -108,6 +108,7 @@ void UGDigicamComponent::HandleShutter()
 			Meta.PlaceName   = CurrentMatchedData.PlaceName;
 			Meta.AreaCode    = CurrentMatchedData.AreaCode;
 			Meta.StoryDate   = CurrentMatchedData.StoryDate;
+			Meta.SubjectID   = CurrentMatchedData.PhotoSubjectID;
 
 			// 사진은 인벤토리 아이템이라 공간이 없으면 실패할 수 있다.
 			// 사진을 못 남기더라도 시공간 이동 자체는 막지 않는다.

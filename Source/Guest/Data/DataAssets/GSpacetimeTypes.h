@@ -59,6 +59,12 @@ struct FSpacetimeData : public FTableRowBase
 	// 이 좌표가 열리는 최소 스토리 진행도 (0 = 처음부터 열림)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
 	int32 RequiredStoryProgress = 0;
+
+	// 이 좌표에서 찍은 사진에 기록될 촬영 대상 식별자.
+	// 사진 퀘스트 목표(EQuestObjectiveType::Photo)의 TargetID와 대조된다.
+	// 비어 있으면 그 좌표의 사진은 어떤 퀘스트 목표도 진행시키지 않는다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spacetime")
+	FName PhotoSubjectID;
 };
 
 // 촬영된 사진 한 장의 데이터
@@ -95,6 +101,13 @@ struct FPhotoData
 	// 현실 촬영 시각
 	UPROPERTY(BlueprintReadOnly, Category = "Photo")
 	FDateTime RealWorldTime;
+
+	// 무엇을 찍었는가 (퀘스트 목표 판정용).
+	// 지금은 촬영 좌표의 FSpacetimeData::PhotoSubjectID가 그대로 들어간다 — 장소 단위 판정.
+	// 추후 카메라에 피사체 조준(트레이스)이 생기면 이 필드를 실제 피사체로 채우면 되고,
+	// 퀘스트 데이터와 판정 로직은 그대로 둘 수 있다.
+	UPROPERTY(BlueprintReadOnly, Category = "Photo")
+	FName SubjectID;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhotoTaken, const FPhotoData&, Photo);

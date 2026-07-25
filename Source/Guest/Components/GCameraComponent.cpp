@@ -9,6 +9,7 @@
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/Instance/GPhotoItemInstanceData.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
@@ -129,12 +130,21 @@ bool UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 		return false;
 	}
 
-	// 갤러리 실시간 갱신용 — 인벤토리를 다시 훑지 않고 방금 찍은 것만 밀어넣는다
 	if (UGameInstance* PhotoGI = GetWorld()->GetGameInstance())
 	{
+		// 갤러리 실시간 갱신용 — 인벤토리를 다시 훑지 않고 방금 찍은 것만 밀어넣는다
 		if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
 		{
 			PhotoLib->NotifyPhotoTaken(NewPhoto);
+		}
+
+		// 촬영 대상이 지정된 좌표에서만 사진 퀘스트 목표가 진행된다
+		if (!NewPhoto.SubjectID.IsNone())
+		{
+			if (UGQuestSubsystem* QuestSys = PhotoGI->GetSubsystem<UGQuestSubsystem>())
+			{
+				QuestSys->OnObjectiveUpdated.Broadcast(NewPhoto.SubjectID, 1);
+			}
 		}
 	}
 
