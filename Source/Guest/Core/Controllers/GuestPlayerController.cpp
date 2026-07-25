@@ -365,7 +365,7 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 
 		if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
 		{
-			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour);
+			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
 		}
 
 		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음

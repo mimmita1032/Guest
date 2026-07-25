@@ -82,7 +82,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 	// ── 세계 시간 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 즉시 적용) ──
 	if (UGSpacetimeSubsystem* SpacetimeSys = GetSubsystem<UGSpacetimeSubsystem>())
 	{
-		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour);
+		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
 	}
 
 	// 사진은 인벤토리 아이템이므로 인벤토리 복원(ImportInventorySaveData)에 포함된다

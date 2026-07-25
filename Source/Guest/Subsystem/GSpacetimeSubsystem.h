@@ -9,6 +9,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTravelStarted, const FSpacetimeData&, TargetData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTimeChanged, float, CurrentHour);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDayChanged, int32, CurrentDay);
 
 UCLASS()
 class GUEST_API UGSpacetimeSubsystem : public UGameInstanceSubsystem
@@ -65,20 +66,37 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
 	float GetCurrentHour() const { return CurrentTime; }
 
+	// 현재 날짜 (1부터 시작 — 게임 시작일이 1일차)
+	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
+	int32 GetCurrentDay() const { return CurrentDay; }
+
+	// 날짜를 강제로 진행시킨다 (나레이션 후 "하루 뒤" 같은 스크립트 전환용).
+	// NewHour가 0 이상이면 시각도 함께 설정한다 — 예: AdvanceDay(1, 9.f) = 다음 날 아침 9시
+	UFUNCTION(BlueprintCallable, Category = "Spacetime|Time")
+	void AdvanceDay(int32 NumDays = 1, float NewHour = -1.0f);
+
 	// 시간이 변할 때마다 다른 객체들에게 알리는 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Spacetime|Time")
 	FOnTimeChanged OnTimeChanged;
 
-	// 세이브용: 현재 세계 시간 내보내기
-	void ExportTimeSaveData(float& OutCurrentHour) const;
+	// 날짜가 바뀔 때 발생 (자정 경과 또는 AdvanceDay)
+	UPROPERTY(BlueprintAssignable, Category = "Spacetime|Time")
+	FOnDayChanged OnDayChanged;
 
-	// 세이브용: 세계 시간 복원 (음수 = 저장된 적 없는 세이브 → 무시)
-	void ImportTimeSaveData(float InCurrentHour);
+	// 세이브용: 현재 세계 시간/날짜 내보내기
+	void ExportTimeSaveData(float& OutCurrentHour, int32& OutCurrentDay) const;
+
+	// 세이브용: 세계 시간/날짜 복원 (음수 = 저장된 적 없는 세이브 → 각각 무시)
+	void ImportTimeSaveData(float InCurrentHour, int32 InCurrentDay);
 
 protected:
 	// 현재 시간 (0.0 ~ 24.0)
 	UPROPERTY(VisibleInstanceOnly, Category = "Spacetime|Time")
 	float CurrentTime = 9.0f;
+
+	// 현재 날짜 (1일차부터 시작)
+	UPROPERTY(VisibleInstanceOnly, Category = "Spacetime|Time")
+	int32 CurrentDay = 1;
 
 	// 시간 흐름 배율 (게임 1시간 = 현실 3600/TimeScale초. 예: 60이면 하루가 현실 24분)
 	UPROPERTY(EditAnywhere, Category = "Spacetime|Time")

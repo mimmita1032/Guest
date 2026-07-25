@@ -107,6 +107,10 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
 	float SavedWorldHour = -1.f;
 
+	// 세계 날짜 (1일차부터). 날짜 개념이 없던 구버전 세이브 구분용 기본값 -1
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedWorldDay = -1;
+
 	// 디지캠으로 촬영한 사진은 인벤토리 아이템(FGPhotoItemInstanceData)이므로
 	// SavedInventory에 함께 저장된다 — 별도 배열을 두지 않는다
 };
