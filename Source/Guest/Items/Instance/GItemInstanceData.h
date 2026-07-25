@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GItemInstanceData.generated.h"
 
+class UTexture2D;
+
 /*========================
 아이템 개체별 런타임 데이터의 조상.
 
@@ -18,12 +20,15 @@ FInstancedStruct에 담기므로 세이브(FGuestSavedInventoryEntry::InstanceDa
 그대로 직렬화되며, 나중에 파생 구조체에 필드를 추가해도 구버전 세이브는
 기본값으로 채워져 로드되므로 마이그레이션이 필요 없다.
 
-의도적으로 virtual 함수를 두지 않았다 — 순수 데이터 컨테이너이며,
-소멸자는 UScriptStruct가 실제 타입을 알고 호출하므로 vtable이 필요 없다.
-다형적 동작이 실제로 필요해지면 그때 추가한다.
 ========================*/
 USTRUCT(BlueprintType)
 struct GUEST_API FGItemInstanceData
 {
 	GENERATED_BODY()
+
+	virtual ~FGItemInstanceData() = default;
+
+	// 개체별 아이콘. 사진처럼 개체마다 그림이 다른 아이템이 오버라이드한다.
+	// nullptr을 반환하면 설계도(UGItemFragmentInventory::ItemIcon)의 아이콘을 쓴다.
+	virtual UTexture2D* GetRuntimeIcon() const { return nullptr; }
 };

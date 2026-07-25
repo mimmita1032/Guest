@@ -294,6 +294,12 @@ FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemH
 	else
 		RenderData.Icon = TSoftObjectPtr<UTexture2D>();
 
+	// 개체별 아이콘이 있으면 그쪽이 우선 (사진은 찍힌 장면 자체가 아이콘이 된다)
+	if (const FGItemInstanceData* InstanceData = (*Found)->GetInstanceData<FGItemInstanceData>())
+	{
+		RenderData.RuntimeIcon = InstanceData->GetRuntimeIcon();
+	}
+
 	RenderData.bIsValid = true;
 	return RenderData;
 }

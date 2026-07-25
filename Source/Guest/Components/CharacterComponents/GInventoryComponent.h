@@ -19,6 +19,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 struct FInventoryItemRenderData
 {
 	TSoftObjectPtr<UTexture2D> Icon;
+	// 개체별 아이콘 (사진의 촬영 스냅샷 등). 있으면 Icon보다 우선한다
+	UTexture2D* RuntimeIcon = nullptr;
 	FIntPoint GridSize = FIntPoint(1, 1);  // GridEntries 기준 (회전 대응)
 	FIntPoint Position = FIntPoint(-1, -1); // 좌상단 그리드 좌표
 	bool bIsValid      = false;

@@ -24,4 +24,8 @@ struct GUEST_API FGPhotoItemInstanceData : public FGItemInstanceData
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Photo")
 	FPhotoData PhotoData;
+
+	// 인벤토리에서 사진마다 실제로 찍힌 장면이 보이도록 촬영 스냅샷을 아이콘으로 쓴다.
+	// 스냅샷이 없으면(이미지 손상 등) nullptr을 반환해 설계도 기본 아이콘으로 대체된다.
+	virtual UTexture2D* GetRuntimeIcon() const override { return PhotoData.Snapshot; }
 };

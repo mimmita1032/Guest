@@ -217,7 +217,7 @@ void UGInventoryWidget::OnRefreshInventory()
 
 		if (UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass))
 		{
-			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize);
+			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize, RenderData.RuntimeIcon);
 			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
 			ItemWidget->OnItemRightClicked.AddDynamic(this, &UGInventoryWidget::HandleItemRightClicked);
 			ItemWidget->SetInteractionLocked(bPlacementModeActive);
