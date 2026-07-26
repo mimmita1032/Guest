@@ -73,6 +73,9 @@ protected:
 	void UpdateSearch();
 	void BroadcastSearchState();
 
+	// 오너의 카메라 컴포넌트 (촬영·뷰파인더 제어용)
+	class UGCameraComponent* GetCameraComponent() const;
+
 protected:
 	UPROPERTY(VisibleInstanceOnly, Category = "Digicam")
 	EDigicamState CurrentState;

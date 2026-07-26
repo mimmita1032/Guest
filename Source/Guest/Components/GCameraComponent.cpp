@@ -31,8 +31,30 @@ void UGCameraComponent::SetupCapture(USceneCaptureComponent2D* InCapture, UTextu
 	if (CaptureComponent && RenderTarget)
 	{
 		CaptureComponent->TextureTarget = RenderTarget;
-		CaptureComponent->bCaptureEveryFrame = true;
+
+		// 뷰파인더는 기본적으로 꺼둔다. 켜져 있으면 씬 전체가 매 프레임 두 번 그려지므로
+		// 디지캠을 꺼내지도 않은 평상시에 그 비용을 내서는 안 된다.
+		CaptureComponent->bCaptureEveryFrame = false;
 	}
+}
+
+void UGCameraComponent::SetViewfinderActive(bool bActive)
+{
+	if (!CaptureComponent) return;
+	if (CaptureComponent->bCaptureEveryFrame == bActive) return;
+
+	CaptureComponent->bCaptureEveryFrame = bActive;
+
+	// 켜는 순간 한 장 그려두지 않으면 첫 프레임에 이전(또는 빈) 화면이 보인다
+	if (bActive)
+	{
+		CaptureComponent->CaptureScene();
+	}
+}
+
+bool UGCameraComponent::IsViewfinderActive() const
+{
+	return CaptureComponent && CaptureComponent->bCaptureEveryFrame;
 }
 
 bool UGCameraComponent::TakePhoto(const FPhotoData& Metadata)

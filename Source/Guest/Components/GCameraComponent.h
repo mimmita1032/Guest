@@ -35,6 +35,14 @@ public:
 
 	void SetupCapture(USceneCaptureComponent2D* InCapture, UTextureRenderTarget2D* InRenderTarget);
 
+	// 뷰파인더(실시간 미리보기) 켜기/끄기.
+	// 켜져 있는 동안 씬 전체가 매 프레임 한 번 더 렌더링되므로, 디지캠을 보고 있을 때만 켠다.
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void SetViewfinderActive(bool bActive);
+
+	UFUNCTION(BlueprintPure, Category = "Camera")
+	bool IsViewfinderActive() const;
+
 protected:
 	virtual void BeginPlay() override;
 

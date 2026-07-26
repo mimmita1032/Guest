@@ -151,6 +151,22 @@ struct FGuestSavedInventoryEntry {
 **남은 이름 빚**: `FOnShutterDenied` 델리게이트는 실제로는 *이동* 거부 시에만 발생한다.
 셔터가 이동을 겸하던 시절의 이름인데, 기존 BP 바인딩을 깨지 않으려 그대로 뒀다.
 
+### C-3. 뷰파인더 비용 — ✅ 완료
+
+`SetupCapture()`가 BeginPlay에서 `bCaptureEveryFrame = true`로 켠 뒤 한 번도 끄지 않았다.
+디지캠을 꺼내지 않은 평상시에도 **씬 전체가 매 프레임 두 번 렌더링**되고 있었다.
+
+- ✅ `SetupCapture()` 기본값을 `false`로
+- ✅ `UGCameraComponent::SetViewfinderActive(bool)` 추가 — 켜는 순간 한 장 그려 첫 프레임 빈 화면 방지
+- ✅ `ActivateDigicam()` / `DeactivateDigicam()`에서 켜고 끈다
+
+> 디지캠을 **닫을 때는 `OnTabDeactivated`가 오지 않는다** (`SwitchTab`에서 탭 전환 시에만 호출).
+> 그래서 끄는 책임은 `DeactivateDigicam()`에 둬야 한다.
+>
+> 더 좁히고 싶다면 `WBP_DigiTab_Camera`에서 `OnTabActivated` / `OnTabDeactivated`에
+> `SetViewfinderActive`를 물려 **Camera 탭을 보고 있을 때만** 돌게 할 수 있다 (선택).
+> 그 경우에도 위의 `DeactivateDigicam()` 처리는 남겨둘 것.
+
 ### D. 날짜 시스템 — ✅ 완료
 
 - ✅ `GSpacetimeSubsystem::CurrentDay` (1일차부터)

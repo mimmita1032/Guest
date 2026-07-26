@@ -21,12 +21,24 @@ void UGDigicamComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+UGCameraComponent* UGDigicamComponent::GetCameraComponent() const
+{
+	AActor* Owner = GetOwner();
+	return Owner ? Owner->FindComponentByClass<UGCameraComponent>() : nullptr;
+}
+
 void UGDigicamComponent::ActivateDigicam()
 {
 	if (CurrentState == EDigicamState::Inactive)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("디카 활성화: 수거 준비"));
+	}
+
+	// 뷰파인더는 디지캠을 보고 있는 동안만 돈다 — 씬을 매 프레임 한 번 더 그리는 비용이다
+	if (UGCameraComponent* CamComp = GetCameraComponent())
+	{
+		CamComp->SetViewfinderActive(true);
 	}
 
 	UpdateSearch();
@@ -36,6 +48,14 @@ void UGDigicamComponent::ActivateDigicam()
 void UGDigicamComponent::DeactivateDigicam()
 {
 	CurrentState = EDigicamState::Inactive;
+
+	// 탭 전환과 달리 디지캠을 닫을 때는 OnTabDeactivated가 오지 않는다.
+	// 여기서 확실히 꺼야 뷰파인더가 평상시에 계속 도는 일이 없다.
+	if (UGCameraComponent* CamComp = GetCameraComponent())
+	{
+		CamComp->SetViewfinderActive(false);
+	}
+
 	G_LOG(TEXT("디카 비활성화: 귀가 상태 유지"));
 }
 
@@ -97,8 +117,7 @@ void UGDigicamComponent::HandleShutter()
 		return;
 	}
 
-	AActor* Owner = GetOwner();
-	UGCameraComponent* CamComp = Owner ? Owner->FindComponentByClass<UGCameraComponent>() : nullptr;
+	UGCameraComponent* CamComp = GetCameraComponent();
 	if (!CamComp)
 	{
 		G_WARN(TEXT("디지캠: 카메라 컴포넌트를 찾을 수 없어 촬영할 수 없습니다."));
