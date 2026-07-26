@@ -83,6 +83,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 	if (UGSpacetimeSubsystem* SpacetimeSys = GetSubsystem<UGSpacetimeSubsystem>())
 	{
 		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+		SpacetimeSys->ImportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 	}
 
 	// 사진은 인벤토리 아이템이므로 인벤토리 복원(ImportInventorySaveData)에 포함된다

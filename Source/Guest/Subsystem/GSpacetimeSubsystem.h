@@ -18,6 +18,7 @@ class GUEST_API UGSpacetimeSubsystem : public UGameInstanceSubsystem
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
 #pragma region Space
 public:
@@ -34,6 +35,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spacetime")
 	void ExecuteTravel(const FSpacetimeData& TargetData);
 
+	// 지금 플레이어가 있는 시공간 좌표.
+	// 촬영한 사진의 장소·연도·SubjectID가 전부 여기서 나온다 — 사진의 "언제 어디서"의 단일 출처.
+	UFUNCTION(BlueprintPure, Category = "Spacetime")
+	FSpacetimeData GetCurrentLocation() const { return CurrentLocation; }
+
+	// 현재 좌표가 확정돼 있는가. 미확정이면 사진에 장소 정보가 비어 들어간다
+	UFUNCTION(BlueprintPure, Category = "Spacetime")
+	bool HasCurrentLocation() const { return bHasCurrentLocation; }
+
+	// 좌표가 아직 미확정이면 지금 월드를 기준으로 확정을 시도한다.
+	// PostLoadMapWithWorld는 PIE 시작처럼 맵이 GameInstance보다 먼저 준비되는 경로에서
+	// 첫 레벨에 대해 오지 않을 수 있다 — 촬영처럼 좌표가 실제로 필요한 시점의 안전망.
+	UFUNCTION(BlueprintCallable, Category = "Spacetime")
+	void EnsureCurrentLocation();
+
+	// 세이브용: 현재 좌표를 연도/구역으로 내보낸다 (미확정이면 둘 다 -1)
+	void ExportLocationSaveData(int32& OutYear, int32& OutAreaCode) const;
+
+	// 세이브용: 연도/구역으로 현재 좌표를 다시 찾아 복원 (-1이면 무시)
+	void ImportLocationSaveData(int32 InYear, int32 InAreaCode);
+
 	// 이동 진행 중 여부 (페이드 중 셔터 연타 등 중복 이동 방지, UI 조회용)
 	UFUNCTION(BlueprintPure, Category = "Spacetime")
 	bool IsTravelInProgress() const { return bTravelInProgress; }
@@ -49,9 +71,22 @@ public:
 private:
 	void DoTravel();
 
+	// 맵 로드 완료 시 현재 좌표를 확정한다.
+	// 이동으로 온 경우는 이미 확정돼 있고, 게임 시작·문 이동·세이브 로드처럼
+	// ExecuteTravel을 거치지 않은 경로는 레벨 이름으로 역조회해 채운다.
+	void HandlePostLoadMap(UWorld* LoadedWorld);
+
+	// 레벨 이름으로 좌표 행을 찾는다 (같은 레벨을 가리키는 행이 여럿이면 첫 번째)
+	bool FindRowByLevelName(FName LevelName, FSpacetimeData& OutData) const;
+
 	FSpacetimeData PendingTravelData;
 	FTimerHandle TravelTimerHandle;
 	bool bTravelInProgress = false;
+
+	FSpacetimeData CurrentLocation;
+	bool bHasCurrentLocation = false;
+
+	FDelegateHandle PostLoadMapHandle;
 #pragma endregion
 
 #pragma region Time

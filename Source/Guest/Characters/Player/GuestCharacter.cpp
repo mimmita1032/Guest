@@ -244,6 +244,11 @@ void AGuestCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
           GIC->BindAction(IA_DigicamShutter, ETriggerEvent::Started, this, &AGuestCharacter::DigicamShutterAction);
        }
 
+       if (IA_DigicamTravel)
+       {
+          GIC->BindAction(IA_DigicamTravel, ETriggerEvent::Started, this, &AGuestCharacter::DigicamTravelAction);
+       }
+
        if (IA_DigicamToggle)
        {
           GIC->BindAction(IA_DigicamToggle, ETriggerEvent::Started, this, &AGuestCharacter::DigicamToggleAction);
@@ -357,8 +362,17 @@ void AGuestCharacter::DigicamShutterAction(const FInputActionValue& Value)
 {
     if (DigicamComponent)
     {
-       UE_LOG(LogTemp, Log, TEXT("디카 셔터 눌림"));
+       UE_LOG(LogTemp, Log, TEXT("디카 셔터 눌림 — 촬영"));
        DigicamComponent->HandleShutter();
+    }
+}
+
+void AGuestCharacter::DigicamTravelAction(const FInputActionValue& Value)
+{
+    if (DigicamComponent)
+    {
+       UE_LOG(LogTemp, Log, TEXT("디카 이동 키 눌림"));
+       DigicamComponent->HandleTravel();
     }
 }
 

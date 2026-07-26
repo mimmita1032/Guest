@@ -115,13 +115,41 @@ struct FGuestSavedInventoryEntry {
 - ✅ `FSpacetimeData::PhotoSubjectID` — 그 좌표에서 찍은 사진에 기록될 촬영 대상 식별자
 - ✅ 촬영 시 `SubjectID`가 지정돼 있으면 `OnObjectiveUpdated` 브로드캐스트
 
-**판정 방식 (확정):** 지금은 **장소 단위**로 동작한다 — 한 좌표 = 한 피사체.
-현재 촬영이 시공간 이동 직전 자동 촬영이라 "피사체를 조준한다"는 개념 자체가 없기 때문이다.
+**판정 방식 (확정):** **장소 단위**로 동작한다 — 한 좌표 = 한 피사체.
+사진의 `SubjectID`는 **촬영 당시 플레이어가 있던 좌표**의 `PhotoSubjectID`에서 온다.
 
 `SubjectID`라는 한 겹을 둔 덕분에, 추후 카메라에 트레이스가 생기면 **그 필드를 실제 피사체로 채우기만 하면 되고** `DT_QuestData`의 목표 데이터와 판정 로직은 그대로 둘 수 있다.
 
 > 따라서 아파트/주택가/달동네는 현재 구조에서 **각각 다른 좌표(`DT_SpacetimeData` 행)** 로 두어야 구분된다.
-> 능동 촬영이 생기면 한 레벨 안에 세 피사체를 두는 방식으로 바꿀 수 있다.
+> 피사체 조준(트레이스)이 생기면 한 레벨 안에 세 피사체를 두는 방식으로 바꿀 수 있다.
+
+### C-2. 촬영과 이동의 분리 — ✅ 완료
+
+**바뀐 것**: 원래 디지캠 셔터 하나가 "이동 직전 자동 촬영 + 시공간 이동"을 겸했다.
+그래서 **찍히는 그림은 출발지인데 사진에 박히는 정보는 목적지**였다 —
+들판에서 주택가 좌표를 입력하고 셔터를 누르면 들판 사진에 "주택가 · `Photo_House`"가 붙어,
+스미스의 주택가 사진 의뢰가 들판 사진으로 완료됐다.
+
+- ✅ 이동에 딸린 자동 촬영 제거
+- ✅ `UGDigicamComponent::HandleShutter()` — **촬영 전담**. 지금 있는 곳을 찍는다
+- ✅ `UGDigicamComponent::HandleTravel()` — **이동 전담**. 좌표가 맞춰졌을 때만 동작
+- ✅ `IA_DigicamTravel` — 이동 확정용 별도 입력. 되돌릴 수 없는 행동이라 셔터와 키를 나눴다
+- ✅ `UGSpacetimeSubsystem::GetCurrentLocation()` — **현재 좌표**. 사진의 장소·연도·`SubjectID`의 단일 출처
+  - `DoTravel()`에서 도착지를 확정
+  - `PostLoadMapWithWorld`에서 레벨 이름으로 역조회 (문 이동·세이브 로드처럼 `ExecuteTravel`을 거치지 않은 경로)
+  - `EnsureCurrentLocation()` — 좌표가 비어 있으면 촬영 시점에 다시 확정한다
+  - 세이브 연동 (`SavedLocationYear` / `SavedLocationAreaCode` — 좌표가 아니라 좌표를 찾는 열쇠만 저장)
+
+> ⚠️ **`PostLoadMapWithWorld`는 PIE 시작 레벨에 대해 오지 않는다.** 실측으로 확인했다 —
+> 맵이 GameInstance보다 먼저 준비되는 경로라 첫 레벨만 훅을 놓친다.
+> 그래서 `EnsureCurrentLocation()`이 없으면 **시작 레벨에서 찍은 사진에만 장소가 비었다.**
+> 앞으로 현재 좌표를 읽는 코드를 새로 쓸 때는 델리게이트가 이미 돌았다고 가정하지 말 것.
+
+> ⚠️ 촬영이 필요한 레벨은 **반드시 `DT_SpacetimeData`에 행이 있어야 한다.**
+> 행이 없으면 그 레벨의 사진에는 장소 정보가 비어 들어가고 로그에 경고가 남는다.
+
+**남은 이름 빚**: `FOnShutterDenied` 델리게이트는 실제로는 *이동* 거부 시에만 발생한다.
+셔터가 이동을 겸하던 시절의 이름인데, 기존 BP 바인딩을 깨지 않으려 그대로 뒀다.
 
 ### D. 날짜 시스템 — ✅ 완료
 
@@ -157,7 +185,31 @@ struct FGuestSavedInventoryEntry {
   - ✅ `DA_Item_Flower` (`Content/Items/Definitions/Quest/`)
   - ✅ `DT_QuestData`의 `Q_Field_001` (Step01: Collect(Flower) → ReachHome)
   - ✅ `L_Field_01`에 `AGItemPickup`(꽃) + `AGQuestAutoStarter` 배치
+  - ⬜ **(에디터)** `Q_Field_001`을 꽃 줍기까지로 축소 + `StoryProgressOnComplete = 1` (아래 「퀘스트 분할」)
 - **구현 상태**: 구현됨
+
+### 퀘스트 분할 — 주점 이동 게이팅 (확정)
+
+**문제**: `Tavern` 좌표의 `RequiredStoryProgress`가 `0`이라 **꽃을 줍지 않고도 주점에 갈 수 있다.**
+퀘스트 흐름상 주점 이동 조건은 "꽃을 인벤토리에 넣는 것"인데 그게 강제되지 않는다.
+
+**구조적 제약**: `StoryProgressOnComplete`는 **퀘스트 단위** 필드다(`FQuestData`). 단계 단위가 아니다.
+그런데 원래 설계는 꽃 줍기와 주점 도착·배치가 **같은 퀘스트의 다른 단계**였다.
+그러면 진행도가 오르는 시점이 주점에서 화분을 놓은 *뒤*라서, 주점 이동을 막는 데 쓸 수 없다.
+
+**채택안 — 퀘스트를 둘로 쪼갠다** (데이터만으로 해결):
+
+| 퀘스트 | 범위 | 핵심 필드 |
+|---|---|---|
+| `Q_Field_001` | 꽃 줍기까지 | `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002` |
+| `Q_Field_002` | 귀가 + 화분 배치 | `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋 |
+
+그리고 `DT_SpacetimeData`의 `Tavern` 행에 **`RequiredStoryProgress = 1`**.
+→ 꽃을 줍기 전에는 주점 좌표가 `Locked`으로 뜨고 이동이 거부된다.
+
+**기각안**: `FQuestStepData`에 단계 단위 `StoryProgressOnComplete`를 추가하는 방법.
+퀘스트를 하나로 유지할 수 있지만 개념이 하나 늘어난다. 스미스 체인도 퀘스트 단위로 끊기므로
+퀘스트 분할 쪽이 일관된다. 다만 단계 단위 진행도 자체는 나중에 쓸 데가 있어 TODO에 남긴다.
 
 ## 상세 — Stage 1: 귀가 (주점 Guest)
 
@@ -173,9 +225,10 @@ struct FGuestSavedInventoryEntry {
   - ✅ `AGItemPlacementPoint` — 인벤토리에서 제거 후 월드에 시각화 + Place 목표 브로드캐스트
   - ✅ `EQuestObjectiveType::Place`
   - ✅ 나레이션 시스템 (`UGNarrationDataAsset`, `WBP_Narration`, `GQuestSubsystem::OnNarrationRequested`)
-  - ⬜ (에디터) `DT_QuestData`의 `Q_Field_001`에 Step02 추가 (Reach + Place)
+  - ⬜ (에디터) `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place) — 「퀘스트 분할」 참고
   - ⬜ (에디터) `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem=DA_Item_Flower) 배치
-  - ⬜ (에디터) `DT_SpacetimeData`에 주점 Year/AreaCode 행 추가
+  - ✅ (에디터) `DT_SpacetimeData`의 `Tavern` 행 (2026 / 0)
+  - ⬜ (에디터) `Tavern` 행의 `RequiredStoryProgress`를 `1`로 — 꽃을 줍기 전에는 주점에 못 가게
   - ⬜ (에디터) 나레이션 애셋 본문 작성 — "다음 날 아침…" 문구로 하루 경과를 연출
   - ⬜ 날짜 시스템(선행작업 D) 연동
 - **구현 상태**: 부분구현 (C++ 준비 완료, 콘텐츠 작업 남음)
@@ -244,27 +297,40 @@ struct FGuestSavedInventoryEntry {
 
 코드로는 만들 수 없어 에디터에서 직접 해야 하는 것들. **위쪽이 더 급하다.**
 
-### 1. 사진 아이템 설계도 — 이게 없으면 촬영이 아예 안 된다
-- ⬜ `DA_Item_Photo` 생성 (`UGItemDefinition`) — 위치는 `Content/Items/Definitions/` 권장
-  - `ItemID` 지정 (예: `Photo`)
-  - `UGItemFragmentInventory` 프래그먼트 추가 → `GridSize`(사진이 인벤토리에서 차지할 칸)와 `ItemIcon` 설정
-- ⬜ 플레이어 블루프린트의 **Camera 컴포넌트 → `Photo Item Definition`** 에 위 애셋 지정
-  - 미지정 시 촬영이 실패하고 `"PhotoItemDefinition 미설정"` 경고가 뜬다
+### 1. 사진 아이템 설계도 — ✅ 완료
+- ✅ `DA_Item_Photo` (`Content/Items/Definitions/`) — `ItemID = Photo`,
+  `UGItemFragmentInventory`(`GridSize = 2×2`, `ItemIcon` 비움 — 사진은 찍힌 장면이 아이콘이 된다)
+- ✅ 플레이어 블루프린트의 **Camera 컴포넌트 → `Photo Item Definition`** 에 위 애셋 지정
+
+> **촬영 파이프라인 실측 확인 완료** — 들판에서 SNAP → `사진 촬영 완료: 2026년 들판` → 인벤토리 진입(2×2).
+
+### 1-2. 촬영/이동 분리에 따른 에디터 작업 — 이것도 없으면 이동이 안 된다
+- ✅ **`IA_DigicamTravel`** 인풋 액션 애셋 생성 → IMC 바인딩 → `BP_GuestCharacter`에 지정
+- ✅ `WBP_DigiTab_Collection`의 `HandleShutter` 호출 노드를 `HandleTravel`로 교체
+- ✅ `WBP_DigiTab_Camera`의 `SNAP` 버튼을 `HandleShutter`에 연결 (`On Clicked` → Cast → Get Digicam Component → Handle Shutter)
+- ✅ `DT_SpacetimeData`에 `Field_2026` 행 (`L_Field_01`, 2026/1, `RequiredStoryProgress = 999` — 한 번 떠나면 못 돌아감)
 
 ### 2. 촬영 대상 지정 (사진 퀘스트용)
-- ⬜ `DT_SpacetimeData`의 각 행에 **`PhotoSubjectID`** 입력
-  - 그 좌표에서 찍은 사진에 기록될 식별자. 비워두면 그 사진은 어떤 퀘스트도 진행시키지 않는다
-  - 스미스 1차 의뢰용으로 아파트/주택가/달동네를 **각각 다른 행**으로 만들고 서로 다른 ID를 줄 것
+- ✅ `Residential_2010` 행 (`L_Residential_01`, 2010/7, `PhotoSubjectID = Photo_House`)
+- ✅ `Tavern` 행 (`L_TavernMain`, 2026/0, `PhotoSubjectID` 비움 — 의도된 것)
+- ⬜ 아파트/달동네 — 레벨을 나눌지 피사체 조준을 도입할지 미정 (「C. 판정 방식」 참고)
+  - 지금 구조에서는 **각각 다른 행**이어야 구분된다. 다만 같은 레벨을 세 행이 가리키면
+    플레이어 눈에는 같은 풍경을 세 번 찍는 것이 된다
 
 ### 3. 시간 경과 연출
 - ⬜ `DA_Narration`(꽃 배치 후 재생되는 것)의 **`Days To Advance On Finish`** 를 `1`로
 - ⬜ **`Hour On Finish`** 를 `9.0` 정도로 (다음 날 아침)
 
-### 4. 나머지 (기존 목록)
+### 4. 퀘스트 분할 (주점 이동 게이팅 — 「Stage 0 · 퀘스트 분할」 참고)
+- ⬜ `DT_QuestData`의 `Q_Field_001`을 **꽃 줍기까지로 축소**
+  - `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002`
+- ⬜ `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place)
+  - `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋
+- ⬜ `DT_SpacetimeData`의 `Tavern` 행 → **`RequiredStoryProgress = 1`**
+
+### 5. 나머지 (기존 목록)
 - ⬜ `WBP_Narration`에 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut` (선택 — 없으면 컷 전환)
-- ⬜ `DT_QuestData`의 `Q_Field_001`에 Step02 추가 (Reach + Place)
 - ⬜ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
-- ⬜ `DT_SpacetimeData`에 주점 좌표 행 추가
 
 > ⚠️ **기존 세이브의 사진은 유실된다.** `SavedPhotos` 배열을 제거하고 인벤토리로 일원화했기 때문이다.
 > 개발 단계라 마이그레이션 코드는 넣지 않았다. 새로 시작하면 문제없다.
@@ -281,12 +347,53 @@ struct FGuestSavedInventoryEntry {
 ## 데모 이후 예정
 - **DSLR 촬영 기능 본편** — 노출 보정, 조리개·셔터스피드·ISO, 초점/피사계심도, 뷰파인더 UI
   (선행작업 B에서 구조를 열어두므로 인벤토리·세이브 재작업 없이 얹을 수 있어야 한다)
+- **인화 모델 (사진 저장 구조 개편)** — 아래 참조
 - 메인 퀘스트 체인 (노션상 미기획)
 - 히든 퀘스트 (노션상 미기획)
 
+### 인화 모델 — 사진 저장 구조 개편 (데모 이후)
+
+**문제**: 시공간 이동 시 자동 촬영이라 이동할 때마다 사진이 인벤토리 칸을 먹는다.
+
+**채택안**: 찍은 것은 전부 디지캠(갤러리)에 남고, 플레이어가 갤러리에서 골라 **"인화"** 했을 때
+비로소 인벤토리 아이템이 된다. 분기를 *퀘스트 유무*가 아니라 **플레이어 선택**으로 옮기는 것.
+서사적으로도 맞다 — 디지캠에 있는 건 데이터고, 남에게 건네려면 인화해야 한다.
+
+**기각안**: "퀘스트가 있으면 인벤토리, 없으면 디지캠에 저장" — 채택하지 않는다.
+- 촬영이 자동이라 플레이어가 통제할 수 없는 분기다. 퀘스트 수락 **전에** 찍은 사진은
+  영영 퀘스트에 못 쓰고, 플레이어는 "찍었는데 왜 없어?"를 겪는다
+- 저장소가 둘로 갈리면 세이브·복원·갤러리·스냅샷 텍스처 복원이 전부 두 갈래가 된다.
+  `SavedPhotos`를 지우고 인벤토리로 일원화한 이유가 정확히 이것이었다
+- 디지캠에만 있는 사진은 NPC에게 건넬 수단이 없다
+
+**데모 범위에서는**: 저장소는 인벤토리 하나로 유지한다. 칸 압박은 `GridSize`를 작게 두고
+필요 없는 사진을 버릴 수 있게 하는 선에서 해결한다.
+
+**구현 시 주의**: 갤러리 저장소를 다시 만드는 작업이므로, 지금의
+"저장소는 인벤토리 하나 / 갤러리(`UGPhotoLibrarySubsystem`)는 그걸 읽는 뷰" 구조가 바뀐다.
+인화된 사진과 인화되지 않은 사진의 세이브 경로를 처음부터 하나로 설계할 것.
+
 ## TODO
+
+### 다음 할 일 — 에디터 (Stage 1 완주까지)
+촬영·이동 파이프라인은 실측 확인 완료. 남은 것은 이 셋이고, 순서대로 하면 Stage 1이 한 줄기로 이어진다.
+
+1. **`DA_Narration` 시간 경과 설정** — `Days To Advance On Finish = 1`, `Hour On Finish = 9.0`
+   → 「에디터에서 해야 할 일 · 3」
+2. **퀘스트 분할** — `Q_Field_001` 축소(`StoryProgressOnComplete = 1`) + `Q_Field_002` 신설 + `Tavern` 행 `RequiredStoryProgress = 1`
+   → 「에디터에서 해야 할 일 · 4」, 배경은 「Stage 0 · 퀘스트 분할」
+3. **`L_TavernMain` 배치** — `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem = `DA_Item_Flower`)
+   → 「에디터에서 해야 할 일 · 5」
+
+### 기타
 - 노션 「퀘스트 흐름 개요」의 `Q_S_SMT_*` 표기를 `Q_Smith_*`로 갱신
 - 노션 「퀘스트 흐름 개요」에 꽃 퀘스트(`Q_Field_001`) 추가 — 현재 "게임 시작 즉시 스미스"로 되어 있어 실제 흐름과 다름
 - 각 Stage별 `RequiredStoryProgress` / `StoryProgressOnComplete` 실제 값 확정 후 `DT_QuestData`와 대조
 - 사진 목표 판정 기준 확정 (선행작업 C)
 - 날짜 진행 트리거 확정 (선행작업 D)
+- **단계 단위 스토리 진행도** — `FQuestStepData`에 `StoryProgressOnComplete` 추가
+  - 지금은 `FQuestData`(퀘스트 단위)에만 있어서, 한 퀘스트 중간에 무언가를 해금하려면
+    퀘스트를 쪼개는 수밖에 없다 (Stage 0의 `Q_Field_001` 분할이 그 사례)
+  - 퀘스트 체인이 길어지면 "쪼개기"만으로는 관리가 어려워진다. 그때 도입할 것
+- **`FOnShutterDenied` 이름 정리** — 실제로는 *이동* 거부 시에만 발생한다.
+  기존 BP 바인딩을 깨지 않으려 이름을 그대로 뒀다. `BTN_Shutter`(실제로는 이동 버튼)도 같은 빚

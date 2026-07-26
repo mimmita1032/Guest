@@ -111,6 +111,15 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
 	int32 SavedWorldDay = -1;
 
+	// 저장 시점의 시공간 좌표 (연도 + 구역). 좌표 자체가 아니라 좌표를 찾는 열쇠만 저장한다 —
+	// DT_SpacetimeData의 다른 필드가 바뀌어도 로드 시 최신 값을 따라간다.
+	// 저장된 적 없는 구버전 세이브 구분용 기본값 -1 (그 경우 레벨 이름으로 역조회)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedLocationYear = -1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedLocationAreaCode = -1;
+
 	// 디지캠으로 촬영한 사진은 인벤토리 아이템(FGPhotoItemInstanceData)이므로
 	// SavedInventory에 함께 저장된다 — 별도 배열을 두지 않는다
 };

@@ -68,7 +68,12 @@ bool UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 		return false;
 	}
 
-	CaptureComponent->CaptureScene();
+	// bCaptureEveryFrame이 켜져 있으면(뷰파인더 실시간 표시) 렌더타겟은 이미 최신이다.
+	// 그 위에 CaptureScene을 또 부르면 같은 장면을 두 번 그리게 되고 엔진이 경고를 띄운다.
+	if (!CaptureComponent->bCaptureEveryFrame)
+	{
+		CaptureComponent->CaptureScene();
+	}
 
 	// GPU → CPU 픽셀 읽기 (동기식 — 촬영 시에만 호출되므로 허용)
 	TArray<FColor> Pixels;
