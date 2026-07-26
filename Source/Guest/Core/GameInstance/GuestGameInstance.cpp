@@ -79,16 +79,14 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		QuestSys->SetStoryProgress(SaveObject->SavedStoryProgress);
 	}
 
-	// ── 세계 시간/사진 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 즉시 적용) ──
+	// ── 세계 시간 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 즉시 적용) ──
 	if (UGSpacetimeSubsystem* SpacetimeSys = GetSubsystem<UGSpacetimeSubsystem>())
 	{
-		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour);
+		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+		SpacetimeSys->ImportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 	}
 
-	if (UGPhotoLibrarySubsystem* PhotoLib = GetSubsystem<UGPhotoLibrarySubsystem>())
-	{
-		PhotoLib->ImportPhotoSaveData(SaveObject->SavedPhotos);
-	}
+	// 사진은 인벤토리 아이템이므로 인벤토리 복원(ImportInventorySaveData)에 포함된다
 
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
 	const FString SavedPackage = SaveObject->MapPackageName;
@@ -105,10 +103,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
-				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
-				{
-					Inv->ImportInventorySaveData(SaveObject->SavedInventory);
-				}
+				RestoreInventory(Pawn, SaveObject);
 			}
 		}
 		return;
@@ -129,10 +124,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
-				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
-				{
-					Inv->ImportInventorySaveData(SaveObject->SavedInventory);
-				}
+				RestoreInventory(Pawn, SaveObject);
 			}
 		}
 		return;
@@ -188,10 +180,7 @@ void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 			if (PendingSaveObject)
 			{
 				RestoreGASAttributes(Pawn, PendingSaveObject);
-				if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
-				{
-					Inv->ImportInventorySaveData(PendingSaveObject->SavedInventory);
-				}
+				RestoreInventory(Pawn, PendingSaveObject);
 				PendingSaveObject = nullptr;
 			}
 		},
@@ -224,6 +213,22 @@ void UGuestGameInstance::CarryPlayerStateAcrossTravel()
 	}
 
 	PendingSaveObject = Snapshot;
+}
+
+void UGuestGameInstance::RestoreInventory(APawn* Pawn, const UGuestSaveGame* SaveObject)
+{
+	if (!Pawn || !SaveObject) return;
+
+	UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>();
+	if (!Inv) return;
+
+	Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+
+	// 사진은 인벤토리 아이템이므로 복원 직후 스냅샷 텍스처를 되살려야 갤러리에 보인다
+	if (UGPhotoLibrarySubsystem* PhotoLib = GetSubsystem<UGPhotoLibrarySubsystem>())
+	{
+		PhotoLib->RestorePhotoSnapshots(Inv);
+	}
 }
 
 void UGuestGameInstance::RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject)

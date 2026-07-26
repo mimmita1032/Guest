@@ -76,11 +76,19 @@ void UGInventoryComponent::BeginPlay()
 
 FInventoryItemHandle UGInventoryComponent::GrantItem(const UGItemDefinition* ItemDef)
 {
+	return GrantItemWithData(ItemDef, FInstancedStruct());
+}
+
+FInventoryItemHandle UGInventoryComponent::GrantItemWithData(const UGItemDefinition* ItemDef, const FInstancedStruct& InstanceData)
+{
 	if (!ItemDef) return FInventoryItemHandle();
 
 	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
 	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
 	Instance->InitInstance(Handle, ItemDef);
+
+	// 빈 구조체면 내부에서 "데이터 없음"으로 처리되므로 분기 없이 넘긴다
+	Instance->SetInstanceData(InstanceData);
 
 	FIntPoint ItemSize(1, 1);
 	if (const UGItemFragmentInventory* InvFrag = Instance->FindFragmentByClass<UGItemFragmentInventory>())
@@ -133,6 +141,23 @@ bool UGInventoryComponent::CanMoveItemTo(FInventoryItemHandle Handle, int32 Targ
 bool UGInventoryComponent::CanPlaceNewItemAt(FIntPoint ItemSize, int32 StartX, int32 StartY) const
 {
 	return CanPlaceAt(ItemSize, StartX, StartY, FInventoryItemHandle());
+}
+
+bool UGInventoryComponent::HasSpaceForItem(FIntPoint ItemSize) const
+{
+	if (ItemSize.X <= 0 || ItemSize.Y <= 0) return false;
+
+	for (int32 Y = 0; Y < Rows; ++Y)
+	{
+		for (int32 X = 0; X < Columns; ++X)
+		{
+			if (CanPlaceAt(ItemSize, X, Y, FInventoryItemHandle()))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool UGInventoryComponent::MoveItem(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY)
@@ -216,7 +241,8 @@ bool UGInventoryComponent::DropItem(FInventoryItemHandle Handle)
 	}
 
 	// TODO: 추후 스택 아이템 대응 시 Quantity 전달 구조 필요
-	Pickup->InitializePickup(Definition, 1);
+	// 개체별 데이터를 함께 실어야 드롭했다 다시 주웠을 때 내용이 유지된다
+	Pickup->InitializePickup(Definition, 1, (*InstancePtr)->GetInstanceDataStruct());
 	Pickup->FinishSpawning(SpawnTransform);
 
 	// 스폰 성공 후에만 인벤토리에서 제거
@@ -268,6 +294,12 @@ FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemH
 		RenderData.Icon = InvFrag->ItemIcon;
 	else
 		RenderData.Icon = TSoftObjectPtr<UTexture2D>();
+
+	// 개체별 아이콘이 있으면 그쪽이 우선 (사진은 찍힌 장면 자체가 아이콘이 된다)
+	if (const FGItemInstanceData* InstanceData = (*Found)->GetInstanceData<FGItemInstanceData>())
+	{
+		RenderData.RuntimeIcon = InstanceData->GetRuntimeIcon();
+	}
 
 	RenderData.bIsValid = true;
 	return RenderData;
@@ -387,11 +419,12 @@ void UGInventoryComponent::ExportInventorySaveData(TArray<FGuestSavedInventoryEn
 		}
 		
 		FGuestSavedInventoryEntry Entry;
-		Entry.ItemID   = ItemDef->ItemID;
-		Entry.TopLeft  = TopLeft;
-		Entry.Size     = GetItemSize(Handle);
-		Entry.Quantity = 1;  // 스택 없으면 항상 1
-		
+		Entry.ItemID       = ItemDef->ItemID;
+		Entry.TopLeft      = TopLeft;
+		Entry.Size         = GetItemSize(Handle);
+		Entry.Quantity     = 1;  // 스택 없으면 항상 1
+		Entry.InstanceData = Instance->GetInstanceDataStruct();  // 없으면 빈 구조체
+
 		OutEntries.Add(MoveTemp(Entry));
 	}
 	// UE_LOG(LogGSystem, Log, TEXT("ExportInventory: %d items"), OutEntries.Num());
@@ -405,7 +438,8 @@ void UGInventoryComponent::ClearInventory()
 }
 
 //그리드 좌표에 아이템을 배치하는 함수.
-bool UGInventoryComponent::PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size)
+bool UGInventoryComponent::PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size,
+	const FInstancedStruct& InstanceData)
 {
 	if (!ItemDef)
 	{
@@ -422,14 +456,15 @@ bool UGInventoryComponent::PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoin
 	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
 	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
 	Instance->InitInstance(Handle, ItemDef);
-	
+	Instance->SetInstanceData(InstanceData);
+
 	OccupySlots(Handle, Size, TopLeft.X, TopLeft.Y);
 	InventoryMap.Add(Handle, Instance);
-	
+
 	return true;
 }
 
-void UGInventoryComponent::ImportInventorySaveData(TArray<FGuestSavedInventoryEntry>& InEntries)
+void UGInventoryComponent::ImportInventorySaveData(const TArray<FGuestSavedInventoryEntry>& InEntries)
 {
 	ClearInventory();
 	
@@ -445,7 +480,7 @@ void UGInventoryComponent::ImportInventorySaveData(TArray<FGuestSavedInventoryEn
 			G_WARN(TEXT("ImportInventory 스킵: ItemID [%s] 없음"), *Entry.ItemID.ToString());
 			continue;
 		}
-		if (!PlaceItemAt(ItemDef, Entry.TopLeft, Entry.Size))
+		if (!PlaceItemAt(ItemDef, Entry.TopLeft, Entry.Size, Entry.InstanceData))
 		{
 			G_WARN(TEXT("ImportInventory 스킵: [%s] (%d,%d) 배치 실패"),
 				*Entry.ItemID.ToString(), Entry.TopLeft.X, Entry.TopLeft.Y);

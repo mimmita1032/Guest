@@ -365,13 +365,11 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 
 		if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
 		{
-			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour);
+			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+			SpacetimeSys->ExportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 		}
 
-		if (UGPhotoLibrarySubsystem* PhotoLib = GI->GetSubsystem<UGPhotoLibrarySubsystem>())
-		{
-			PhotoLib->ExportPhotoSaveData(SaveObject->SavedPhotos);
-		}
+		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음
 	}
 	
 	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(ControllerPawn))

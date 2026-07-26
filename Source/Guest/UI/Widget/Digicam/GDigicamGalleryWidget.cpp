@@ -35,7 +35,8 @@ void UGDigicamGalleryWidget::RefreshPhotoList()
 		return;
 	}
 
-	const TArray<FPhotoData>& Photos = PhotoLib->GetPhotos();
+	// 인벤토리를 훑어 만들어진 목록이므로 값으로 받는다
+	const TArray<FPhotoData> Photos = PhotoLib->GetPhotos();
 	if (Photos.IsEmpty())
 	{
 		ShowEmptyState();

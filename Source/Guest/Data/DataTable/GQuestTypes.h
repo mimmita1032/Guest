@@ -23,7 +23,9 @@ enum class EQuestObjectiveType : uint8
 	Talk,
 	Collect,
 	Reach,
-	Place
+	Place,
+	// 사진 촬영. TargetID는 FPhotoData::SubjectID(= 촬영 좌표의 PhotoSubjectID)와 대조된다
+	Photo
 };
 
 // 퀘스트가 활성화되는 시간대 조건

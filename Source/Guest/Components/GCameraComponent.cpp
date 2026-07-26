@@ -5,6 +5,11 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/Texture2D.h"
 #include "ImageUtils.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
+#include "Guest/Items/Definition/GItemDefinition.h"
+#include "Guest/Items/Fragments/GItemFragmentInventory.h"
+#include "Guest/Items/Instance/GPhotoItemInstanceData.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Utils/GLog.h"
 
@@ -26,19 +31,71 @@ void UGCameraComponent::SetupCapture(USceneCaptureComponent2D* InCapture, UTextu
 	if (CaptureComponent && RenderTarget)
 	{
 		CaptureComponent->TextureTarget = RenderTarget;
-		CaptureComponent->bCaptureEveryFrame = true;
+
+		// 뷰파인더는 기본적으로 꺼둔다. 켜져 있으면 씬 전체가 매 프레임 두 번 그려지므로
+		// 디지캠을 꺼내지도 않은 평상시에 그 비용을 내서는 안 된다.
+		CaptureComponent->bCaptureEveryFrame = false;
 	}
 }
 
-void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
+void UGCameraComponent::SetViewfinderActive(bool bActive)
+{
+	if (!CaptureComponent) return;
+	if (CaptureComponent->bCaptureEveryFrame == bActive) return;
+
+	CaptureComponent->bCaptureEveryFrame = bActive;
+
+	// 켜는 순간 한 장 그려두지 않으면 첫 프레임에 이전(또는 빈) 화면이 보인다
+	if (bActive)
+	{
+		CaptureComponent->CaptureScene();
+	}
+}
+
+bool UGCameraComponent::IsViewfinderActive() const
+{
+	return CaptureComponent && CaptureComponent->bCaptureEveryFrame;
+}
+
+bool UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 {
 	if (!CaptureComponent || !RenderTarget)
 	{
 		G_WARN(TEXT("카메라: CaptureComponent 또는 RenderTarget 미설정"));
-		return;
+		return false;
 	}
 
-	CaptureComponent->CaptureScene();
+	if (!PhotoItemDefinition)
+	{
+		G_WARN(TEXT("카메라: PhotoItemDefinition 미설정 — 사진을 아이템으로 만들 수 없습니다."));
+		return false;
+	}
+
+	UGInventoryComponent* InvComp = GetOwner() ? GetOwner()->FindComponentByClass<UGInventoryComponent>() : nullptr;
+	if (!InvComp)
+	{
+		G_WARN(TEXT("카메라: 오너에 인벤토리 컴포넌트가 없습니다."));
+		return false;
+	}
+
+	// 픽셀 읽기·PNG 압축은 무거우므로 인벤토리 공간부터 확인하고 시작한다
+	FIntPoint PhotoSize(1, 1);
+	if (const UGItemFragmentInventory* InvFrag = PhotoItemDefinition->FindFragmentByClass<UGItemFragmentInventory>())
+	{
+		PhotoSize = InvFrag->GridSize;
+	}
+	if (!InvComp->HasSpaceForItem(PhotoSize))
+	{
+		G_WARN(TEXT("카메라: 인벤토리에 공간이 없어 촬영을 취소합니다. (필요 %dx%d)"), PhotoSize.X, PhotoSize.Y);
+		return false;
+	}
+
+	// bCaptureEveryFrame이 켜져 있으면(뷰파인더 실시간 표시) 렌더타겟은 이미 최신이다.
+	// 그 위에 CaptureScene을 또 부르면 같은 장면을 두 번 그리게 되고 엔진이 경고를 띄운다.
+	if (!CaptureComponent->bCaptureEveryFrame)
+	{
+		CaptureComponent->CaptureScene();
+	}
 
 	// GPU → CPU 픽셀 읽기 (동기식 — 촬영 시에만 호출되므로 허용)
 	TArray<FColor> Pixels;
@@ -46,7 +103,7 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	if (!RTResource || !RTResource->ReadPixels(Pixels))
 	{
 		G_WARN(TEXT("카메라: 픽셀 읽기 실패"));
-		return;
+		return false;
 	}
 
 	const int32 Width  = RenderTarget->SizeX;
@@ -58,7 +115,7 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	if (!Snapshot)
 	{
 		G_WARN(TEXT("카메라: 스냅샷 텍스처 생성 실패"));
-		return;
+		return false;
 	}
 
 	// Outer를 GameInstance로 변경 → 레벨 전환 후에도 GC되지 않음
@@ -86,12 +143,39 @@ void UGCameraComponent::TakePhoto(const FPhotoData& Metadata)
 	NewPhoto.CompressedImage.Reset();
 	NewPhoto.CompressedImage.Append(PngData.GetData(), static_cast<int32>(PngData.Num()));
 
-	UGameInstance* PhotoGI = GetWorld()->GetGameInstance();
-	if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
+	// 사진의 저장소는 인벤토리 하나뿐이다 — 갤러리는 이걸 읽어 보여주는 뷰일 뿐
+	FGPhotoItemInstanceData PhotoInstanceData;
+	PhotoInstanceData.PhotoData = NewPhoto;
+
+	const FInventoryItemHandle Handle =
+		InvComp->GrantItemWithData(PhotoItemDefinition, FInstancedStruct::Make(PhotoInstanceData));
+
+	if (!Handle.IsValid())
 	{
-		PhotoLib->AddPhoto(NewPhoto);
+		// 위에서 공간을 확인했으므로 정상적으로는 도달하지 않는다
+		G_WARN(TEXT("카메라: 사진 아이템 지급 실패"));
+		return false;
+	}
+
+	if (UGameInstance* PhotoGI = GetWorld()->GetGameInstance())
+	{
+		// 갤러리 실시간 갱신용 — 인벤토리를 다시 훑지 않고 방금 찍은 것만 밀어넣는다
+		if (UGPhotoLibrarySubsystem* PhotoLib = PhotoGI->GetSubsystem<UGPhotoLibrarySubsystem>())
+		{
+			PhotoLib->NotifyPhotoTaken(NewPhoto);
+		}
+
+		// 촬영 대상이 지정된 좌표에서만 사진 퀘스트 목표가 진행된다
+		if (!NewPhoto.SubjectID.IsNone())
+		{
+			if (UGQuestSubsystem* QuestSys = PhotoGI->GetSubsystem<UGQuestSubsystem>())
+			{
+				QuestSys->OnObjectiveUpdated.Broadcast(NewPhoto.SubjectID, 1);
+			}
+		}
 	}
 
 	OnPhotoTaken.Broadcast(NewPhoto);
 	G_LOG(TEXT("사진 촬영 완료: %d년 %s"), NewPhoto.InGameYear, *NewPhoto.PlaceName.ToString());
+	return true;
 }

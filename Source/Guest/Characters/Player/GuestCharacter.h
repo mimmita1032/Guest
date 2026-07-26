@@ -129,8 +129,14 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamControl;
 
+    // 셔터 — 촬영 전용
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamShutter;
+
+    // 시공간 이동 확정 — 셔터와 분리된 별도 입력.
+    // 되돌릴 수 없는 행동이라 실수로 눌리지 않도록 촬영과 키를 나눈다
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_DigicamTravel;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamToggle;
@@ -141,6 +147,9 @@ protected:
 
     UFUNCTION()
     void DigicamShutterAction(const FInputActionValue& Value);
+
+    UFUNCTION()
+    void DigicamTravelAction(const FInputActionValue& Value);
 
     UFUNCTION()
     void DigicamToggleAction(const FInputActionValue& Value);

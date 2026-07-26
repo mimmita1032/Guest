@@ -37,4 +37,15 @@ class GUEST_API UGNarrationDataAsset : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration")
 	TArray<FNarrationBeat> Beats;
+
+	// 나레이션이 끝난 뒤 진행시킬 날짜 수 (0이면 진행 없음).
+	// "꽃을 놓았다 → 나레이션 → 하루 뒤 스미스가 찾아온다" 같은 시간 경과 연출용.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|시간 경과")
+	int32 DaysToAdvanceOnFinish = 0;
+
+	// 날짜를 진행시킬 때 맞출 시각 (0~24). 음수면 시각은 건드리지 않는다.
+	// 예: 9.0을 넣으면 "다음 날 아침 9시"가 된다.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|시간 경과",
+		meta = (EditCondition = "DaysToAdvanceOnFinish > 0"))
+	float HourOnFinish = -1.0f;
 };
