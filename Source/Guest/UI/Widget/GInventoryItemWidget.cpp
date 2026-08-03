@@ -6,18 +6,26 @@
 #include "Engine/Texture2D.h"
 #include "GItemDragDropOperation.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Sound/GuestSoundSubsystem.h"
+#include "Guest/Sound/GuestSoundTags.h"
 
 void UGInventoryItemWidget::InitItem(FInventoryItemHandle InHandle, TSoftObjectPtr<UTexture2D> InIcon,
-                                     FIntPoint InGridSize, float InSlotSize)
+                                     FIntPoint InGridSize, float InSlotSize, UTexture2D* InRuntimeIcon)
 {
-	ItemHandle     = InHandle;
-	CachedIcon     = InIcon;
-	CachedGridSize = InGridSize;
-	CachedSlotSize = InSlotSize;
+	ItemHandle        = InHandle;
+	CachedIcon        = InIcon;
+	CachedGridSize    = InGridSize;
+	CachedSlotSize    = InSlotSize;
+	CachedRuntimeIcon = InRuntimeIcon;
 
 	if (Img_ItemIcon)
 	{
-		if (UTexture2D* Icon = CachedIcon.LoadSynchronous())
+		// 개체별 아이콘이 우선 — 사진은 찍힌 장면이 그대로 아이콘이 된다
+		if (CachedRuntimeIcon)
+		{
+			Img_ItemIcon->SetBrushFromTexture(CachedRuntimeIcon);
+		}
+		else if (UTexture2D* Icon = CachedIcon.LoadSynchronous())
 		{
 			Img_ItemIcon->SetBrushFromTexture(Icon);
 		}
@@ -27,6 +35,17 @@ void UGInventoryItemWidget::InitItem(FInventoryItemHandle InHandle, TSoftObjectP
 FReply UGInventoryItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+
+	if (bInteractionLocked) return Reply;
+
+	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
+	{
+		if (ItemHandle.IsValid())
+		{
+			OnItemRightClicked.Broadcast(ItemHandle, InMouseEvent.GetScreenSpacePosition());
+		}
+		return Reply.Handled();
+	}
 
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
@@ -40,12 +59,18 @@ void UGInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, co
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	if (!ItemHandle.IsValid()) return;
+	if (!ItemHandle.IsValid() || bInteractionLocked) return;
+
+	// 사운드: 아이템을 클릭해서 집어들 때 (드래그 시작)
+	if (UGuestSoundSubsystem* SoundSys = GetOwningPlayer()->GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
+	{
+		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ButtonClick, AudioDataAsset);
+	}
 
 	UGInventoryItemWidget* DragVisual = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), GetClass());
 	if (!DragVisual) return;
 
-	DragVisual->InitItem(ItemHandle, CachedIcon, CachedGridSize, CachedSlotSize);
+	DragVisual->InitItem(ItemHandle, CachedIcon, CachedGridSize, CachedSlotSize, CachedRuntimeIcon);
 
 	if (USizeBox* VisualRoot = Cast<USizeBox>(DragVisual->GetRootWidget()))
 	{

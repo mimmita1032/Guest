@@ -11,12 +11,16 @@ class UGItemDefinition;
 class AGItemPickup;
 class UTexture2D;
 
+struct FGuestSavedInventoryEntry;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
 // UI 렌더링에 필요한 데이터를 한 번에 반환 (C++ 전용, USTRUCT 아님)
 struct FInventoryItemRenderData
 {
 	TSoftObjectPtr<UTexture2D> Icon;
+	// 개체별 아이콘 (사진의 촬영 스냅샷 등). 있으면 Icon보다 우선한다
+	UTexture2D* RuntimeIcon = nullptr;
 	FIntPoint GridSize = FIntPoint(1, 1);  // GridEntries 기준 (회전 대응)
 	FIntPoint Position = FIntPoint(-1, -1); // 좌상단 그리드 좌표
 	bool bIsValid      = false;
@@ -62,6 +66,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	FInventoryItemHandle GrantItem(const UGItemDefinition* ItemDef);
 
+	// 개체별 데이터를 함께 실어 지급 (사진처럼 개체마다 내용이 다른 아이템용)
+	// InstanceData는 FGItemInstanceData 파생 구조체여야 하며, 아니면 데이터 없이 지급된다
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	FInventoryItemHandle GrantItemWithData(const UGItemDefinition* ItemDef, const FInstancedStruct& InstanceData);
+
 	// 핸들 → 인스턴스
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	UGItemInstance* GetItemByHandle(FInventoryItemHandle Handle) const;
@@ -86,6 +95,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
 	bool CanPlaceNewItemAt(FIntPoint ItemSize, int32 StartX, int32 StartY) const;
 
+	// 어디든 놓을 자리가 있는지 확인 — 무거운 작업 전에 미리 거르는 용도
+	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
+	bool HasSpaceForItem(FIntPoint ItemSize) const;
+
 	// 핸들로 아이템 이동
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Grid")
 	bool MoveItem(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY);
@@ -102,6 +115,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	TArray<FInventoryItemHandle> GetAllHandles() const;
 
+	// ItemID로 인벤토리에서 첫 번째 매칭 핸들 검색 (없으면 InvalidHandle)
+	UFUNCTION(BlueprintPure, Category = "Inventory")
+	FInventoryItemHandle FindHandleByItemID(FName ItemID) const;
+
 	// 핸들로 아이템 크기 조회 (GridEntries 기반 — 회전 적용 시 Fragment 크기와 다를 수 있음)
 	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
 	FIntPoint GetItemSize(FInventoryItemHandle Handle) const;
@@ -113,6 +130,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryChanged OnInventoryChanged;
 
+	//save 용
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void ExportInventorySaveData(TArray<FGuestSavedInventoryEntry>& OutEntries) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
+	void ImportInventorySaveData(const TArray<FGuestSavedInventoryEntry>& InEntries);
+	
 private:
 	// 점유된 셀만 기록 (빈 셀은 항목 없음)
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
@@ -140,4 +164,10 @@ private:
 	bool AutoPlace(FInventoryItemHandle Handle, FIntPoint ItemSize);
 
 	void NotifyInventoryChanged();
+	
+	void ClearInventory();
+
+	// 지정 좌표에 인스턴스를 만들어 배치 (세이브 복원용). InstanceData가 유효하면 함께 주입한다
+	bool PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size,
+		const FInstancedStruct& InstanceData = FInstancedStruct());
 };

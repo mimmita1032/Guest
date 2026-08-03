@@ -3,7 +3,6 @@
 
 #include "GDebugTimeWidget.h"
 #include "Components/Slider.h"
-#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,11 +17,6 @@ void UGDebugTimeWidget::NativeConstruct()
 		TimeSlider->SetMaxValue(23.99f);
 		TimeSlider->OnValueChanged.AddUniqueDynamic(this, &UGDebugTimeWidget::OnTimeSliderChanged);	}
 
-	if (SyncButton)
-	{
-		SyncButton->OnClicked.AddUniqueDynamic(this, &UGDebugTimeWidget::OnSyncButtonClicked);
-	}
-	
 	if (UGameInstance* GI = GetGameInstance())
 	{
 		if (UGSpacetimeSubsystem* SpacetimeSS = GI->GetSubsystem<UGSpacetimeSubsystem>())
@@ -52,17 +46,5 @@ void UGDebugTimeWidget::UpdateTimeText(float CurrentHour)
 	{
 		FString TimeString = FString::Printf(TEXT("디버그 시간: %.2f시"), CurrentHour);
 		TimeText->SetText(FText::FromString(TimeString));
-	}
-}
-
-
-void UGDebugTimeWidget::OnSyncButtonClicked()
-{
-	if (UGameInstance* GI = GetGameInstance())
-	{
-		if (UGSpacetimeSubsystem* SpacetimeSS = GI->GetSubsystem<UGSpacetimeSubsystem>())
-		{
-			SpacetimeSS->ResumeRealTimeSync();
-		}
 	}
 }

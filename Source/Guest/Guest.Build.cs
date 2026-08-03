@@ -13,7 +13,7 @@ public class Guest : ModuleRules
 			"Slate", "SlateCore","GameplayAbilities","GameplayTasks"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AssetRegistry" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

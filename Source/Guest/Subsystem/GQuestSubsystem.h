@@ -10,9 +10,16 @@
 
 class UGuestSaveGame;
 struct FGuestSavedActiveQuestEntry;
+class UGNarrationDataAsset;
 
 // 아이템 획득 / NPC 대화 / 구역 진입 시 Broadcast → 서브시스템이 수신하여 장부 갱신
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestObjectiveUpdated, FName, TargetID, int32, Amount);
+
+// 퀘스트 수락/완료/목표 진행 시 Broadcast → UI 트래커가 구독하여 갱신
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnQuestListChanged);
+
+// 퀘스트 완료 시 NarrationOnComplete가 지정돼 있으면 Broadcast → UI가 구독해 나레이션 연출 재생
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNarrationRequested, UGNarrationDataAsset*, NarrationAsset);
 
 UCLASS()
 class GUEST_API UGQuestSubsystem : public UGameInstanceSubsystem
@@ -27,6 +34,14 @@ public:
 	// 아이템/NPC/트리거가 이 델리게이트에 Broadcast하면 서브시스템이 자동으로 장부를 갱신
 	UPROPERTY(BlueprintAssignable, Category = "Quest")
 	FOnQuestObjectiveUpdated OnObjectiveUpdated;
+
+	// 퀘스트 상태 변경 시 Broadcast (수락/완료/목표 진행) → UI 트래커용
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnQuestListChanged OnQuestListChanged;
+
+	// 퀘스트 완료 + NarrationOnComplete 지정 시 Broadcast → UI가 구독해 나레이션 위젯 오픈
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnNarrationRequested OnNarrationRequested;
 #pragma endregion
 
 #pragma region Quest Flow
@@ -51,6 +66,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	TArray<FName> GetCompletedQuestIDs() const;
 
+	// UI에서 퀘스트 진행 상태 조회
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool GetQuestRuntimeData(FName QuestID, FQuestRuntimeData& OutData) const;
+
+	// UI에서 퀘스트 정적 데이터 조회
+	const FQuestData* FindQuestDataPublic(FName QuestID) const { return FindQuestData(QuestID); }
+
 private:
 	// OnObjectiveUpdated 델리게이트 수신 핸들러
 	UFUNCTION()
@@ -58,6 +80,21 @@ private:
 
 	// 모든 목표 달성 시 내부 호출 → 보상 지급 + 다음 퀘스트 연결
 	void CompleteQuest(FName QuestID);
+#pragma endregion
+
+#pragma region Story Progress
+public:
+	// 현재 스토리 진행도 조회 (RequiredStoryProgress 게이팅용)
+	UFUNCTION(BlueprintCallable, Category = "Quest|Story")
+	int32 GetStoryProgress() const { return StoryProgress; }
+
+	// 스토리 진행도 갱신 (퀘스트 완료/이벤트 트리거 등에서 호출, 세이브 로드 시 복원에도 사용)
+	UFUNCTION(BlueprintCallable, Category = "Quest|Story")
+	void SetStoryProgress(int32 NewProgress);
+
+private:
+	UPROPERTY()
+	int32 StoryProgress = 0;
 #pragma endregion
 
 #pragma region Data
@@ -75,6 +112,9 @@ private:
 
 	// 헬퍼: DataTable에서 퀘스트 데이터 조회
 	const FQuestData* FindQuestData(FName QuestID) const;
+
+	// 진행/저장 매칭 키인 StepID/ObjectiveID가 비었거나 중복인 행을 기동 시점에 경고 (기획 데이터 입력 유도)
+	void ValidateQuestDataTableIDs() const;
 #pragma endregion
 	
 	

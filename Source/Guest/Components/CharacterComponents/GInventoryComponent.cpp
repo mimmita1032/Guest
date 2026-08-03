@@ -6,6 +6,60 @@
 #include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/Items/WorldActor/GItemPickup.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Save/GuestSaveGame.h"
+#include "Guest/FrameWork/GuestAssetManager.h"
+#include "Guest/Items/Definition/GItemDefinition.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Engine/AssetManager.h"
+
+
+namespace
+{
+	const UGItemDefinition* FindItemDefinitionByItemID(FName ItemID)
+	{
+		if (ItemID.IsNone())
+		{
+			return nullptr;
+		}
+
+		// GuestAssetManager가 등록된 경우 Primary Asset 목록 우선 사용
+		if (GEngine && GEngine->AssetManager)
+		{
+			if (const UGuestAssetManager* GuestAM = Cast<UGuestAssetManager>(GEngine->AssetManager.Get()))
+			{
+				TArray<const UGItemDefinition*> LoadedItems;
+				if (GuestAM->GetLoadedItems(LoadedItems))
+				{
+					for (const UGItemDefinition* Def : LoadedItems)
+					{
+						if (Def && Def->ItemID == ItemID)
+						{
+							return Def;
+						}
+					}
+				}
+			}
+		}
+
+		// Fallback: Asset Registry (Fatal 없이 ItemID 검색)
+		const FAssetRegistryModule& AssetRegistryModule =
+			FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		TArray<FAssetData> AssetDatas;
+		AssetRegistryModule.Get().GetAssetsByClass(
+			UGItemDefinition::StaticClass()->GetClassPathName(), AssetDatas, true);
+
+		for (const FAssetData& AssetData : AssetDatas)
+		{
+			const UGItemDefinition* Def = Cast<UGItemDefinition>(AssetData.GetAsset());
+			if (Def && Def->ItemID == ItemID)
+			{
+				return Def;
+			}
+		}
+
+		return nullptr;
+	}
+}
 
 UGInventoryComponent::UGInventoryComponent()
 {
@@ -22,11 +76,19 @@ void UGInventoryComponent::BeginPlay()
 
 FInventoryItemHandle UGInventoryComponent::GrantItem(const UGItemDefinition* ItemDef)
 {
+	return GrantItemWithData(ItemDef, FInstancedStruct());
+}
+
+FInventoryItemHandle UGInventoryComponent::GrantItemWithData(const UGItemDefinition* ItemDef, const FInstancedStruct& InstanceData)
+{
 	if (!ItemDef) return FInventoryItemHandle();
 
 	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
 	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
 	Instance->InitInstance(Handle, ItemDef);
+
+	// 빈 구조체면 내부에서 "데이터 없음"으로 처리되므로 분기 없이 넘긴다
+	Instance->SetInstanceData(InstanceData);
 
 	FIntPoint ItemSize(1, 1);
 	if (const UGItemFragmentInventory* InvFrag = Instance->FindFragmentByClass<UGItemFragmentInventory>())
@@ -79,6 +141,23 @@ bool UGInventoryComponent::CanMoveItemTo(FInventoryItemHandle Handle, int32 Targ
 bool UGInventoryComponent::CanPlaceNewItemAt(FIntPoint ItemSize, int32 StartX, int32 StartY) const
 {
 	return CanPlaceAt(ItemSize, StartX, StartY, FInventoryItemHandle());
+}
+
+bool UGInventoryComponent::HasSpaceForItem(FIntPoint ItemSize) const
+{
+	if (ItemSize.X <= 0 || ItemSize.Y <= 0) return false;
+
+	for (int32 Y = 0; Y < Rows; ++Y)
+	{
+		for (int32 X = 0; X < Columns; ++X)
+		{
+			if (CanPlaceAt(ItemSize, X, Y, FInventoryItemHandle()))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool UGInventoryComponent::MoveItem(FInventoryItemHandle Handle, int32 TargetX, int32 TargetY)
@@ -162,7 +241,8 @@ bool UGInventoryComponent::DropItem(FInventoryItemHandle Handle)
 	}
 
 	// TODO: 추후 스택 아이템 대응 시 Quantity 전달 구조 필요
-	Pickup->InitializePickup(Definition, 1);
+	// 개체별 데이터를 함께 실어야 드롭했다 다시 주웠을 때 내용이 유지된다
+	Pickup->InitializePickup(Definition, 1, (*InstancePtr)->GetInstanceDataStruct());
 	Pickup->FinishSpawning(SpawnTransform);
 
 	// 스폰 성공 후에만 인벤토리에서 제거
@@ -179,6 +259,21 @@ TArray<FInventoryItemHandle> UGInventoryComponent::GetAllHandles() const
 	TArray<FInventoryItemHandle> Handles;
 	InventoryMap.GetKeys(Handles);
 	return Handles;
+}
+
+FInventoryItemHandle UGInventoryComponent::FindHandleByItemID(FName ItemID) const
+{
+	if (ItemID.IsNone()) return FInventoryItemHandle();
+
+	for (const TPair<FInventoryItemHandle, TObjectPtr<UGItemInstance>>& Pair : InventoryMap)
+	{
+		const UGItemDefinition* Definition = Pair.Value ? Pair.Value->GetItemDef() : nullptr;
+		if (Definition && Definition->ItemID == ItemID)
+		{
+			return Pair.Key;
+		}
+	}
+	return FInventoryItemHandle();
 }
 
 FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemHandle Handle) const
@@ -199,6 +294,12 @@ FInventoryItemRenderData UGInventoryComponent::GetItemRenderData(FInventoryItemH
 		RenderData.Icon = InvFrag->ItemIcon;
 	else
 		RenderData.Icon = TSoftObjectPtr<UTexture2D>();
+
+	// 개체별 아이콘이 있으면 그쪽이 우선 (사진은 찍힌 장면 자체가 아이콘이 된다)
+	if (const FGItemInstanceData* InstanceData = (*Found)->GetInstanceData<FGItemInstanceData>())
+	{
+		RenderData.RuntimeIcon = InstanceData->GetRuntimeIcon();
+	}
 
 	RenderData.bIsValid = true;
 	return RenderData;
@@ -283,4 +384,109 @@ FIntPoint UGInventoryComponent::GetItemSize(FInventoryItemHandle Handle) const
 void UGInventoryComponent::NotifyInventoryChanged()
 {
 	OnInventoryChanged.Broadcast();
+}
+
+void UGInventoryComponent::ExportInventorySaveData(TArray<FGuestSavedInventoryEntry>& OutEntries) const
+{
+	OutEntries.Reset();
+	
+	const TArray<FInventoryItemHandle> Handles = GetAllHandles();
+	OutEntries.Reserve(Handles.Num());
+	
+	for (const FInventoryItemHandle& Handle : Handles)
+	{
+		if (!Handle.IsValid())
+		{
+			continue;
+		}
+		
+		const UGItemInstance* Instance = GetItemByHandle(Handle);
+		if (!Instance)
+		{
+			continue;
+		}
+		
+		const UGItemDefinition* ItemDef = Instance->GetItemDef();
+		if (!ItemDef || ItemDef->ItemID.IsNone())
+		{
+			continue;
+		}
+		
+		const FIntPoint TopLeft = GetItemPosition(Handle);
+		if (TopLeft.X < 0 || TopLeft.Y < 0)
+		{
+			continue;
+		}
+		
+		FGuestSavedInventoryEntry Entry;
+		Entry.ItemID       = ItemDef->ItemID;
+		Entry.TopLeft      = TopLeft;
+		Entry.Size         = GetItemSize(Handle);
+		Entry.Quantity     = 1;  // 스택 없으면 항상 1
+		Entry.InstanceData = Instance->GetInstanceDataStruct();  // 없으면 빈 구조체
+
+		OutEntries.Add(MoveTemp(Entry));
+	}
+	// UE_LOG(LogGSystem, Log, TEXT("ExportInventory: %d items"), OutEntries.Num());
+}
+
+void UGInventoryComponent::ClearInventory()
+{
+	OccupiedSlots.Empty();
+	GridEntries.Empty();
+	InventoryMap.Empty();
+}
+
+//그리드 좌표에 아이템을 배치하는 함수.
+bool UGInventoryComponent::PlaceItemAt(const UGItemDefinition* ItemDef, FIntPoint TopLeft, FIntPoint Size,
+	const FInstancedStruct& InstanceData)
+{
+	if (!ItemDef)
+	{
+		return false;
+	}
+	if (Size.X <= 0 || Size.Y <= 0)
+	{
+		return false;
+	}
+	if (!CanPlaceAt(Size, TopLeft.X, TopLeft.Y, FInventoryItemHandle()))
+	{
+		return false;
+	}
+	const FInventoryItemHandle Handle = FInventoryItemHandle::CreateHandle();
+	UGItemInstance* Instance = NewObject<UGItemInstance>(this);
+	Instance->InitInstance(Handle, ItemDef);
+	Instance->SetInstanceData(InstanceData);
+
+	OccupySlots(Handle, Size, TopLeft.X, TopLeft.Y);
+	InventoryMap.Add(Handle, Instance);
+
+	return true;
+}
+
+void UGInventoryComponent::ImportInventorySaveData(const TArray<FGuestSavedInventoryEntry>& InEntries)
+{
+	ClearInventory();
+	
+	for (const FGuestSavedInventoryEntry& Entry : InEntries)
+	{
+		if (Entry.ItemID.IsNone()) continue;
+		if (Entry.TopLeft.X < 0 || Entry.TopLeft.Y < 0) continue;
+		if (Entry.Size.X <= 0 || Entry.Size.Y <= 0) continue;
+		
+		const UGItemDefinition* ItemDef = FindItemDefinitionByItemID(Entry.ItemID);
+		if (!ItemDef)
+		{
+			G_WARN(TEXT("ImportInventory 스킵: ItemID [%s] 없음"), *Entry.ItemID.ToString());
+			continue;
+		}
+		if (!PlaceItemAt(ItemDef, Entry.TopLeft, Entry.Size, Entry.InstanceData))
+		{
+			G_WARN(TEXT("ImportInventory 스킵: [%s] (%d,%d) 배치 실패"),
+				*Entry.ItemID.ToString(), Entry.TopLeft.X, Entry.TopLeft.Y);
+			continue;
+		}
+		
+	}
+	NotifyInventoryChanged();
 }

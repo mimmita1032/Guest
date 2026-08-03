@@ -22,6 +22,7 @@ void UGuestPrimaryLayout::NativeOnInitialized()
 	UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_GameMenu,    Stack_GameMenu);
 	UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Modal,       Stack_Modal);
 	UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_BarDialogue, Stack_BarDialogue);
+	UISubsystem->RegisterStack(GuestGameplayTags::TAG_WidgetStack_Narration,   Stack_Narration);
 
 	// InputConfig 등록 (IMC 는 에디터에서 로드한 에셋 전달)
 	UISubsystem->RegisterInputConfig(GuestGameplayTags::TAG_WidgetStack_Frontend,    { EGuestInputMode::UIOnly,nullptr,1 });
@@ -29,4 +30,5 @@ void UGuestPrimaryLayout::NativeOnInitialized()
 	UISubsystem->RegisterInputConfig(GuestGameplayTags::TAG_WidgetStack_GameMenu,    { EGuestInputMode::GameAndUI,nullptr,1 });
 	UISubsystem->RegisterInputConfig(GuestGameplayTags::TAG_WidgetStack_Modal,       { EGuestInputMode::UIOnly,nullptr,2 });
 	UISubsystem->RegisterInputConfig(GuestGameplayTags::TAG_WidgetStack_BarDialogue, { EGuestInputMode::UIOnly,nullptr,2 });
+	UISubsystem->RegisterInputConfig(GuestGameplayTags::TAG_WidgetStack_Narration,   { EGuestInputMode::UIOnly,nullptr,2 });
 }

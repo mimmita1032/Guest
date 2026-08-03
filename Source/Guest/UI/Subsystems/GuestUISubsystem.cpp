@@ -3,6 +3,9 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/Data/DataAssets/GDialogueDataAsset.h"
+#include "Guest/Data/DataAssets/GNarrationDataAsset.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -13,6 +16,7 @@
 #include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/GameViewportClient.h"
 
 // ─────────────────────────────────────────────────────────
 // 1. USubsystem 인터페이스
@@ -29,12 +33,25 @@ bool UGuestUISubsystem::ShouldCreateSubsystem(UObject* Outer) const
     return true;
 }
 
+void UGuestUISubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+
+    if (UGQuestSubsystem* QuestSys = GetGameInstance()->GetSubsystem<UGQuestSubsystem>())
+    {
+        QuestSys->OnNarrationRequested.AddDynamic(this, &UGuestUISubsystem::HandleNarrationRequested);
+    }
+}
+
 void UGuestUISubsystem::Deinitialize()
 {
     StackMap.Empty();
     InputConfigMap.Empty();
     ActiveStackHistory.Empty();
     CurrentIMC = nullptr;
+    PendingDialogueAsset = nullptr;
+    PendingDialogueNPCActor = nullptr;
+    PendingNarrationAsset = nullptr;
     Super::Deinitialize();
 }
 
@@ -49,6 +66,54 @@ void UGuestUISubsystem::RegisterStack(FGameplayTag StackTag, UCommonActivatableW
         StackMap.Add(StackTag, Stack);
         UE_LOG(LogTemp, Log, TEXT("[GuestUI] Stack 등록: %s"), *StackTag.ToString());
     }
+}
+
+void UGuestUISubsystem::NotifyWidgetDeactivated(FGameplayTag StackTag)
+{
+    ActiveStackHistory.RemoveSingle(StackTag);
+
+    FGameplayTag FallbackStackTag;
+    if (ActiveStackHistory.Num() > 0)
+    {
+        FallbackStackTag = ActiveStackHistory.Top();
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("[GuestUI] Widget 종료: %s → 입력 복구: %s"),
+        *StackTag.ToString(),
+        FallbackStackTag.IsValid() ? *FallbackStackTag.ToString() : TEXT("GameOnly"));
+
+    CurrentStackTag = FallbackStackTag;
+    ApplyInputConfig(ResolveInputConfig(FallbackStackTag));
+}
+
+FUIInputConfig UGuestUISubsystem::GetDesiredUIInputConfig() const
+{
+    switch (CurrentInputMode)
+    {
+    case EGuestInputMode::GameOnly:
+        return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, true);
+
+    case EGuestInputMode::UIOnly:
+        return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+
+    case EGuestInputMode::GameAndUI:
+    default:
+        return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+    }
+}
+
+bool UGuestUISubsystem::IsWidgetActive(FGameplayTag StackTag, FGameplayTag WidgetTag) const
+{
+    UCommonActivatableWidgetContainerBase* const* Stack = StackMap.Find(StackTag);
+    if (!Stack || !*Stack) return false;
+
+    UCommonActivatableWidget* ActiveWidget = (*Stack)->GetActiveWidget();
+    if (!ActiveWidget) return false;
+
+    const UGuestUISettings* Settings = GetDefault<UGuestUISettings>();
+    const UClass* WidgetClass = Settings->FindWidgetClassByTag(WidgetTag).Get();
+
+    return WidgetClass && ActiveWidget->IsA(WidgetClass);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -107,19 +172,32 @@ void UGuestUISubsystem::PushWidget(FGameplayTag StackTag, FGameplayTag WidgetTag
     );
 }
 
-void UGuestUISubsystem::OpenBarDialogue(const FBarDialogueData& Data, AActor* DialogueActor)
+void UGuestUISubsystem::OpenBarDialogue(UGDialogueDataAsset* DialogueAsset, AActor* NPCActor)
 {
-    if (Data.DialogueData.Lines.IsEmpty()) return;
-    PendingBarDialogueData = Data;
-    PendingBarDialogueActor = DialogueActor;
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = NPCActor;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_BarDialogue, GuestGameplayTags::TAG_Widget_BarDialogue);
 }
 
-void UGuestUISubsystem::OpenNPCDialogue(const FNPCDialogueData& Data)
+void UGuestUISubsystem::OpenNPCDialogue(UGDialogueDataAsset* DialogueAsset)
 {
-    if (Data.Lines.IsEmpty()) return;
-    PendingDialogueData = Data;
+    if (!DialogueAsset || !DialogueAsset->DialogueTable) return;
+    PendingDialogueAsset = DialogueAsset;
+    PendingDialogueNPCActor = nullptr;
     PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_NPCDialogue);
+}
+
+void UGuestUISubsystem::OpenNarration(UGNarrationDataAsset* NarrationAsset)
+{
+    if (!NarrationAsset || NarrationAsset->Beats.IsEmpty()) return;
+    PendingNarrationAsset = NarrationAsset;
+    PushWidget(GuestGameplayTags::TAG_WidgetStack_Narration, GuestGameplayTags::TAG_Widget_Narration);
+}
+
+void UGuestUISubsystem::HandleNarrationRequested(UGNarrationDataAsset* NarrationAsset)
+{
+    OpenNarration(NarrationAsset);
 }
 
 void UGuestUISubsystem::PopWidget(FGameplayTag StackTag)
@@ -231,6 +309,19 @@ void UGuestUISubsystem::ApplyInputMode(EGuestInputMode InputMode, APlayerControl
             Mode.SetHideCursorDuringCapture(false);
             PC->SetInputMode(Mode);
             PC->SetShowMouseCursor(true);
+
+            // FInputModeGameAndUI::ApplyInputMode가 뷰포트 캡처 모드를 무조건 CaptureDuringMouseDown으로
+            // 강제 설정함(엔진 내부 동작, FInputModeGameAndUI에 끄는 옵션 없음). 이 상태에서는 UI 위젯을
+            // 클릭한 직후의 첫 마우스다운이 "뷰포트에 마우스 캡처 확립"에 소모되어 게임 입력(Enhanced Input
+            // 마우스 버튼 액션 등)으로 전달되지 않음 — 아이템 배치 확정이 항상 두 번째 클릭에서만 되던 원인.
+            // SetInputMode 직후 캡처 모드를 NoCapture로 재설정해서 이 소모를 없앰.
+            if (UWorld* World = PC->GetWorld())
+            {
+                if (UGameViewportClient* ViewportClient = World->GetGameViewport())
+                {
+                    ViewportClient->SetMouseCaptureMode(EMouseCaptureMode::NoCapture);
+                }
+            }
         }
         break;
     }

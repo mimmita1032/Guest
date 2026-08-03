@@ -21,6 +21,7 @@ class UGCharacterDataAsset;
 class UGCharacterGASData;
 class UGInputConfigData;
 class UGInventoryComponent;
+class UGItemPlacementComponent;
 class UGuestPawnUIComponent;
 
 UCLASS()
@@ -49,6 +50,8 @@ protected:
     void FreeLookStart(const FInputActionValue& Value);
     void FreeLookEnd(const FInputActionValue& Value);
     void ToggleInventoryAction(const FInputActionValue& Value);
+    void ToggleSaveBoardAction(const FInputActionValue& Value);
+    void ToggleLoadBoardAction(const FInputActionValue& Value);
 
     // 기획 데이터 에셋 참조
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
@@ -76,7 +79,23 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_ToggleInventory;
-    
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_SaveGame;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_LoadGame;
+
+    // 아이템 배치 모드 확정/취소 — UMG 위젯 히트테스트에 기대지 않고 Enhanced Input으로 직접 처리
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_ConfirmPlacement;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_CancelPlacement;
+
+    void ConfirmPlacementAction(const FInputActionValue& Value);
+    void CancelPlacementAction(const FInputActionValue& Value);
+
     //카메라
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     TObjectPtr<USpringArmComponent> SpringArmComp;
@@ -110,8 +129,14 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamControl;
 
+    // 셔터 — 촬영 전용
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamShutter;
+
+    // 시공간 이동 확정 — 셔터와 분리된 별도 입력.
+    // 되돌릴 수 없는 행동이라 실수로 눌리지 않도록 촬영과 키를 나눈다
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    TObjectPtr<UInputAction> IA_DigicamTravel;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     TObjectPtr<UInputAction> IA_DigicamToggle;
@@ -122,6 +147,9 @@ protected:
 
     UFUNCTION()
     void DigicamShutterAction(const FInputActionValue& Value);
+
+    UFUNCTION()
+    void DigicamTravelAction(const FInputActionValue& Value);
 
     UFUNCTION()
     void DigicamToggleAction(const FInputActionValue& Value);
@@ -136,9 +164,36 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float ZoomSpeed;
 
+    // FOV/소켓오프셋 전환 연출용으로 TargetZoomLength를 부드럽게 뒤따라가는 값
+    // (TargetZoomLength는 휠 한 번에 ZoomStep만큼 즉시 점프하므로, FOV 등에 그대로 쓰면 뚝뚝 끊겨 보임)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float SmoothedZoomLength;
+
+    // 아래를 내려다볼 때 SpringArm이 바닥 콜리전에 걸리지 않도록 줄어드는 최소 길이
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float MinArmLengthWhenLookingDown = 150.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
     bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
+
+#pragma region CameraPitch
+public:
+    // AGuestPlayerController::UpdateRotation에서 ControlRotation 클램프에 사용
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMinViewPitch() const { return MinViewPitch; }
+
+    UFUNCTION(BlueprintPure, Category = "Camera|Pitch")
+    float GetMaxViewPitch() const { return MaxViewPitch; }
+
+protected:
+    // 카메라 피치 제한 (바닥 회피 계산 및 ControlRotation 클램프에 사용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MinViewPitch = -25.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
+    float MaxViewPitch = 25.0f;
+#pragma endregion // CameraPitch
 
 #pragma region anim
 public:
@@ -167,12 +222,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "Inventory")
     UGInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
+    UFUNCTION(BlueprintPure, Category = "Inventory")
+    UGItemPlacementComponent* GetItemPlacementComponent() const { return ItemPlacementComponent; }
+
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UGInventoryComponent> InventoryComponent;
 
-    bool bIsInventoryOpen = false;
-    bool bIsDigicamOpen   = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UGItemPlacementComponent> ItemPlacementComponent;
 #pragma endregion
 
 #pragma region PawnUI

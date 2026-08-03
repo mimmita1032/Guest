@@ -7,9 +7,13 @@
 #include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/Save/GuestMapPackageUtils.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
+#include "Guest/Utils/GLog.h"
 
 void UGuestGameInstance::Init()
 {
@@ -53,6 +57,13 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		return;
 	}
 
+	if (SaveObject->SaveVersion != UGuestSaveGame::CurrentSaveVersion)
+	{
+		G_WARN(TEXT("세이브 로드 거부: 지원하지 않는 버전입니다. 저장 버전=%d, 현재 버전=%d"),
+			SaveObject->SaveVersion, UGuestSaveGame::CurrentSaveVersion);
+		return;
+	}
+
 	UWorld* World = GetWorld();
 	if (!World)
 	{
@@ -65,8 +76,18 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		QuestSys->ImportQuestSaveData(
 			SaveObject->SavedActiveQuests,
 			SaveObject->SavedCompletedQuestIDs);
+		QuestSys->SetStoryProgress(SaveObject->SavedStoryProgress);
 	}
-	
+
+	// ── 세계 시간 복원 (GameInstanceSubsystem이라 맵 전환과 무관하게 즉시 적용) ──
+	if (UGSpacetimeSubsystem* SpacetimeSys = GetSubsystem<UGSpacetimeSubsystem>())
+	{
+		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+		SpacetimeSys->ImportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
+	}
+
+	// 사진은 인벤토리 아이템이므로 인벤토리 복원(ImportInventorySaveData)에 포함된다
+
 	const FString CurrentPackage = GuestGetPersistentMapPackageName(World);
 	const FString SavedPackage = SaveObject->MapPackageName;
 
@@ -82,6 +103,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				RestoreInventory(Pawn, SaveObject);
 			}
 		}
 		return;
@@ -102,6 +124,7 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 				
 				// ── GAS 어트리뷰트 복원 ──
 				RestoreGASAttributes(Pawn, SaveObject);
+				RestoreInventory(Pawn, SaveObject);
 			}
 		}
 		return;
@@ -118,43 +141,94 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 
 void UGuestGameInstance::OnPostLoadMapWithWorld(UWorld* LoadedWorld)
 {
-	if (!bPendingApplyPlayerWorld || !LoadedWorld || !LoadedWorld->IsGameWorld())
+	if ((!bPendingApplyPlayerWorld && !PendingSaveObject) || !LoadedWorld || !LoadedWorld->IsGameWorld())
 	{
 		return;
 	}
-	
+
 	FTimerHandle TimerHandle;
 	LoadedWorld->GetTimerManager().SetTimer(
 		TimerHandle,
 		[this, LoadedWorld]()
 		{
-			if(!bPendingApplyPlayerWorld)
+			if (!bPendingApplyPlayerWorld && !PendingSaveObject)
 			{
 				return;
 			}
-		
+
 			APlayerController* PC = UGameplayStatics::GetPlayerController(LoadedWorld, 0);
 			if (!PC)
 			{
 				return;
 			}
-		
+
 			APawn* Pawn = PC ->GetPawn();
 			if (!Pawn)
 			{
 				return;
 			}
-		
-			Pawn->SetActorLocation(PendingPlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
-			Pawn->SetActorRotation(PendingPlayerWorld.Rotation, ETeleportType::TeleportPhysics);
-		
-			// ── 맵 전환 후 GAS 어트리뷰트 복원 ──
-			RestoreGASAttributes(Pawn, PendingSaveObject);
-			PendingSaveObject = nullptr;
-		
-			bPendingApplyPlayerWorld = false;
+
+			// 세이브 로드 시에만 위치 복원 — 시공간 이동(CarryPlayerStateAcrossTravel)은 새 레벨의 기본 스폰 위치를 그대로 씀
+			if (bPendingApplyPlayerWorld)
+			{
+				Pawn->SetActorLocation(PendingPlayerWorld.Location, false, nullptr, ETeleportType::TeleportPhysics);
+				Pawn->SetActorRotation(PendingPlayerWorld.Rotation, ETeleportType::TeleportPhysics);
+				bPendingApplyPlayerWorld = false;
+			}
+
+			// ── 맵 전환 후 GAS 어트리뷰트/인벤토리 복원 ──
+			if (PendingSaveObject)
+			{
+				RestoreGASAttributes(Pawn, PendingSaveObject);
+				RestoreInventory(Pawn, PendingSaveObject);
+				PendingSaveObject = nullptr;
+			}
 		},
 		0.05f, false);
+}
+
+void UGuestGameInstance::CarryPlayerStateAcrossTravel()
+{
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+	if (!Pawn) return;
+
+	UGuestSaveGame* Snapshot = NewObject<UGuestSaveGame>(this);
+
+	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Pawn))
+	{
+		if (UAbilitySystemComponent* ASC = ASCInterface->GetAbilitySystemComponent())
+		{
+			Snapshot->SavedCurrentHealth  = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentHealthAttribute());
+			Snapshot->SavedCurrentBattery = ASC->GetNumericAttribute(UGuestAttributeSet::GetCurrentBatteryAttribute());
+		}
+	}
+
+	if (UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>())
+	{
+		Inv->ExportInventorySaveData(Snapshot->SavedInventory);
+	}
+
+	PendingSaveObject = Snapshot;
+}
+
+void UGuestGameInstance::RestoreInventory(APawn* Pawn, const UGuestSaveGame* SaveObject)
+{
+	if (!Pawn || !SaveObject) return;
+
+	UGInventoryComponent* Inv = Pawn->FindComponentByClass<UGInventoryComponent>();
+	if (!Inv) return;
+
+	Inv->ImportInventorySaveData(SaveObject->SavedInventory);
+
+	// 사진은 인벤토리 아이템이므로 복원 직후 스냅샷 텍스처를 되살려야 갤러리에 보인다
+	if (UGPhotoLibrarySubsystem* PhotoLib = GetSubsystem<UGPhotoLibrarySubsystem>())
+	{
+		PhotoLib->RestorePhotoSnapshots(Inv);
+	}
 }
 
 void UGuestGameInstance::RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject)

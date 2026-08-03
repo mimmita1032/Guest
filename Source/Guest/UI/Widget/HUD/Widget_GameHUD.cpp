@@ -4,6 +4,7 @@
 #include "CommonUITypes.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Components/CharacterComponents/GuestPawnUIComponent.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
 
 void UWidget_GameHUD::NativeOnInitialized()
 {
@@ -27,6 +28,10 @@ void UWidget_GameHUD::NativeOnInitialized()
 
 TOptional<FUIInputConfig> UWidget_GameHUD::GetDesiredInputConfig() const
 {
+	if (const UGuestUISubsystem* UISys = GetUISubsystem())
+	{
+		return UISys->GetDesiredUIInputConfig();
+	}
 	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently, true);
 }
 

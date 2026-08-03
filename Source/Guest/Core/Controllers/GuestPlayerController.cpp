@@ -9,6 +9,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Guest/Components/CharacterComponents/GInventoryComponent.h"
 #include "Guest/UI/Layout/GuestPrimaryLayout.h"
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,9 +22,13 @@
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/GAS/GuestAttributeSet.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/AI/GuestTeamIds.h"
+#include "Guest/Characters/Player/GuestCharacter.h"
 
 
 
@@ -34,6 +39,21 @@ namespace
 
 AGuestPlayerController::AGuestPlayerController()
 {
+}
+
+void AGuestPlayerController::UpdateRotation(float DeltaTime)
+{
+	Super::UpdateRotation(DeltaTime);
+
+	if (const AGuestCharacter* GuestChar = Cast<AGuestCharacter>(GetPawn()))
+	{
+		FRotator NewRotation = GetControlRotation();
+		NewRotation.Pitch = FMath::ClampAngle(
+			FRotator::NormalizeAxis(NewRotation.Pitch),
+			GuestChar->GetMinViewPitch(),
+			GuestChar->GetMaxViewPitch());
+		SetControlRotation(NewRotation);
+	}
 }
 
 FGenericTeamId AGuestPlayerController::GetGenericTeamId() const
@@ -49,6 +69,15 @@ void AGuestPlayerController::BeginPlay()
 	if (IsLocalController())
 	{
 		CreatePrimaryLayout();
+
+		if (QuestTrackerClass)
+		{
+			QuestTrackerInstance = CreateWidget<UGQuestTrackerWidget>(this, QuestTrackerClass);
+			if (QuestTrackerInstance)
+			{
+				QuestTrackerInstance->AddToViewport(10);
+			}
+		}
 	}
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
@@ -267,6 +296,19 @@ void AGuestPlayerController::DebugCompletedQuests()
 	}
 }
 
+/*
+ * 콘솔 명령어: DebugSetStoryProgress 3
+ * 스토리 진행도를 강제로 설정합니다. RequiredStoryProgress 게이팅 테스트용.
+ */
+void AGuestPlayerController::DebugSetStoryProgress(int32 NewProgress)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	QuestSys->SetStoryProgress(NewProgress);
+	G_LOG(TEXT("[디버그] 스토리 진행도 → %d"), QuestSys->GetStoryProgress());
+}
+
 #pragma endregion
 
 #pragma region  SaveDebug
@@ -332,7 +374,16 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 			QuestSys->ExportQuestSaveData(
 				SaveObject->SavedActiveQuests,
 				SaveObject->SavedCompletedQuestIDs);
+			SaveObject->SavedStoryProgress = QuestSys->GetStoryProgress();
 		}
+
+		if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
+		{
+			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+			SpacetimeSys->ExportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
+		}
+
+		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음
 	}
 	
 	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(ControllerPawn))
@@ -344,7 +395,12 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		}
 	}
 	
-	SaveObject->SaveVersion = 4;
+	if (UGInventoryComponent* Inv = ControllerPawn->FindComponentByClass<UGInventoryComponent>())
+	{
+		Inv->ExportInventorySaveData(SaveObject->SavedInventory);
+	}
+	
+	SaveObject->SaveVersion = UGuestSaveGame::CurrentSaveVersion;
 	SaveObject->SavedAt = FDateTime::Now();
 	SaveObject->PlayerWorld.Location = ControllerPawn->GetActorLocation();
 	SaveObject->PlayerWorld.Rotation = ControllerPawn->GetActorRotation();
@@ -380,45 +436,40 @@ void AGuestPlayerController::ShowSaveBoard()
 {
 	G_LOG(TEXT("Show save"))
 	// 로드 보드가 열려있으면 먼저 닫기
-	if (LoadBoardWidget && LoadBoardWidget->IsInViewport())
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
-		LoadBoardWidget->RemoveFromParent();
-	}
-	
-	if (!SaveBoardWidget && SaveBoardClass)
-	{
-		SaveBoardWidget = CreateWidget<UGuestSaveBoardWidget>(this, SaveBoardClass);
-	}
-    
-	if (SaveBoardWidget && !SaveBoardWidget->IsInViewport())
-	{
-		SaveBoardWidget->AddToViewport();
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(SaveBoardWidget->TakeWidget());
-		SetInputMode(InputMode);
-		bShowMouseCursor = true;
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+			return;
+		}
+
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+		}
+
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard);
 	}
 }
 
 void AGuestPlayerController::ShowLoadBoard()
 {
 	G_LOG(TEXT("Show Load"))
-	if (SaveBoardWidget && SaveBoardWidget->IsInViewport())
+	if (UGuestUISubsystem* UISubsystem = GetUISubsystem())
 	{
-		SaveBoardWidget->RemoveFromParent();
-	}
-	
-	if (!LoadBoardWidget&&LoadBoardClass)
-	{
-		LoadBoardWidget = CreateWidget<UGuestLoadBoardWidget>(this, LoadBoardClass);
-	}
-	if (LoadBoardWidget && !LoadBoardWidget->IsInViewport())
-	{
-		LoadBoardWidget->AddToViewport();
-		FInputModeGameAndUI InputMode;
-		InputMode.SetWidgetToFocus(LoadBoardWidget->TakeWidget());
-		SetInputMode(InputMode);
-		bShowMouseCursor = true;
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+			return;
+		}
+
+		if (UISubsystem->IsWidgetActive(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_SaveBoard))
+		{
+			UISubsystem->PopWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu);
+		}
+
+		UISubsystem->PushWidget(GuestGameplayTags::TAG_WidgetStack_GameMenu, GuestGameplayTags::TAG_Widget_LoadBoard);
 	}
 }
 

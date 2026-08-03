@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
+// Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #pragma once
 
@@ -10,13 +10,13 @@
 #include "GuestNPCBase.generated.h"
 
 class UGNPCScheduleDataAsset;
-class UGNPCDialogueDataAsset;
+class UGDialogueDataAsset;
 
 // NPC의 역할 구분용
 UENUM(BlueprintType)
 enum class ENPCType : uint8
 {
-	Ambient UMETA(DisplayName = "일반 주민 (배회용)"),
+	Ambient    UMETA(DisplayName = "일반 주민 (배회용)"),
 	QuestGiver UMETA(DisplayName = "퀘스트/대화 NPC")
 };
 
@@ -30,30 +30,34 @@ public:
 
 	virtual void BeginPlay() override;
 
-	// 상호작용 규약 구현: 플레이어가 E키를 눌렀을 때 실행될 함수
 	virtual void Interact_Implementation(AActor* Interactor) override;
 
 public:
-	// NPC 역할
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guest|NPC")
 	ENPCType NPCType;
 
-	// 시간대별 이동 스케줄 데이터 에셋
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Schedule")
 	TObjectPtr<UGNPCScheduleDataAsset> ScheduleDataAsset;
 
-	// 대화 데이터 에셋 — 없으면 상호작용 시 대화 건너뜀
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Dialogue")
-	TObjectPtr<UGNPCDialogueDataAsset> DialogueDataAsset;
+	TObjectPtr<UGDialogueDataAsset> DialogueAsset;
+
+	// 이 값 이상으로 스토리 진행도가 올라야 맵에 등장 (0이면 항상 등장)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC")
+	int32 RequiredStoryProgress = 0;
 
 private:
-	// GSpacetimeSubsystem::OnTimeChanged 델리게이트 핸들러
 	UFUNCTION()
 	void HandleTimeChanged(float CurrentHour);
 
-	// 현재 시각에 맞는 스케줄 목적지를 BB에 반영
 	void ApplySchedule(float CurrentHour);
 
-	// 직전에 적용된 스케줄의 목적지 태그 (변경 감지용)
+	// GQuestSubsystem::OnQuestListChanged 수신 → 진행도 재확인
+	UFUNCTION()
+	void HandleQuestListChanged();
+
+	// RequiredStoryProgress 대비 현재 스토리 진행도를 비교해 등장/숨김 적용
+	void ApplyStoryProgressVisibility();
+
 	FName LastActiveScheduleTag = NAME_None;
 };
