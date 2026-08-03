@@ -23,6 +23,7 @@
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/AI/GuestTeamIds.h"
 
 
 
@@ -33,6 +34,11 @@ namespace
 
 AGuestPlayerController::AGuestPlayerController()
 {
+}
+
+FGenericTeamId AGuestPlayerController::GetGenericTeamId() const
+{
+	return FGenericTeamId(GuestTeamIds::Player);
 }
 
 void AGuestPlayerController::BeginPlay()

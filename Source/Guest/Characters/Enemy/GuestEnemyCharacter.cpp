@@ -46,8 +46,9 @@ void AGuestEnemyCharacter::BeginPlay()
 		GuestASC->AddLooseGameplayTag(EnemyIdentityTag);
 	}
 
-	// 잔상은 CharacterMovement/Controller가 아닌 BTS_RotateToTarget 서비스가 Actor Rotation을 직접 제어하므로
-	// 두 시스템이 동시에 회전을 갱신하지 않도록 관련 자동 회전 로직을 모두 꺼둔다.
+	// 잔상은 평상시 배회/일반 Move To에서는 bOrientRotationToMovement로 이동 방향을 바라보고,
+	// 포위(Strafe) 브랜치에서는 BTS_OrientToTarget 서비스가 매 Tick SetActorRotation()으로 타깃 방향을 추가 보정한다.
+	// 두 방식 모두 항상 활성 상태를 유지하며 BT Service는 이 설정을 토글하지 않는다.
 	// NPC 및 현실(Reality) 적의 회전 설정은 변경하지 않는다
 	if (IsAfterimageEnemy())
 	{
@@ -55,7 +56,7 @@ void AGuestEnemyCharacter::BeginPlay()
 
 		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
 		{
-			MoveComp->bOrientRotationToMovement     = false;
+			MoveComp->bOrientRotationToMovement     = true;
 			MoveComp->bUseControllerDesiredRotation = false;
 			MoveComp->bUseRVOAvoidance              = false; // CrowdFollowingComponent와 동시 사용 방지
 		}

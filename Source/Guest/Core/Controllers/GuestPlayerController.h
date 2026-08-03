@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GenericTeamAgentInterface.h"
 #include "InputActionValue.h"
 #include "GuestPlayerController.generated.h"
 
@@ -17,7 +18,7 @@ class UInputAction;
  * * UI 프레임워크와 연동되어 최상위 레이아웃(Primary Layout)을 생성하고 관리합니다.
  */
 UCLASS()
-class GUEST_API AGuestPlayerController : public APlayerController
+class GUEST_API AGuestPlayerController : public APlayerController, public IGenericTeamAgentInterface
 {
     GENERATED_BODY()
 
@@ -52,7 +53,10 @@ protected:
 public:
 
 	AGuestPlayerController();
-	
+
+	// IGenericTeamAgentInterface — Player Team 반환
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 	/** UI 서브시스템에 빠르게 접근하기 위한 헬퍼 */
 	UFUNCTION(BlueprintPure, Category = "Guest|UI")
 	UGuestUISubsystem* GetUISubsystem() const;

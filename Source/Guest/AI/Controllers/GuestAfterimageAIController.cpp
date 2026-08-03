@@ -6,25 +6,53 @@
 #include "Navigation/CrowdFollowingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Guest/Characters/Enemy/GuestEnemyCharacter.h"
-#include "Guest/Characters/Player/GuestCharacter.h"
+#include "Guest/AI/GuestTeamIds.h"
+#include "Guest/Subsystem/GAfterimageCombatCoordinatorSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
 // Blackboard 키 이름 정의
 const FName AGuestAfterimageAIController::BB_TargetActor    = TEXT("TargetActor");
 const FName AGuestAfterimageAIController::BB_StrafeLocation = TEXT("StrafeLocation");
+const FName AGuestAfterimageAIController::BB_HasAttackToken = TEXT("HasAttackToken");
 
 AGuestAfterimageAIController::AGuestAfterimageAIController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
+	// 이 컨트롤러(Listener)의 팀을 Enemy로 고정 — GetTeamAttitudeTowards() 판정의 기준이 된다
+	SetGenericTeamId(FGenericTeamId(GuestTeamIds::Enemy));
+
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	// 잔상 Sight는 Hostile 판정 대상만 감지
 	SightConfig->DetectionByAffiliation.bDetectEnemies    = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals   = true;
-	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals   = false;
+	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	AIPerceptionComp->ConfigureSense(*SightConfig);
 	AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
 	SetPerceptionComponent(*AIPerceptionComp);
+}
+
+ETeamAttitude::Type AGuestAfterimageAIController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	// 감지 대상은 Pawn이므로 Controller를 거쳐 Team을 조회한다
+	const APawn* OtherPawn = Cast<const APawn>(&Other);
+	const AController* OtherController = OtherPawn ? OtherPawn->GetController() : nullptr;
+	const IGenericTeamAgentInterface* OtherTeamAgent = Cast<const IGenericTeamAgentInterface>(OtherController);
+	if (!OtherTeamAgent)
+	{
+		return ETeamAttitude::Neutral;
+	}
+
+	const FGenericTeamId MyTeamId    = GetGenericTeamId();
+	const FGenericTeamId OtherTeamId = OtherTeamAgent->GetGenericTeamId();
+
+	if (MyTeamId == FGenericTeamId::NoTeam || OtherTeamId == FGenericTeamId::NoTeam)
+	{
+		return ETeamAttitude::Neutral;
+	}
+
+	return MyTeamId == OtherTeamId ? ETeamAttitude::Friendly : ETeamAttitude::Hostile;
 }
 
 void AGuestAfterimageAIController::ApplySightDataAsset()
@@ -61,13 +89,14 @@ void AGuestAfterimageAIController::ApplyCrowdSettings()
 	CrowdComp->SetCrowdAvoidanceQuality(static_cast<ECrowdAvoidanceQuality::Type>(CrowdAvoidanceQuality), false);
 	CrowdComp->SetCrowdSeparation(bEnableCrowdSeparation, false);
 	CrowdComp->SetCrowdSeparationWeight(CrowdSeparationWeight, false);
+	CrowdComp->SetCrowdCollisionQueryRange(CollisionQueryRange, false);
 
 	// 잔상 Crowd Agent끼리만 서로 회피하도록 그룹 지정 (플레이어/현실 적은 Crowd Agent가 아니므로 영향 없음)
 	CrowdComp->SetAvoidanceGroup(AfterimageCrowdGroup, false);
 	CrowdComp->SetGroupsToAvoid(AfterimageCrowdGroup, false);
 	CrowdComp->SetGroupsToIgnore(0, false);
 
-	// Crowd가 이동 속도 방향으로 캐릭터를 강제 회전하지 않도록 설정 — 회전은 BTS_RotateToTarget이 전담
+	// Crowd가 이동 속도 방향으로 캐릭터를 강제 회전하지 않도록 설정 — 배회/이동 회전은 bOrientRotationToMovement, 포위 중 타깃 보정은 BTS_OrientToTarget이 전담
 	CrowdComp->SetCrowdRotateToVelocity(bCrowdRotateToVelocity);
 
 	CrowdComp->UpdateCrowdAgentParams();
@@ -118,6 +147,9 @@ void AGuestAfterimageAIController::OnPossess(APawn* InPawn)
 		return;
 	}
 
+	// 공격권 관련 Blackboard 값 초기화
+	BB->SetValueAsBool(BB_HasAttackToken, false);
+
 	G_LOG(TEXT("잔상 AI 행동 트리 작동 시작: %s"), *InPawn->GetName());
 
 	// 4) Perception 델리게이트 등록 — 재빙의(재Possess) 시 중복 방지
@@ -129,29 +161,141 @@ void AGuestAfterimageAIController::OnPossess(APawn* InPawn)
 		// 5) Blackboard와 델리게이트가 모두 준비된 뒤 리스너 갱신 요청
 		AIPerceptionComp->RequestStimuliListenerUpdate();
 	}
+
+	// 6) 알람 반경 검색 대상으로 Coordinator에 등록
+	if (UWorld* World = GetWorld())
+	{
+		if (UGAfterimageCombatCoordinatorSubsystem* Coordinator = World->GetSubsystem<UGAfterimageCombatCoordinatorSubsystem>())
+		{
+			Coordinator->RegisterAfterimageController(this);
+		}
+	}
+}
+
+void AGuestAfterimageAIController::OnUnPossess()
+{
+	// Super::OnUnPossess()가 Pawn 참조를 해제하기 전에 토큰 반환/등록 해제를 마쳐야 한다
+	ReleaseAttackTokenIfHeld();
+
+	if (UWorld* World = GetWorld())
+	{
+		if (UGAfterimageCombatCoordinatorSubsystem* Coordinator = World->GetSubsystem<UGAfterimageCombatCoordinatorSubsystem>())
+		{
+			Coordinator->UnregisterAfterimageController(this);
+		}
+	}
+
+	Super::OnUnPossess();
 }
 
 void AGuestAfterimageAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	// 플레이어 캐릭터만 전투 타깃으로 처리
-	if (!Cast<AGuestCharacter>(Actor)) return;
+	if (!IsValid(Actor))
+	{
+		return;
+	}
+
+	// 회전(Focus 유사 역할)은 Behavior Tree의 BTS_OrientToTarget 서비스가 TargetActor 키를 읽어 직접 처리한다
+	const bool bSuccessfullySensed = Stimulus.WasSuccessfullySensed();
+
+	if (bSuccessfullySensed)
+	{
+		// Sight Affiliation 필터를 이미 통과했지만 방어적으로 한 번 더 확인한다
+		if (GetTeamAttitudeTowards(*Actor) != ETeamAttitude::Hostile)
+		{
+			return;
+		}
+	}
+
+	UWorld* World = GetWorld();
+	UGAfterimageCombatCoordinatorSubsystem* Coordinator = World ? World->GetSubsystem<UGAfterimageCombatCoordinatorSubsystem>() : nullptr;
+	if (Coordinator)
+	{
+		// 그룹 전투 유지/해제 판단은 Coordinator가 DirectObservers 기준으로 수행한다
+		Coordinator->ReportTargetSensed(this, Actor, bSuccessfullySensed, AlertRadius);
+		return;
+	}
+
+	// 예외적인 초기화 실패 상황 — 최소한 자기 Blackboard만 안전하게 정리하는 fallback
+	G_WARN(TEXT("AfterimageCombatCoordinatorSubsystem을 찾을 수 없습니다. 개별 Blackboard만 갱신합니다. (Controller: %s)"), *GetName());
 
 	UBlackboardComponent* BB = GetBlackboardComponent();
 	if (!BB)
 	{
-		G_WARN(TEXT("HandleTargetPerceptionUpdated: Blackboard가 아직 초기화되지 않았습니다."));
 		return;
 	}
 
-	// 회전(Focus 유사 역할)은 Behavior Tree의 BTS_RotateToTarget 서비스가 이 키를 읽어 직접 처리한다
-	if (Stimulus.WasSuccessfullySensed() && IsValid(Actor))
+	if (bSuccessfullySensed)
 	{
 		BB->SetValueAsObject(BB_TargetActor, Actor);
-		G_LOG(TEXT("잔상 전투 타깃 감지: %s"), *Actor->GetName());
 	}
-	else
+	else if (BB->GetValueAsObject(BB_TargetActor) == Actor)
 	{
+		ReleaseAttackTokenIfHeld();
 		BB->ClearValue(BB_TargetActor);
-		G_LOG(TEXT("잔상 전투 타깃 상실: %s"), *Actor->GetName());
 	}
+}
+
+void AGuestAfterimageAIController::ReceiveSharedCombatTarget(AActor* TargetActor)
+{
+	if (!IsValid(TargetActor))
+	{
+		return;
+	}
+
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB)
+	{
+		return;
+	}
+
+	BB->SetValueAsObject(BB_TargetActor, TargetActor);
+}
+
+void AGuestAfterimageAIController::ClearSharedCombatTarget(AActor* TargetActor)
+{
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB)
+	{
+		return;
+	}
+
+	// 이미 다른 Target으로 전환된 경우 그 값을 지우지 않는다
+	if (BB->GetValueAsObject(BB_TargetActor) != TargetActor)
+	{
+		return;
+	}
+
+	ReleaseAttackTokenIfHeld();
+	BB->ClearValue(BB_TargetActor);
+}
+
+void AGuestAfterimageAIController::ReleaseAttackTokenIfHeld()
+{
+	UBlackboardComponent* BB = GetBlackboardComponent();
+	if (!BB)
+	{
+		return;
+	}
+
+	if (!BB->GetValueAsBool(BB_HasAttackToken))
+	{
+		return;
+	}
+
+	AActor* TargetActor = Cast<AActor>(BB->GetValueAsObject(BB_TargetActor));
+	APawn* ControlledPawn = GetPawn();
+
+	if (IsValid(TargetActor) && IsValid(ControlledPawn))
+	{
+		if (UWorld* World = GetWorld())
+		{
+			if (UGAfterimageCombatCoordinatorSubsystem* Coordinator = World->GetSubsystem<UGAfterimageCombatCoordinatorSubsystem>())
+			{
+				Coordinator->ReleaseAttackToken(TargetActor, ControlledPawn);
+			}
+		}
+	}
+
+	BB->SetValueAsBool(BB_HasAttackToken, false);
 }
