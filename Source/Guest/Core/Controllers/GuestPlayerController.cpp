@@ -27,6 +27,7 @@
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/AI/GuestTeamIds.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 
 
@@ -53,6 +54,11 @@ void AGuestPlayerController::UpdateRotation(float DeltaTime)
 			GuestChar->GetMaxViewPitch());
 		SetControlRotation(NewRotation);
 	}
+}
+
+FGenericTeamId AGuestPlayerController::GetGenericTeamId() const
+{
+	return FGenericTeamId(GuestTeamIds::Player);
 }
 
 void AGuestPlayerController::BeginPlay()
@@ -100,6 +106,14 @@ void AGuestPlayerController::SetupInputComponent()
 		if (IA_ToggleDebugUI)
 		{
 			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
+		}
+		if (IA_SaveGame)
+		{
+			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
+		}
+		if (IA_LoadGame)
+		{
+			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
 		}
 		// IA_ToggleInventory는 AGuestCharacter::SetupPlayerInputComponent에서 바인딩
 	}

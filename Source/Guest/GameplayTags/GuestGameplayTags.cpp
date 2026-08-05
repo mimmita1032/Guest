@@ -49,16 +49,27 @@ namespace GuestGameplayTags
 	
 	//인풋
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Interact, "Guest.InputTag.Interact");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Attack,   "Guest.InputTag.Attack");
 
 	//Ability
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Interact, "Guest.Ability.Interact");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Melee,    "Guest.Ability.Melee");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Flash,    "Guest.Ability.Flash");
+
+	//인풋
+	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Flash,   "Guest.InputTag.Flash");
 
 	//State
-	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "Guest.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead,              "Guest.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Blinded,           "Guest.State.Blinded");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Calm,        "Guest.State.Alert.Calm");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Suspicious,  "Guest.State.Alert.Suspicious");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Alerted,     "Guest.State.Alert.Alerted");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Chasing,     "Guest.State.Alert.Chasing");
+
+	//Enemy 타입 식별 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Enemy_Type_Reality,    "Guest.Enemy.Type.Reality");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Enemy_Type_AfterImage, "Guest.Enemy.Type.AfterImage");
 
 	//GE SetByCaller 데이터
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Damage, "Guest.Data.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
 
 }
