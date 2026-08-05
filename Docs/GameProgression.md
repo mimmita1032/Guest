@@ -28,7 +28,7 @@
 | StoryProgress | 위치/씬 | 사건 | 플레이어 행동 | 다음 단계 트리거 | 구현 상태 |
 |---|---|---|---|---|---|
 | 0 | 현실 · 들판 (`L_Field_01`) | 오프닝. 들판에 핀 꽃을 발견 | 꽃을 화분에 옮겨 담는다 | 화분 들고 주점으로 이동 | 구현됨 |
-| 1 | 주점 (`L_TavernMain`) | 귀가. 주점에 화분을 놓는다 | 테이블에 화분 배치 | 배치 완료 → 나레이션 재생 | 부분구현 |
+| 1 | 주점 (`L_TavernMain`) | 귀가. 주점에 화분을 놓는다 | 테이블에 화분 배치 | 배치 완료 → 나레이션 재생 | 구현됨 |
 | 2 | 주점 (`L_TavernMain`) | 나레이션 종료 후 **하루 경과**. 스미스 첫 방문 | 맥주 2잔 접객 → 의뢰 수주 | 대화 완료 → `Q_Smith_001` 수락 | 미구현 |
 | 3 | 현실 · 주택가 (`L_Residential_01`) | 평범한 건물 촬영 | 아파트/주택가/달동네 3종 촬영 | 사진 3장 확보 후 귀가 | 미구현 |
 | 4 | 주점 (`L_TavernMain`) | 사진 전달. 스미스가 "영감이 안 온다"며 보수 지불 | 스미스와 대화 | `Q_Smith_001` 완료 | 미구현 |
@@ -45,7 +45,8 @@
 콘텐츠 배치보다 **먼저** 끝내야 하는 것들. 나중에 하면 이미 만든 퀘스트/세이브를 다시 손봐야 한다.
 
 > **진행 상황 (2026-07-26): A·B·C·D 코드 작업 완료.** 브랜치 `feat/item-instance-data`.
-> 남은 것은 **에디터 작업**(맨 아래 「에디터에서 해야 할 일」)과 **E(데모 엔딩 화면)**.
+> **(2026-08-05): 에디터 작업 1~5 완료 — Stage 0~1이 한 줄기로 완주된다.** 브랜치 `feat/quest-content-04`.
+> 남은 선행 작업은 **E(데모 엔딩 화면)** 뿐이고, 다음은 Stage 2(스미스 첫 방문) 콘텐츠다.
 
 ### A. 인벤토리 개체별 데이터 (per-instance data) — ✅ 완료
 
@@ -199,10 +200,10 @@ struct FGuestSavedInventoryEntry {
   - ✅ `AGItemPickup` — 꽃 줍기·인벤토리 획득·퀘스트 목표 갱신
   - ✅ `AGQuestAutoStarter` — 레벨 진입 시 NPC 없이 퀘스트 자동 수락
   - ✅ `DA_Item_Flower` (`Content/Items/Definitions/Quest/`)
-  - ✅ `DT_QuestData`의 `Q_Field_001` (Step01: Collect(Flower) → ReachHome)
+  - ✅ `DT_QuestData`의 `Q_Field_001` '분위기 전환' (Step01: Collect(Flower))
   - ✅ `L_Field_01`에 `AGItemPickup`(꽃) + `AGQuestAutoStarter` 배치
-  - ⬜ **(에디터)** `Q_Field_001`을 꽃 줍기까지로 축소 + `StoryProgressOnComplete = 1` (아래 「퀘스트 분할」)
-- **구현 상태**: 구현됨
+  - ✅ **(에디터)** `Q_Field_001`을 꽃 줍기까지로 축소 + `StoryProgressOnComplete = 1` (아래 「퀘스트 분할」)
+- **구현 상태**: 구현됨 — 실측 확인 완료 (꽃 줍기 → 진행도 1 → `Q_Field_002` 자동 수락)
 
 ### 퀘스트 분할 — 주점 이동 게이팅 (확정)
 
@@ -213,15 +214,22 @@ struct FGuestSavedInventoryEntry {
 그런데 원래 설계는 꽃 줍기와 주점 도착·배치가 **같은 퀘스트의 다른 단계**였다.
 그러면 진행도가 오르는 시점이 주점에서 화분을 놓은 *뒤*라서, 주점 이동을 막는 데 쓸 수 없다.
 
-**채택안 — 퀘스트를 둘로 쪼갠다** (데이터만으로 해결):
+**채택안 — 퀘스트를 둘로 쪼갠다** (데이터만으로 해결). ✅ 적용 완료:
 
 | 퀘스트 | 범위 | 핵심 필드 |
 |---|---|---|
-| `Q_Field_001` | 꽃 줍기까지 | `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002` |
-| `Q_Field_002` | 귀가 + 화분 배치 | `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋 |
+| `Q_Field_001` '분위기 전환' | 꽃 줍기까지 | `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002` |
+| `Q_Field_002` '꽃의 자리' | 귀가(Step02) + 화분 배치(Step03) | `RequiredStoryProgress = 1`, `NarrationOnComplete = DA_Narration_Tavern_001` |
 
-그리고 `DT_SpacetimeData`의 `Tavern` 행에 **`RequiredStoryProgress = 1`**.
+그리고 `DT_SpacetimeData`의 `Tavern` 행에 **`RequiredStoryProgress = 1`**. ✅
 → 꽃을 줍기 전에는 주점 좌표가 `Locked`으로 뜨고 이동이 거부된다.
+
+> ⚠️ **미검증**: "꽃을 줍지 않고 주점 이동을 시도하면 거부된다"는 경로는 아직 실제로 밟아보지 않았다.
+> 데이터는 넣었으나 거부 동작 자체는 확인 필요.
+
+**주의 — `NextQuestID`는 비어 있어도 경고가 없다.** `GQuestSubsystem.cpp:194`가
+`if (!NextQuestID.IsNone())`로 조용히 건너뛰므로, 연결이 안 되면 로그에 아무것도 남지 않는다.
+"퀘스트 완료" 다음 줄에 "연결 퀘스트 … 자동 수락"이 없으면 이 필드를 의심할 것.
 
 **기각안**: `FQuestStepData`에 단계 단위 `StoryProgressOnComplete`를 추가하는 방법.
 퀘스트를 하나로 유지할 수 있지만 개념이 하나 늘어난다. 스미스 체인도 퀘스트 단위로 끊기므로
@@ -241,13 +249,14 @@ struct FGuestSavedInventoryEntry {
   - ✅ `AGItemPlacementPoint` — 인벤토리에서 제거 후 월드에 시각화 + Place 목표 브로드캐스트
   - ✅ `EQuestObjectiveType::Place`
   - ✅ 나레이션 시스템 (`UGNarrationDataAsset`, `WBP_Narration`, `GQuestSubsystem::OnNarrationRequested`)
-  - ⬜ (에디터) `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place) — 「퀘스트 분할」 참고
-  - ⬜ (에디터) `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem=DA_Item_Flower) 배치
+  - ✅ (에디터) `DT_QuestData`에 **`Q_Field_002`** 신설 (Step02 Reach → Step03 Place) — 「퀘스트 분할」 참고
+  - ✅ (에디터) `L_TavernMain`에 `AGQuestReachTrigger`(`Reach_Home`) + `AGItemPlacementPoint`(RequiredItem=DA_Item_Flower) 배치
   - ✅ (에디터) `DT_SpacetimeData`의 `Tavern` 행 (2026 / 0)
-  - ⬜ (에디터) `Tavern` 행의 `RequiredStoryProgress`를 `1`로 — 꽃을 줍기 전에는 주점에 못 가게
-  - ⬜ (에디터) 나레이션 애셋 본문 작성 — "다음 날 아침…" 문구로 하루 경과를 연출
-  - ⬜ 날짜 시스템(선행작업 D) 연동
-- **구현 상태**: 부분구현 (C++ 준비 완료, 콘텐츠 작업 남음)
+  - ✅ (에디터) `Tavern` 행의 `RequiredStoryProgress`를 `1`로 — 꽃을 줍기 전에는 주점에 못 가게
+  - ⬜ (에디터) 나레이션 애셋 본문 작성 — 현재 `DA_Narration_Tavern_001`은 테스트용 텍스트 상태
+  - ✅ 날짜 시스템(선행작업 D) 연동 — `DaysToAdvanceOnFinish = 1`, `HourOnFinish = 9.0`
+- **구현 상태**: 구현됨 — 실측 확인 완료
+  (도착 → Step02 완료 → Step03 → 화분 배치 → `Q_Field_002` 완료 → 나레이션 → `1일 경과 → 2일차 9.00시`)
 
 ## 상세 — Stage 2~4: 스미스 첫 방문 (`Q_Smith_001` 평범한 것들의 기록)
 
@@ -333,20 +342,25 @@ struct FGuestSavedInventoryEntry {
   - 지금 구조에서는 **각각 다른 행**이어야 구분된다. 다만 같은 레벨을 세 행이 가리키면
     플레이어 눈에는 같은 풍경을 세 번 찍는 것이 된다
 
-### 3. 시간 경과 연출
-- ⬜ `DA_Narration`(꽃 배치 후 재생되는 것)의 **`Days To Advance On Finish`** 를 `1`로
-- ⬜ **`Hour On Finish`** 를 `9.0` 정도로 (다음 날 아침)
+### 3. 시간 경과 연출 — ✅ 완료
+- ✅ `DA_Narration_Tavern_001`의 **`Days To Advance On Finish`** = `1`
+- ✅ **`Hour On Finish`** = `9.0` (다음 날 아침)
 
-### 4. 퀘스트 분할 (주점 이동 게이팅 — 「Stage 0 · 퀘스트 분할」 참고)
-- ⬜ `DT_QuestData`의 `Q_Field_001`을 **꽃 줍기까지로 축소**
-  - `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002`
-- ⬜ `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place)
-  - `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋
-- ⬜ `DT_SpacetimeData`의 `Tavern` 행 → **`RequiredStoryProgress = 1`**
+> **함정**: `Hour On Finish`에는 `EditCondition = "DaysToAdvanceOnFinish > 0"`이 걸려 있다
+> (`GNarrationDataAsset.h:49`). `Days`를 1로 **확정하기 전에** `Hour`를 타이핑하면 값이 들어가지 않는다.
+> 기본값 `-1.0`은 "시각은 건드리지 않음"이라, 이 경우 날짜만 넘어가고 시계는 흐르던 그대로다.
+> 로그에 `→ 2일차 9.00시`가 아니라 어중간한 시각이 찍히면 이걸 의심할 것.
 
-### 5. 나머지 (기존 목록)
+### 4. 퀘스트 분할 (주점 이동 게이팅 — 「Stage 0 · 퀘스트 분할」 참고) — ✅ 완료
+- ✅ `DT_QuestData`의 `Q_Field_001`을 **꽃 줍기까지로 축소**
+  - `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002`, `NarrationOnComplete` 비움
+- ✅ `DT_QuestData`에 **`Q_Field_002`** 신설 (Step02 Reach → Step03 Place)
+  - `RequiredStoryProgress = 1`, `NarrationOnComplete = DA_Narration_Tavern_001`
+- ✅ `DT_SpacetimeData`의 `Tavern` 행 → **`RequiredStoryProgress = 1`**
+
+### 5. 나머지
 - ⬜ `WBP_Narration`에 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut` (선택 — 없으면 컷 전환)
-- ⬜ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
+- ✅ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
 
 > ⚠️ **기존 세이브의 사진은 유실된다.** `SavedPhotos` 배열을 제거하고 인벤토리로 일원화했기 때문이다.
 > 개발 단계라 마이그레이션 코드는 넣지 않았다. 새로 시작하면 문제없다.
@@ -354,9 +368,9 @@ struct FGuestSavedInventoryEntry {
 ## 작업 순서 권고
 
 1. ~~**선행 시스템** — A(개체별 데이터) → B(사진 아이템화) → C(Photo 목표) → D(날짜)~~ ✅ 코드 완료
-2. **에디터 작업 1~3** — 특히 `DA_Item_Photo`가 없으면 촬영 자체가 동작하지 않는다
-3. **Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게
-4. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다
+2. ~~**에디터 작업 1~3** — 특히 `DA_Item_Photo`가 없으면 촬영 자체가 동작하지 않는다~~ ✅ 완료
+3. ~~**Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게~~ ✅ 완료
+4. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다 ← **지금 여기**
 5. **Stage 5~8** — 스미스 체인 나머지
 6. **Stage 9 + E** — 엔딩과 데모 종료 화면
 
@@ -391,22 +405,30 @@ struct FGuestSavedInventoryEntry {
 
 ## TODO
 
-### 다음 할 일 — 에디터 (Stage 1 완주까지)
-촬영·이동 파이프라인은 실측 확인 완료. 남은 것은 이 셋이고, 순서대로 하면 Stage 1이 한 줄기로 이어진다.
+### ✅ 완료 — Stage 1 완주 (2026-08-05)
+꽃 줍기부터 화분 배치 후 하루 경과까지 실측 확인 완료. 아래 셋 모두 끝났다.
 
-1. **`DA_Narration` 시간 경과 설정** — `Days To Advance On Finish = 1`, `Hour On Finish = 9.0`
-   → 「에디터에서 해야 할 일 · 3」
-2. **퀘스트 분할** — `Q_Field_001` 축소(`StoryProgressOnComplete = 1`) + `Q_Field_002` 신설 + `Tavern` 행 `RequiredStoryProgress = 1`
-   → 「에디터에서 해야 할 일 · 4」, 배경은 「Stage 0 · 퀘스트 분할」
-3. **`L_TavernMain` 배치** — `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem = `DA_Item_Flower`)
-   → 「에디터에서 해야 할 일 · 5」
+1. ~~`DA_Narration` 시간 경과 설정~~ → `DA_Narration_Tavern_001`, `Days = 1` / `Hour = 9.0`
+2. ~~퀘스트 분할~~ → `Q_Field_001` 축소 + `Q_Field_002` 신설 + `Tavern` 행 게이팅
+3. ~~`L_TavernMain` 배치~~ → 기존 배치분으로 충족 (`Reach_Home` 트리거 + 배치 지점)
+
+### 다음 할 일 — Stage 2 (스미스 첫 방문)
+핵심 루프가 처음으로 완주되는 구간이다. 「상세 — Stage 2~4」 참고.
+
+1. **`DT_QuestData`의 `Q_Field_002` → 스미스 연결** — 현재 `NextQuestID`가 비어 있어 하루가 지나도
+   다음 퀘스트가 없다. `Q_Smith_001`을 만든 뒤 연결할 것
+2. **`Q_Smith_001` 행 작성** — 현재 스텁 상태. `RequiredStoryProgress = 2`
+3. **스미스 대화 노드** (`DT_Smith`, `DA_Smith_Dialogue`) — 맥주 2잔 접객 → 의뢰 수주
+4. **`L_Residential_01` 촬영 구역** — 아파트/주택가/달동네 3개소
+
+> 남은 검증: **꽃을 줍지 않고 주점 이동을 시도했을 때 실제로 거부되는지** (「Stage 0 · 퀘스트 분할」 참고)
 
 ### 기타
 - 노션 「퀘스트 흐름 개요」의 `Q_S_SMT_*` 표기를 `Q_Smith_*`로 갱신
 - 노션 「퀘스트 흐름 개요」에 꽃 퀘스트(`Q_Field_001`) 추가 — 현재 "게임 시작 즉시 스미스"로 되어 있어 실제 흐름과 다름
 - 각 Stage별 `RequiredStoryProgress` / `StoryProgressOnComplete` 실제 값 확정 후 `DT_QuestData`와 대조
 - 사진 목표 판정 기준 확정 (선행작업 C)
-- 날짜 진행 트리거 확정 (선행작업 D)
+- ~~날짜 진행 트리거 확정 (선행작업 D)~~ ✅ 나레이션 종료 시점으로 확정, 실측 확인 완료
 - **단계 단위 스토리 진행도** — `FQuestStepData`에 `StoryProgressOnComplete` 추가
   - 지금은 `FQuestData`(퀘스트 단위)에만 있어서, 한 퀘스트 중간에 무언가를 해금하려면
     퀘스트를 쪼개는 수밖에 없다 (Stage 0의 `Q_Field_001` 분할이 그 사례)
