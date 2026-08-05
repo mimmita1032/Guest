@@ -91,4 +91,8 @@ private:
      * TWeakObjectPtr 사용으로 PlayerController 가 파괴되어도 크래시 방지.
      */
     mutable TWeakObjectPtr<AGuestPlayerController> CachedController;
+
+protected:
+    // ★ 추가: 서브시스템의 입력 모드를 CommonUI에 전달
+    virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 };
