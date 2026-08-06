@@ -48,4 +48,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|시간 경과",
 		meta = (EditCondition = "DaysToAdvanceOnFinish > 0"))
 	float HourOnFinish = -1.0f;
+
+	// 나레이션이 끝난 뒤 올릴 스토리 진행도 (0이면 변화 없음).
+	// 퀘스트 완료 즉시 올리면 나레이션이 화면을 덮기도 전에 세계가 바뀐다 —
+	// 게이팅된 NPC가 연출 도중에 나타나버린다. 연출이 끝난 뒤에 바뀌어야 할 것은 여기에 둔다.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|시간 경과")
+	int32 StoryProgressOnFinish = 0;
 };
