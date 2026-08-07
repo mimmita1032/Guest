@@ -70,6 +70,14 @@ private:
 	void PopulateChoices(const TArray<FDialogueChoice>& Choices);
 	void AdvanceTo(FName NextNodeID);
 
+	/**
+	 * 선택지 표시 조건 판정.
+	 *  - 비어 있으면 항상 표시
+	 *  - "Q_Smith_001"        — 그 퀘스트가 진행 중일 때
+	 *  - "Q_Smith_001.Step02" — 진행 중이고 현재 단계가 Step02일 때
+	 */
+	bool IsChoiceConditionMet(FName ConditionID) const;
+
 	UFUNCTION()
 	void OnNextClicked();
 

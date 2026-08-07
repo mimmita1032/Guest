@@ -76,6 +76,11 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 		if (Btn_Next) Btn_Next->SetVisibility(ESlateVisibility::Visible);
 		if (Text_PlayerResponse)
 		{
+			// 선택지 노드를 지나오면 Collapsed로 남아 있다 — 텍스트만 채우면 화면에 나오지 않는다.
+			// Visible이 아니라 SelfHitTestInvisible이어야 한다. 이 텍스트는 Btn_Next 위에 얹히므로
+			// 히트 테스트 대상이 되면 클릭을 자기가 먹고 버튼이 눌리지 않는다.
+			Text_PlayerResponse->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+
 			if (!Node->PlayerResponseText.IsEmpty())
 			{
 				Text_PlayerResponse->SetText(FText::FromString(Node->PlayerResponseText));
@@ -91,6 +96,26 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 	}
 }
 
+bool UGuestDialogueWidgetBase::IsChoiceConditionMet(FName ConditionID) const
+{
+	// 조건이 없으면 항상 표시
+	if (ConditionID.IsNone()) return true;
+
+	const UWorld* World = GetWorld();
+	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+	const UGQuestSubsystem* QuestSys = GI ? GI->GetSubsystem<UGQuestSubsystem>() : nullptr;
+	if (!QuestSys) return false;
+
+	// "QuestID.StepID" — 단계까지 일치해야 한다. 점이 없으면 단계 무관.
+	FString QuestPart, StepPart;
+	if (ConditionID.ToString().Split(TEXT("."), &QuestPart, &StepPart))
+	{
+		return QuestSys->GetCurrentStepID(FName(*QuestPart)) == FName(*StepPart);
+	}
+
+	return QuestSys->IsQuestActive(ConditionID);
+}
+
 void UGuestDialogueWidgetBase::PopulateChoices(const TArray<FDialogueChoice>& Choices)
 {
 	if (!Box_Choices || !ChoiceWidgetClass) return;
@@ -100,6 +125,8 @@ void UGuestDialogueWidgetBase::PopulateChoices(const TArray<FDialogueChoice>& Ch
 
 	for (const FDialogueChoice& Choice : Choices)
 	{
+		if (!IsChoiceConditionMet(Choice.ConditionID)) continue;
+
 		UGDialogueChoiceWidget* ChoiceWidget =
 			CreateWidget<UGDialogueChoiceWidget>(this, ChoiceWidgetClass);
 		if (!ChoiceWidget) continue;
