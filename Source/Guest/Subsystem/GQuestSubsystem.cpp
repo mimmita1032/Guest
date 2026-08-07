@@ -217,6 +217,12 @@ bool UGQuestSubsystem::IsQuestActive(FName QuestID) const
 	return ActiveQuests.Contains(QuestID);
 }
 
+FName UGQuestSubsystem::GetCurrentStepID(FName QuestID) const
+{
+	const FQuestRuntimeData* Runtime = ActiveQuests.Find(QuestID);
+	return Runtime ? Runtime->CurrentStepID : NAME_None;
+}
+
 bool UGQuestSubsystem::IsQuestCompleted(FName QuestID) const
 {
 	return CompletedQuests.Contains(QuestID);

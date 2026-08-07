@@ -58,6 +58,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsQuestCompleted(FName QuestID) const;
 
+	// 진행 중인 퀘스트의 현재 단계 ID (활성이 아니면 NAME_None)
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	FName GetCurrentStepID(FName QuestID) const;
+
 	// 현재 진행 중인 퀘스트 목록 반환
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	TArray<FName> GetActiveQuestIDs() const;
