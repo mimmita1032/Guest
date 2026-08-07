@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AIController.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
+#include "Guest/AI/Controllers/GuestAIControllerBase.h"
 #include "GuardDogAIController.generated.h"
 
 class UGAISightDataAsset;
@@ -16,16 +14,14 @@ class UBlackboardData;
  * 시야 감지 결과를 Blackboard에 기록하고 디버그 정보를 제공한다.
  */
 UCLASS()
-class GUEST_API AGuardDogAIController : public AAIController
+class GUEST_API AGuardDogAIController : public AGuestAIControllerBase
 {
 	GENERATED_BODY()
 
 public:
 	AGuardDogAIController();
 
-	// BB_GuardDog와 이름이 일치해야 하는 Blackboard 키다.
-	static const FName BB_TargetActor;
-	static const FName BB_LastKnownLocation;
+	// BB_TargetActor / BB_LastKnownLocation은 AGuestAIControllerBase에서 상속받는다.
 	static const FName BB_IsAlerted;
 
 	UFUNCTION(BlueprintPure, Category = "Guest|GuardDog|Perception")
@@ -49,12 +45,6 @@ protected:
 	/** 지정하지 않으면 생성자의 기본 시야 설정을 사용한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Perception")
 	TObjectPtr<UGAISightDataAsset> SightDataAsset;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guest|GuardDog|Perception")
-	TObjectPtr<UAIPerceptionComponent> AIPerceptionComp;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Guest|GuardDog|Perception")
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Perception")
 	TObjectPtr<AActor> SensedPlayer;

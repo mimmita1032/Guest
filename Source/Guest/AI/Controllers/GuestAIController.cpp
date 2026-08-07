@@ -11,52 +11,30 @@
 #include "Guest/Utils/GLog.h"
 #include "DrawDebugHelpers.h"
 
-// Blackboard 키 이름 정의
-const FName AGuestAIController::BB_TargetActor           = TEXT("TargetActor");
+// Blackboard 키 이름 정의 — BB_TargetActor / BB_LastKnownLocation은 AGuestAIControllerBase에서 정의한다.
 const FName AGuestAIController::BB_TargetLocation        = TEXT("TargetLocation");
-const FName AGuestAIController::BB_LastKnownLocation     = TEXT("LastKnownLocation");
 const FName AGuestAIController::BB_ScheduledDestination  = TEXT("ScheduledDestination");
 const FName AGuestAIController::BB_bHasSchedule          = TEXT("bHasSchedule");
 const FName AGuestAIController::BB_bScheduleArrived      = TEXT("bScheduleArrived");
 
 AGuestAIController::AGuestAIController()
 {
-	// SightConfig는 기본값으로 초기화 — 실제 수치는 BeginPlay에서 DataAsset으로 덮어씀
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	// SightConfig/AIPerceptionComp 객체 자체는 Base 생성자가 만든다. 여기서는 세부값만 채운 뒤
+	// FinalizeSightPerceptionSetup()으로 ConfigureSense에 반영한다.
 	SightConfig->DetectionByAffiliation.bDetectEnemies    = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals   = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 
-	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
-	AIPerceptionComp->ConfigureSense(*SightConfig);
-	AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
-	SetPerceptionComponent(*AIPerceptionComp);
+	FinalizeSightPerceptionSetup();
 
 	PrimaryActorTick.bCanEverTick = true;
-}
-
-void AGuestAIController::ApplySightDataAsset()
-{
-	if (!SightDataAsset)
-	{
-		G_WARN(TEXT("SightDataAsset이 설정되지 않았습니다. 기본값을 사용합니다."));
-		return;
-	}
-
-	SightConfig->SightRadius                  = SightDataAsset->SightRadius;
-	SightConfig->LoseSightRadius              = SightDataAsset->LoseSightRadius;
-	SightConfig->PeripheralVisionAngleDegrees = SightDataAsset->PeripheralVisionAngleDegrees;
-	SightConfig->SetMaxAge(SightDataAsset->MaxAge);
-
-	// 변경된 수치를 PerceptionComponent에 반영
-	AIPerceptionComp->ConfigureSense(*SightConfig);
 }
 
 void AGuestAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ApplySightDataAsset();
+	ApplySightDataAssetToConfig(SightDataAsset);
 
 	if (AIPerceptionComp)
 	{

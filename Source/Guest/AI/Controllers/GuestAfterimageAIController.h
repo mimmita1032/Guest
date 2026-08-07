@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AIController.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
+#include "Guest/AI/Controllers/GuestAIControllerBase.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "Guest/Data/DataAssets/GAISightDataAsset.h"
 #include "GuestAfterimageAIController.generated.h"
@@ -33,7 +31,7 @@ enum class EGuestCrowdAvoidanceQuality : uint8
  * - NPC 전용 AGuestAIController와는 완전히 분리된 책임을 가진다.
  */
 UCLASS()
-class GUEST_API AGuestAfterimageAIController : public AAIController
+class GUEST_API AGuestAfterimageAIController : public AGuestAIControllerBase
 {
 	GENERATED_BODY()
 
@@ -45,7 +43,7 @@ public:
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	// Blackboard 키 이름 상수 (BT, EQS Context 등 외부에서도 참조 가능)
-	static const FName BB_TargetActor;
+	// BB_TargetActor는 AGuestAIControllerBase에서 상속받는다.
 	static const FName BB_StrafeLocation;
 	static const FName BB_HasAttackToken;
 
@@ -63,9 +61,6 @@ protected:
 	virtual void OnUnPossess() override;
 
 private:
-	// SightDataAsset 수치를 SightConfig에 적용하고 PerceptionComponent를 갱신
-	void ApplySightDataAsset();
-
 	// CrowdFollowingComponent를 안전하게 가져와 Crowd 관련 프로퍼티를 적용
 	void ApplyCrowdSettings();
 
@@ -89,12 +84,6 @@ protected:
 	// 에디터에서 할당하는 시각 감지 수치 데이터 에셋
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Perception")
 	TObjectPtr<UGAISightDataAsset> SightDataAsset;
-
-	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
-	TObjectPtr<UAIPerceptionComponent> AIPerceptionComp;
-
-	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
 	// 이 잔상이 플레이어를 직접 감지했을 때, 주변 잔상에게 같은 TargetActor를 공유해 Combat에 참여시킬 반경(cm)
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Combat", meta = (ClampMin = "0.0"))
