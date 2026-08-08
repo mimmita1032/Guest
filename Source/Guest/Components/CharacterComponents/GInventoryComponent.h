@@ -37,6 +37,17 @@ struct FInventoryGridEntry
 	FIntPoint Size = FIntPoint(1, 1);
 };
 
+// 장비 부위 열거형
+UENUM(BlueprintType)
+enum class EEquipSlot : uint8
+{
+	None,
+	Helmet,
+	Chest,
+	Legs,
+	Boots
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GUEST_API UGInventoryComponent : public UActorComponent
 {
@@ -59,8 +70,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Drop")
 	TSubclassOf<AGItemPickup> DropPickupClass;
 
+	// ─── 기본 인벤토리(Grid) API ───
+	
 	// 아이템 정의로부터 인스턴스 생성 후 인벤토리에 자동 배치
-	// 성공 시 발급된 핸들 반환, 실패(공간 없음) 시 InvalidHandle 반환
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	FInventoryItemHandle GrantItem(const UGItemDefinition* ItemDef);
 
@@ -108,18 +120,42 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	FInventoryItemHandle FindHandleByItemID(FName ItemID) const;
 
-	// 핸들로 아이템 크기 조회 (GridEntries 기반 — 회전 적용 시 Fragment 크기와 다를 수 있음)
+	// 핸들로 아이템 크기 조회 (GridEntries 기반)
 	UFUNCTION(BlueprintPure, Category = "Inventory|Grid")
 	FIntPoint GetItemSize(FInventoryItemHandle Handle) const;
 
 	// UI 렌더링 데이터 일괄 반환 — C++ 전용
-	// GridEntry 또는 InventoryMap에서 Handle을 찾지 못하면 bIsValid=false 반환
 	FInventoryItemRenderData GetItemRenderData(FInventoryItemHandle Handle) const;
+
+	// ─── 장비 및 퀵슬롯 API ───
+
+	// 아이템 장착 (그리드에서 제거하고 장비 슬롯으로 이동)
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Equipment")
+	bool EquipItem(FInventoryItemHandle Handle, EEquipSlot Slot);
+
+	// 장착 해제 (장비 슬롯에서 제거하고 그리드의 특정 좌표 또는 빈 공간에 자동 배치)
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Equipment")
+	bool UnequipItem(EEquipSlot Slot, int32 TargetX = -1, int32 TargetY = -1);
+
+	// 퀵슬롯 등록 (그리드 이동 없이 바로가기 링크만 할당)
+	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
+	bool AssignQuickSlot(FInventoryItemHandle Handle, int32 SlotIndex);
+
+	// 퀵슬롯 해제
+	UFUNCTION(BlueprintCallable, Category = "Inventory|QuickSlot")
+	void ClearQuickSlot(int32 SlotIndex);
+
+	UFUNCTION(BlueprintPure, Category = "Inventory|Equipment")
+	FInventoryItemHandle GetEquippedItem(EEquipSlot Slot) const;
+
+	UFUNCTION(BlueprintPure, Category = "Inventory|QuickSlot")
+	FInventoryItemHandle GetQuickSlotItem(int32 SlotIndex) const;
+
+	// ─── 저장/불러오기 API ───
 
 	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
 	FOnInventoryChanged OnInventoryChanged;
 
-	//save 용
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Save")
 	void ExportInventorySaveData(TArray<FGuestSavedInventoryEntry>& OutEntries) const;
 	
@@ -127,11 +163,13 @@ public:
 	void ImportInventorySaveData(TArray<FGuestSavedInventoryEntry>& InEntries);
 	
 private:
+	// ─── 인벤토리 상태 데이터 ───
+
 	// 점유된 셀만 기록 (빈 셀은 항목 없음)
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
 	TMap<FIntPoint, FInventoryItemHandle> OccupiedSlots;
 
-	// 핸들 → 인스턴스
+	// 핸들 → 인스턴스 (장착된 아이템도 여기에 포함됨)
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
 	TMap<FInventoryItemHandle, TObjectPtr<UGItemInstance>> InventoryMap;
 
@@ -139,17 +177,19 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
 	TMap<FInventoryItemHandle, FInventoryGridEntry> GridEntries;
 
-	// 배치 가능 여부 핵심 로직
-	// ExcludeHandle 셀은 점유되어 있어도 통과 (이동 시 자기 셀 제외용)
+	// 장착된 아이템 관리 (해당 아이템은 InventoryMap에는 있지만 Grid에는 없음)
+	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
+	TMap<EEquipSlot, FInventoryItemHandle> EquipmentSlots;
+
+	// 퀵슬롯 (0~3 인덱스가 1~4번 슬롯을 의미. 아이템 자체는 Grid에 존재하며 참조만 가짐)
+	UPROPERTY(VisibleInstanceOnly, Category = "Inventory State")
+	TArray<FInventoryItemHandle> QuickSlots;
+
+	// ─── 비공개 헬퍼 ───
+
 	bool CanPlaceAt(FIntPoint ItemSize, int32 StartX, int32 StartY, FInventoryItemHandle ExcludeHandle) const;
-
-	// OccupiedSlots + GridEntries에 핸들 기록
 	void OccupySlots(FInventoryItemHandle Handle, FIntPoint ItemSize, int32 StartX, int32 StartY);
-
-	// OccupiedSlots + GridEntries에서 핸들 제거
 	void ClearSlotsForHandle(FInventoryItemHandle Handle);
-
-	// 첫 번째 가능한 위치에 자동 배치
 	bool AutoPlace(FInventoryItemHandle Handle, FIntPoint ItemSize);
 
 	void NotifyInventoryChanged();
