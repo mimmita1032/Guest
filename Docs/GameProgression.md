@@ -8,6 +8,18 @@
 - `StoryProgress` 값은 `FQuestData::RequiredStoryProgress` / `StoryProgressOnComplete`와 그대로 대응해야 한다.
 - 구현 여부(구현됨 / 부분구현 / 미구현)를 표시해서, 이 문서만 보고 다음에 뭘 만들어야 하는지 알 수 있게 한다.
 
+### 노션 문서와의 역할 분담
+
+내용이 겹치면 반드시 한쪽이 낡는다. 이렇게 나눈다.
+
+| | 담는 것 |
+|---|---|
+| **이 문서** | 데모 진행 흐름, 스테이지별 구현 현황, 설계 결정과 그 이유. 코드와 함께 버전 관리된다 |
+| **노션 「퀘스트 작성 가이드」** | 퀘스트를 새로 만들 때의 작업 절차, 필드별 의미, 함정, 검증 방법 |
+| **노션 「퀘스트 DB」** | 퀘스트별 실제 기입값 (Steps, Target ID, 대화 노드 등) |
+
+**"어떤 필드에 뭘 넣는가"는 이 문서에 쓰지 않는다.** 노션을 가리킨다.
+
 ## 데모 범위
 
 **데모 종료 지점: 스미스 퀘스트 체인 완결 (`Q_Smith_003` 완료 + 엔딩 재등장)**
@@ -29,9 +41,9 @@
 |---|---|---|---|---|---|
 | 0 | 현실 · 들판 (`L_Field_01`) | 오프닝. 들판에 핀 꽃을 발견 | 꽃을 화분에 옮겨 담는다 | 화분 들고 주점으로 이동 | 구현됨 |
 | 1 | 주점 (`L_TavernMain`) | 귀가. 주점에 화분을 놓는다 | 테이블에 화분 배치 | 배치 완료 → 나레이션 재생 | 구현됨 |
-| 2 | 주점 (`L_TavernMain`) | 나레이션 종료 후 **하루 경과**. 스미스 첫 방문 | 맥주 2잔 접객 → 의뢰 수주 | 대화 완료 → `Q_Smith_001` 수락 | 미구현 |
-| 3 | 현실 · 주택가 (`L_Residential_01`) | 평범한 건물 촬영 | 아파트/주택가/달동네 3종 촬영 | 사진 3장 확보 후 귀가 | 미구현 |
-| 4 | 주점 (`L_TavernMain`) | 사진 전달. 스미스가 "영감이 안 온다"며 보수 지불 | 스미스와 대화 | `Q_Smith_001` 완료 | 미구현 |
+| 2 | 주점 (`L_TavernMain`) | 나레이션 종료 후 **하루 경과**. 스미스 첫 방문 | 맥주 접객 → 의뢰 수주 | 대화 완료 → `Q_Smith_001` 수락 | 구현됨 |
+| 3 | 현실 · 주택가 (`L_Residential_01`) | 평범한 건물 촬영 | 주택가 풍경 촬영 | 사진 확보 후 귀가 | 부분구현 |
+| 4 | 주점 (`L_TavernMain`) | 사진 전달. 스미스가 "영감이 안 온다"며 보수 지불 | 스미스와 대화 | `Q_Smith_001` 완료 | 구현됨 |
 | 5 | 주점 (`L_TavernMain`) | 스미스 재방문. 독특한 건물 의뢰 | 대화 | `Q_Smith_002` 수락 | 미구현 |
 | 6 | 현실 · 랜드마크 3종 | 독특한 건물 촬영 | 박물관/전통건축/스카이스파이어 촬영 | 사진 전달 → 스미스가 스카이스파이어 선택 | 미구현 |
 | 7 | 현실 · 스카이스파이어 (`L_Landmark_SkySpire_01`) | 추가 의뢰 — 입체 모형 수거 | 내부 전망대에서 모형 획득 | 모형 들고 귀가 | 미구현 |
@@ -179,7 +191,29 @@ struct FGuestSavedInventoryEntry {
 **날짜 진행 트리거 (확정):** 자정 경과(자동) + 나레이션 종료(데이터 지정).
 `UGNarrationDataAsset::DaysToAdvanceOnFinish` / `HourOnFinish`를 채우면 나레이션이 끝날 때 날짜가 넘어간다.
 화면이 페이드아웃되는 동안 적용되므로, 나레이션이 걷히면 이미 다음 날이다.
+
+### 진행도도 나레이션이 올린다 — `StoryProgressOnFinish`
+
+스토리 진행도를 올리는 곳은 **둘**이고, 어느 쪽을 쓰느냐가 곧 시점을 정한다.
+
+| 올리는 곳 | 시점 |
+|---|---|
+| `FQuestData::StoryProgressOnComplete` | 퀘스트가 완료되는 즉시 |
+| `UGNarrationDataAsset::StoryProgressOnFinish` | 나레이션이 끝나고 화면이 걷힐 때 |
+
+처음에는 퀘스트 쪽만 있었는데, 그러면 **연출 도중에 세계가 바뀐다.** `CompleteQuest`가
+진행도를 올리면 그 안에서 곧바로 `OnQuestListChanged`가 브로드캐스트되고, 그것을 구독하는
+NPC가 가시성을 재평가한다. 나레이션 요청은 그보다 뒤라서, **스미스가 나레이션과 동시에
+나타나버렸다** — 하룻밤이 지나고 찾아와야 할 손님이 하루가 지나기도 전에 앉아 있었다.
+
+그래서 진행도 상승을 나레이션 종료 시점으로 옮겼다. 날짜도 진행도도 같은 자리에서 바뀌므로
+**세계가 바뀌는 시점이 한 곳으로 모인다.**
+
 → Stage 1의 "꽃 배치 → 나레이션 → 하루 뒤 스미스"가 **코드 수정 없이 데이터만으로** 완성된다.
+`Q_Field_002`는 진행도를 올리지 않고, `DA_Narration_Tavern_001`이 `StoryProgressOnFinish = 2`로 올린다.
+
+> 나레이션이 붙은 퀘스트에서 **둘을 동시에 쓰지 않는다.** 둘 다 채우면 진행도가 두 번 올라
+> 게이팅이 엉뚱하게 풀린다.
 
 ### E. 데모 엔딩 화면
 
@@ -266,17 +300,47 @@ struct FGuestSavedInventoryEntry {
   2. 두 번째 맥주를 주문하며 자신이 건축가임을 밝힘
   3. 주인공이 주점을 물려받았다는 것을 언급, 마음에 드는 건물이 없었다고 한탄
   4. 현실 세계의 건물들을 보면 영감이 떠오를지도 모르겠다며 의뢰
-- **수거 대상**: 아파트 / 주택가 / 달동네 사진 3종 — 노션 레벨 DB상 촬영 구역은 `L_Residential_01` ("현실 세계 — 주택가 구역", 미시작)
+- **수거 대상**: **주택가 사진 1장** (`Photo_House`). 좌표는 `DT_SpacetimeData`의 `Residential_2010` 행 → `L_Residential_01`, 2010/7
 - **결말**: 스미스는 "이미 비슷한 걸 지어봤다"며 영감을 못 얻지만, 다음엔 독특한 것을 달라고 하며 **보수 지불**
+
+> **사진 3종 → 1장 축소 (확정).** 판정이 장소 단위(한 좌표 = 한 피사체)라 3종을 구분하려면
+> 좌표 세 개가 필요한데, 셋이 같은 레벨을 가리키면 플레이어는 같은 풍경을 세 번 찍게 되고
+> 레벨을 셋으로 나누면 작업량이 3배가 된다. 데모의 핵심 루프 시연에는 1장으로 충분하다.
+> 늘릴 때는 `DT_SpacetimeData`에 좌표 행을 더하고 Step01에 목표만 추가하면 된다.
+
+### 퀘스트 구조
+
+수락은 **대화**가, 완료는 **Talk 목표**가 맡는다.
+
+```
+Q_Smith_001  '평범한 것들의 기록'   (RequiredStoryProgress = 2)
+├ Step01  Photo  Photo_House    "주택가의 평범한 풍경을 찍어오자"
+└ Step02  Talk   Smith_Deliver  "스미스에게 사진을 보여주자"
+
+수락: DT_Smith의 Smith_Order_05 노드에 QuestEventID = Q_Smith_001
+```
+
+**`TalkObjectiveID`가 NPC당 하나뿐**이기 때문이다. 스미스는 「의뢰 수주」와 「사진 전달」 두 번
+대화하는데 Talk 목표 ID는 하나만 가질 수 있어서, 수락을 Talk 목표로 두면 전달에 쓸 것이 없다.
+
+목표 갱신이 현재 단계만 훑으므로, 대화가 끝날 때마다 `Smith_Deliver`가 브로드캐스트돼도
+Step01(Photo) 중에는 무시된다. 그래서 이 구조가 안전하다.
+
+**선택지 조건**(`FDialogueChoice::ConditionID`)은 이때 구현했다. 필드만 있고 아무도 읽지 않아
+선택지가 늘 전부 보였다 — 첫 만남부터 "(사진을 보여준다)"가 떠 있었다. 이제 `Q_Smith_001`은
+"그 퀘스트 진행 중", `Q_Smith_001.Step02`는 "진행 중이고 현재 단계가 Step02"로 해석된다.
+단계까지 볼 수 있어야 "사진을 찍어온 뒤에만" 같은 조건이 표현된다. 사용법은 노션 가이드 참고.
+
 - **구현 현황**:
-  - ✅ NPC 등장 게이팅 — `AGuestNPCBase::RequiredStoryProgress` / `ApplyStoryProgressVisibility()`
+  - ✅ NPC 등장 게이팅 — `RequiredStoryProgress` / `ApplyStoryProgressVisibility()`
   - ✅ 바 대화 시스템 — `ABarCustomerNPC`, `WBP_BarDialogue`
-  - ⬜ 선행작업 A·B·C (사진 아이템화 + Photo 목표)
-  - ⬜ (에디터) `DT_QuestData`에 `Q_Smith_001` 행 — 현재 있는 행은 스텁 상태
-  - ⬜ (에디터) 스미스 대화 노드 작성 (`DT_Smith`, `DA_Smith_Dialogue`)
-  - ⬜ (에디터) `L_Residential_01` 촬영 구역 제작 — 아파트/주택가/달동네 3개소
-  - ⬜ 판정 기준에 따라 `DT_SpacetimeData` 구역 분리 여부 결정 (선행작업 C 참고)
-- **구현 상태**: 미구현
+  - ✅ 선행작업 A·B·C (사진 아이템화 + Photo 목표)
+  - ✅ (에디터) `DT_QuestData`의 `Q_Smith_001` 행
+  - ✅ (에디터) 스미스 대화 노드 (`DT_Smith` 9행 + `DA_Smith_Dialogue` 연결)
+  - ✅ (에디터) `BP_Smith` 등장 설정 및 `L_TavernMain` 배치
+  - ✅ 판정 기준 확정 — 장소 단위 (선행작업 C)
+  - ⬜ (에디터) `L_Residential_01` 촬영 구역 제작 — 실제로 찍을 만한 풍경이 필요하다
+- **구현 상태**: 부분구현 — 퀘스트·대화 흐름은 완성. 촬영지 레벨만 남음
 
 ## 상세 — Stage 5~6: 스미스 재방문 (`Q_Smith_002` 독특한 건물 탐색)
 
@@ -412,23 +476,41 @@ struct FGuestSavedInventoryEntry {
 2. ~~퀘스트 분할~~ → `Q_Field_001` 축소 + `Q_Field_002` 신설 + `Tavern` 행 게이팅
 3. ~~`L_TavernMain` 배치~~ → 기존 배치분으로 충족 (`Reach_Home` 트리거 + 배치 지점)
 
-### 다음 할 일 — Stage 2 (스미스 첫 방문)
-핵심 루프가 처음으로 완주되는 구간이다. 「상세 — Stage 2~4」 참고.
+### ✅ 완료 — Stage 2 스미스 첫 방문 (2026-08-07)
 
-1. **`DT_QuestData`의 `Q_Field_002` → 스미스 연결** — 현재 `NextQuestID`가 비어 있어 하루가 지나도
-   다음 퀘스트가 없다. `Q_Smith_001`을 만든 뒤 연결할 것
-2. **`Q_Smith_001` 행 작성** — 현재 스텁 상태. `RequiredStoryProgress = 2`
-3. **스미스 대화 노드** (`DT_Smith`, `DA_Smith_Dialogue`) — 맥주 2잔 접객 → 의뢰 수주
-4. **`L_Residential_01` 촬영 구역** — 아파트/주택가/달동네 3개소
+`Q_Smith_001` 행, `DT_Smith` 대화 노드 9행, `BP_Smith` 배치·설정까지 끝났다.
+스미스에게 말을 걸어 의뢰를 받는 데까지 실측 확인 완료.
+
+> **`Q_Field_002`의 `NextQuestID`는 비워둔다 (확정).** 예전 계획은 여기에 `Q_Smith_001`을
+> 걸어 자동 수락시키는 것이었으나, **스미스 대화가 퀘스트를 수락**시키는 구조로 바꿨다.
+> 하루가 지나면 스미스가 등장하고, `DialogueTrigger`에 플레이어가 들어가면 대화가
+> 자동으로 시작되므로 별도 안내 없이 이어진다. 비어 있는 것이 정상이니 채우지 말 것.
+
+### 다음 할 일
+
+1. **`L_Residential_01` 촬영 구역 제작** — Stage 2~4를 완주시키려면 실제로 찍을 풍경이 필요하다.
+   현재 좌표(`Residential_2010`)와 `PhotoSubjectID`(`Photo_House`)는 이미 있다
+2. **UI 텍스트 넘침 정리** — 전체화면에서 목표 문구·대사·버튼 라벨이 화면 밖으로 잘린다.
+   UMG TextBlock에 줄바꿈 기준 폭이 없어서다. 브랜치 `feat/packaging-test`에서 진행 중
+3. **패키징 테스트 환경** — `GameDefaultMap`·`bCookAll`은 잡았다. `Packaged/`를 `.gitignore`에
+   추가하고 한 번 패키징해볼 것
+4. **Stage 5~8** — 스미스 체인 나머지 (`Q_Smith_002`, `Q_Smith_003`)
 
 > 남은 검증: **꽃을 줍지 않고 주점 이동을 시도했을 때 실제로 거부되는지** (「Stage 0 · 퀘스트 분할」 참고)
+
+> ⚠️ **패키지에서는 메인메뉴·설정창을 볼 수 없다.** `TAG_Widget_MainMenu` / `TAG_Widget_PressAnyKey`를
+> 푸시하는 코드가 없고, `GuestPlayerController::BeginPlay`가 시작하자마자 `GameHUD`를 띄운다.
+> `UGuestMainMenuWidget::OnNewGameClicked()` / `HasSaveData()`도 TODO 상태다. 프론트엔드 흐름
+> 담당자에게 공유 필요.
 
 ### 기타
 - 노션 「퀘스트 흐름 개요」의 `Q_S_SMT_*` 표기를 `Q_Smith_*`로 갱신
 - 노션 「퀘스트 흐름 개요」에 꽃 퀘스트(`Q_Field_001`) 추가 — 현재 "게임 시작 즉시 스미스"로 되어 있어 실제 흐름과 다름
 - 각 Stage별 `RequiredStoryProgress` / `StoryProgressOnComplete` 실제 값 확정 후 `DT_QuestData`와 대조
-- 사진 목표 판정 기준 확정 (선행작업 C)
+- ~~사진 목표 판정 기준 확정 (선행작업 C)~~ ✅ 장소 단위(한 좌표 = 한 피사체)로 확정
 - ~~날짜 진행 트리거 확정 (선행작업 D)~~ ✅ 나레이션 종료 시점으로 확정, 실측 확인 완료
+- **`WBP_Narration`의 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut`** — 없어서 현재 컷 전환이다.
+  페이드가 붙으면 NPC 등장 순간이 더 자연스럽게 가려진다
 - **단계 단위 스토리 진행도** — `FQuestStepData`에 `StoryProgressOnComplete` 추가
   - 지금은 `FQuestData`(퀘스트 단위)에만 있어서, 한 퀘스트 중간에 무언가를 해금하려면
     퀘스트를 쪼개는 수밖에 없다 (Stage 0의 `Q_Field_001` 분할이 그 사례)
