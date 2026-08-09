@@ -3,6 +3,8 @@
 #include "Guest/AI/Controllers/GuestAfterimageAIController.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "Navigation/CrowdFollowingComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Guest/Characters/Enemy/GuestEnemyCharacter.h"
@@ -10,8 +12,7 @@
 #include "Guest/Subsystem/GAfterimageCombatCoordinatorSubsystem.h"
 #include "Guest/Utils/GLog.h"
 
-// Blackboard 키 이름 정의
-const FName AGuestAfterimageAIController::BB_TargetActor    = TEXT("TargetActor");
+// Blackboard 키 이름 정의 — BB_TargetActor는 AGuestAIControllerBase에서 정의한다.
 const FName AGuestAfterimageAIController::BB_StrafeLocation = TEXT("StrafeLocation");
 const FName AGuestAfterimageAIController::BB_HasAttackToken = TEXT("HasAttackToken");
 
@@ -21,16 +22,13 @@ AGuestAfterimageAIController::AGuestAfterimageAIController(const FObjectInitiali
 	// 이 컨트롤러(Listener)의 팀을 Enemy로 고정 — GetTeamAttitudeTowards() 판정의 기준이 된다
 	SetGenericTeamId(FGenericTeamId(GuestTeamIds::Enemy));
 
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	// SightConfig/AIPerceptionComp 객체 자체는 Base 생성자가 만든다.
 	// 잔상 Sight는 Hostile 판정 대상만 감지
 	SightConfig->DetectionByAffiliation.bDetectEnemies    = true;
 	SightConfig->DetectionByAffiliation.bDetectNeutrals   = false;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
-	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
-	AIPerceptionComp->ConfigureSense(*SightConfig);
-	AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
-	SetPerceptionComponent(*AIPerceptionComp);
+	FinalizeSightPerceptionSetup();
 }
 
 ETeamAttitude::Type AGuestAfterimageAIController::GetTeamAttitudeTowards(const AActor& Other) const
@@ -53,23 +51,6 @@ ETeamAttitude::Type AGuestAfterimageAIController::GetTeamAttitudeTowards(const A
 	}
 
 	return MyTeamId == OtherTeamId ? ETeamAttitude::Friendly : ETeamAttitude::Hostile;
-}
-
-void AGuestAfterimageAIController::ApplySightDataAsset()
-{
-	if (!SightDataAsset)
-	{
-		G_WARN(TEXT("SightDataAsset이 설정되지 않았습니다. 기본값을 사용합니다."));
-		return;
-	}
-
-	SightConfig->SightRadius                  = SightDataAsset->SightRadius;
-	SightConfig->LoseSightRadius              = SightDataAsset->LoseSightRadius;
-	SightConfig->PeripheralVisionAngleDegrees = SightDataAsset->PeripheralVisionAngleDegrees;
-	SightConfig->SetMaxAge(SightDataAsset->MaxAge);
-
-	// 변경된 수치를 PerceptionComponent에 반영
-	AIPerceptionComp->ConfigureSense(*SightConfig);
 }
 
 void AGuestAfterimageAIController::ApplyCrowdSettings()
@@ -118,7 +99,7 @@ void AGuestAfterimageAIController::OnPossess(APawn* InPawn)
 	G_LOG(TEXT("잔상 AIController Possess: %s"), *InPawn->GetName());
 
 	// 2) Sight / Crowd / RVO 설정
-	ApplySightDataAsset();
+	ApplySightDataAssetToConfig(SightDataAsset);
 	ApplyCrowdSettings();
 
 	if (UCharacterMovementComponent* MoveComp = AfterimageCharacter->GetCharacterMovement())

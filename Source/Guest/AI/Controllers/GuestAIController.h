@@ -3,24 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AIController.h"
-#include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
+#include "Guest/AI/Controllers/GuestAIControllerBase.h"
 #include "Guest/Data/DataAssets/GAISightDataAsset.h"
 #include "GuestAIController.generated.h"
 
 UCLASS()
-class GUEST_API AGuestAIController : public AAIController
+class GUEST_API AGuestAIController : public AGuestAIControllerBase
 {
 	GENERATED_BODY()
 
 public:
 	AGuestAIController();
 
-	// Blackboard 키 이름 상수 (BT Task 등 외부에서도 참조 가능)
-	static const FName BB_TargetActor;
+	// BB_TargetActor / BB_LastKnownLocation은 AGuestAIControllerBase에서 상속받는다.
 	static const FName BB_TargetLocation;
-	static const FName BB_LastKnownLocation;
 
 	// 시간대 스케줄 관련 BB 키
 	static const FName BB_ScheduledDestination; // Vector — 스케줄로 지정된 목적지
@@ -31,10 +27,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
-
-private:
-	// SightDataAsset 수치를 SightConfig에 적용하고 PerceptionComponent를 갱신
-	void ApplySightDataAsset();
 
 private:
 	// 감지 이벤트 핸들러
@@ -49,10 +41,4 @@ protected:
 	// 에디터에서 할당하는 시각 감지 수치 데이터 에셋
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI|Perception")
 	TObjectPtr<UGAISightDataAsset> SightDataAsset;
-
-	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
-	TObjectPtr<UAIPerceptionComponent> AIPerceptionComp;
-
-	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
-	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 };
