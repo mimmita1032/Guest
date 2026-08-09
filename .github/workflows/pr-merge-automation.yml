@@ -17,9 +17,21 @@ jobs:
     steps:
       # ────────────────────────────────────────
       # STEP 1. Claude Code Action으로 PR 요약
-      #   인증은 Pro/Max 구독의 OAuth 토큰을 쓴다 (API 크레딧 불필요).
-      #   토큰은 로컬에서 `claude setup-token`으로 발급해 리포지토리 시크릿
-      #   CLAUDE_CODE_OAUTH_TOKEN 에 넣어둔다.
+      #
+      #   설정에 두 가지가 모두 필요하다. 하나만 해두면 조용히 실패한다.
+      #
+      #   1) Claude Code GitHub App 설치 — https://github.com/apps/claude
+      #      액션이 시작하자마자 OIDC 토큰을 앱 토큰으로 교환하는데, 앱이
+      #      없으면 여기서 401로 끊긴다. 아래 시크릿까지 가보지도 못한다.
+      #        App token exchange failed: 401 Unauthorized
+      #        Claude Code is not installed on this repository.
+      #
+      #   2) 리포지토리 시크릿 CLAUDE_CODE_OAUTH_TOKEN
+      #      로컬에서 `claude setup-token`으로 발급. Pro/Max 구독으로 인증되므로
+      #      API 크레딧이 필요 없다 (api.anthropic.com 직접 호출은 Console
+      #      크레딧으로만 결제되고, Pro 구독은 거기 들어가지 않는다).
+      #
+      #   터미널에서 `claude` 실행 후 /install-github-app 을 쓰면 둘 다 안내해준다.
       # ────────────────────────────────────────
       - name: Claude 요약 생성
         id: summarize
