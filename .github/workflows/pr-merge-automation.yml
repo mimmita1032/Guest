@@ -59,6 +59,11 @@ jobs:
 
           # ── Claude API 호출 ──
           print("Claude API 호출 중...")
+          # PR 본문이 길면 앞부분만 보낸다 — 요약에는 도입부가 가장 정보량이 높다
+          MAX_BODY_CHARS = 8000
+          if len(pr_body) > MAX_BODY_CHARS:
+              pr_body = pr_body[:MAX_BODY_CHARS] + "\n\n(...이하 생략)"
+
           claude_payload = {
               "model": "claude-haiku-4-5",
               "max_tokens": 1024,
@@ -100,8 +105,11 @@ jobs:
               pr_type = parsed.get("type", pr_type)
               impact  = parsed.get("impact", impact)
               print(f"Claude 요약 완료: {summary}")
+          except urllib.error.HTTPError as e:
+              # 본문에 실제 이유가 들어 있다. 상태 코드만 찍으면 원인을 알 수 없다
+              print(f"Claude API 오류 ({e.code}): {e.read().decode('utf-8', 'replace')}")
           except Exception as e:
-              print(f"Claude API 오류: {e}")
+              print(f"Claude 오류: {type(e).__name__}: {e}")
 
           # ── 타입별 이모지 ──
           emoji_map = {"feat": "✨", "fix": "🐛", "refactor": "♻️", "docs": "📝", "chore": "🔧"}
