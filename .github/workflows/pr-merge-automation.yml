@@ -32,7 +32,16 @@ jobs:
       #      크레딧으로만 결제되고, Pro 구독은 거기 들어가지 않는다).
       #
       #   터미널에서 `claude` 실행 후 /install-github-app 을 쓰면 둘 다 안내해준다.
+      #
+      #   그리고 액션은 저장소가 체크아웃돼 있다고 전제한다. 아래 checkout이
+      #   없으면 내부에서 git diff를 돌리다 죽는다.
+      #     Command failed: git diff --name-only -z --relative --ignore-submodules HEAD --
       # ────────────────────────────────────────
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Claude 요약 생성
         id: summarize
         uses: anthropics/claude-code-action@v1
