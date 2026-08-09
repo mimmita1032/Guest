@@ -144,7 +144,26 @@ bool UGInventoryComponent::MoveItem(FInventoryItemHandle Handle, int32 TargetX, 
 		UE_LOG(LogGSystem, Warning, TEXT("MoveItem 실패: 핸들 %u → (%d, %d) 공간 없음"), Handle.GetHandleId(), TargetX, TargetY);
 		return false;
 	}
+    
+	// 만약 장착된(Equipped) 아이템이었다면 장비 슬롯에서 제거
+	for (auto It = EquipmentSlots.CreateIterator(); It; ++It)
+	{
+		if (It.Value() == Handle)
+		{
+			It.RemoveCurrent();
+			break;
+		}
+	}
 
+	// ★ 만약 퀵슬롯에 등록되어 있던 아이템이었다면 퀵슬롯 참조 해제
+	for (int32 i = 0; i < QuickSlots.Num(); ++i)
+	{
+		if (QuickSlots[i] == Handle)
+		{
+			QuickSlots[i] = FInventoryItemHandle(); 
+		}
+	}
+    
 	ClearSlotsForHandle(Handle);
 	OccupySlots(Handle, ItemSize, TargetX, TargetY);
 
@@ -273,11 +292,21 @@ bool UGInventoryComponent::EquipItem(FInventoryItemHandle Handle, EEquipSlot Slo
 		if (!UnequipItem(Slot)) return false; 
 	}
 
+	// 만약 장착하려는 아이템이 퀵슬롯에 등록되어 있던 거라면 퀵슬롯 비우기
+	for (int32 i = 0; i < QuickSlots.Num(); ++i)
+	{
+		if (QuickSlots[i] == Handle)
+		{
+			QuickSlots[i] = FInventoryItemHandle();
+			break;
+		}
+	}
+
 	// 그리드에서 아이템 점유 해제
 	ClearSlotsForHandle(Handle);
-	
+    
 	EquipmentSlots.Add(Slot, Handle);
-	
+    
 	NotifyInventoryChanged();
 	G_LOG(TEXT("아이템 장착 성공: 부위 %d, 핸들 %u"), (int32)Slot, Handle.GetHandleId());
 	return true;
@@ -319,12 +348,48 @@ bool UGInventoryComponent::UnequipItem(EEquipSlot Slot, int32 TargetX, int32 Tar
 
 bool UGInventoryComponent::AssignQuickSlot(FInventoryItemHandle Handle, int32 SlotIndex)
 {
-	if (!QuickSlots.IsValidIndex(SlotIndex)) return false;
-	if (Handle.IsValid() && !InventoryMap.Contains(Handle)) return false;
+	// 만약 Handle이 유효하지 않다면(비우기 요청인 경우), 특정 슬롯만 비우고 종료합니다.
+	if (!Handle.IsValid())
+	{
+		if (QuickSlots.IsValidIndex(SlotIndex))
+		{
+			QuickSlots[SlotIndex] = FInventoryItemHandle();
+			NotifyInventoryChanged();
+			return true;
+		}
+		return false;
+	}
 
+	if (!InventoryMap.Contains(Handle)) return false;
+	if (!QuickSlots.IsValidIndex(SlotIndex)) return false;
+
+	// 1. 만약 이 아이템이 이미 다른 퀵슬롯에 들어가 있던 거라면, 그 자리 비우기
+	for (int32 i = 0; i < QuickSlots.Num(); ++i)
+	{
+		if (QuickSlots[i] == Handle)
+		{
+			QuickSlots[i] = FInventoryItemHandle(); // 빈 핸들 대입으로 초기화
+			break;
+		}
+	}
+
+	// 2. 만약 이 아이템이 장비 슬롯(EquipmentSlots)에 장착되어 있던 거라면 장비 해제
+	for (auto It = EquipmentSlots.CreateIterator(); It; ++It)
+	{
+		if (It.Value() == Handle)
+		{
+			It.RemoveCurrent();
+			break;
+		}
+	}
+
+	// 3. 인벤토리 그리드(GridEntries)에 있던 아이템이라면 그리드 점유 해제
+	ClearSlotsForHandle(Handle);
+
+	// 4. 새로운 퀵슬롯 인덱스에 등록
 	QuickSlots[SlotIndex] = Handle;
+
 	NotifyInventoryChanged();
-	G_LOG(TEXT("퀵슬롯 %d 등록: 핸들 %u"), SlotIndex, Handle.GetHandleId());
 	return true;
 }
 
