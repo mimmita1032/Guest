@@ -62,8 +62,13 @@ jobs:
 
             PR 본문:
             ${{ github.event.pull_request.body }}
+          # --max-turns 1은 쓸 수 없다. 구조화 출력이 최종 결과를 별도 턴으로
+          # 내보내므로 최소 2턴이 필요하고, 1로 조이면 Claude가 요약을 만들어낸
+          # 뒤에 액션이 그 결과를 버리고 실패 처리한다.
+          #   Claude reported a successful result after 2 turns,
+          #   exceeding the configured maximum of 1
           claude_args: |
-            --max-turns 1
+            --max-turns 5
             --json-schema '{"type":"object","properties":{"summary":{"type":"string"},"type":{"type":"string","enum":["feat","fix","refactor","docs","chore"]},"impact":{"type":"string"}},"required":["summary","type","impact"],"additionalProperties":false}'
 
       # ────────────────────────────────────────
