@@ -71,5 +71,6 @@ namespace GuestGameplayTags
 
 	//GE SetByCaller 데이터
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_DamageAmount, "Guest.Data.DamageAmount");
 
 }

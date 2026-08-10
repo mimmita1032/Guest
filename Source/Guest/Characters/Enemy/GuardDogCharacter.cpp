@@ -1,9 +1,13 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "Guest/Characters/Enemy/GuardDogCharacter.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Guest/AI/Controllers/GuardDogAIController.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Guest/Characters/Player/GuestCharacter.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 
 AGuardDogCharacter::AGuardDogCharacter()
 {
@@ -48,7 +52,138 @@ void AGuardDogCharacter::SetChasing(const bool bNewChasing)
 	OnChasingStateChanged(bIsChasing);
 }
 
-void AGuardDogCharacter::RequestAttack()
+bool AGuardDogCharacter::RequestAttack()
 {
+	if (!CanAttack())
+	{
+		return false;
+	}
+
+	MarkAttackRequested();
+
+	FHitResult AttackHit;
+	const bool bHitPlayer = PerformAttackTrace(AttackHit);
+
 	OnAttackRequested();
+
+	if (!bHitPlayer)
+	{
+		return false;
+	}
+
+	ApplyAttackDamage(AttackHit.GetActor());
+	return true;
+}
+
+
+bool AGuardDogCharacter::PerformAttackTrace(FHitResult& OutHit) const
+{
+	const FVector TraceStart = GetActorLocation();
+	const FVector TraceEnd = TraceStart + GetActorForwardVector() * AttackRange;
+	
+	EDrawDebugTrace::Type DebugType = EDrawDebugTrace::None;
+
+	if (bDrawDebugAttackTrace)
+	{
+		DebugType = EDrawDebugTrace::ForDuration;
+	}
+	
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(const_cast<AGuardDogCharacter*>(this));
+	
+	TArray<FHitResult> HitResults;
+	
+	UKismetSystemLibrary::SphereTraceMulti(
+		this,
+		TraceStart,
+		TraceEnd,
+		AttackRadius,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		ActorsToIgnore,
+		DebugType,
+		HitResults,
+		true
+	);
+
+	for (const FHitResult& Hit : HitResults)
+	{
+		if (AGuestCharacter* Player = Cast<AGuestCharacter>(Hit.GetActor()))
+		{
+			OutHit = Hit;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
+{
+	if (!TargetActor || !DamageEffectClass)
+	{
+		return;
+	}
+
+	const IAbilitySystemInterface* TargetASCInterface = Cast<IAbilitySystemInterface>(TargetActor);
+	if (!TargetASCInterface)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = TargetASCInterface->GetAbilitySystemComponent();
+	if (!TargetASC)
+	{
+		return;
+	}
+
+	const IAbilitySystemInterface* SourceASCInterface = Cast<IAbilitySystemInterface>(this);
+	if (!SourceASCInterface)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* SourceASC = SourceASCInterface->GetAbilitySystemComponent();
+	if (!SourceASC)
+	{
+		return;
+	}
+
+	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(
+		DamageEffectClass,
+		1.f,
+		SourceASC->MakeEffectContext()
+	);
+
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(
+		GuestGameplayTags::TAG_Data_DamageAmount,
+		-AttackDamage
+	);
+
+	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
+}
+
+bool AGuardDogCharacter::CanAttack() const
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	const float CurrentTime = World->GetTimeSeconds();
+	return CurrentTime - LastAttackTime >= AttackCooldown;
+}
+
+void AGuardDogCharacter::MarkAttackRequested()
+{
+	if (const UWorld* World = GetWorld())
+	{
+		LastAttackTime = World->GetTimeSeconds();
+	}
 }
