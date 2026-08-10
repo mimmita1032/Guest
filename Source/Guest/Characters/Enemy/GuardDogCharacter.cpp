@@ -162,7 +162,7 @@ void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
 
 	SpecHandle.Data->SetSetByCallerMagnitude(
 		GuestGameplayTags::TAG_Data_DamageAmount,
-		AttackDamage
+		-AttackDamage
 	);
 
 	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
