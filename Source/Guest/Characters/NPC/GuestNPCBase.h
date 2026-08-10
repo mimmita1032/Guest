@@ -42,11 +42,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC|Dialogue")
 	TObjectPtr<UGDialogueDataAsset> DialogueAsset;
 
+	// 이 값 이상으로 스토리 진행도가 올라야 맵에 등장 (0이면 항상 등장)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Guest|NPC")
+	int32 RequiredStoryProgress = 0;
+
 private:
 	UFUNCTION()
 	void HandleTimeChanged(float CurrentHour);
 
 	void ApplySchedule(float CurrentHour);
+
+	// GQuestSubsystem::OnQuestListChanged 수신 → 진행도 재확인
+	UFUNCTION()
+	void HandleQuestListChanged();
+
+	// RequiredStoryProgress 대비 현재 스토리 진행도를 비교해 등장/숨김 적용
+	void ApplyStoryProgressVisibility();
 
 	FName LastActiveScheduleTag = NAME_None;
 };

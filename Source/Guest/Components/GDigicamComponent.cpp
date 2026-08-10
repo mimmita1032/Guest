@@ -21,12 +21,24 @@ void UGDigicamComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+UGCameraComponent* UGDigicamComponent::GetCameraComponent() const
+{
+	AActor* Owner = GetOwner();
+	return Owner ? Owner->FindComponentByClass<UGCameraComponent>() : nullptr;
+}
+
 void UGDigicamComponent::ActivateDigicam()
 {
 	if (CurrentState == EDigicamState::Inactive)
 	{
 		CurrentState = EDigicamState::TimeSetting;
 		G_LOG(TEXT("디카 활성화: 수거 준비"));
+	}
+
+	// 뷰파인더는 디지캠을 보고 있는 동안만 돈다 — 씬을 매 프레임 한 번 더 그리는 비용이다
+	if (UGCameraComponent* CamComp = GetCameraComponent())
+	{
+		CamComp->SetViewfinderActive(true);
 	}
 
 	UpdateSearch();
@@ -36,6 +48,14 @@ void UGDigicamComponent::ActivateDigicam()
 void UGDigicamComponent::DeactivateDigicam()
 {
 	CurrentState = EDigicamState::Inactive;
+
+	// 탭 전환과 달리 디지캠을 닫을 때는 OnTabDeactivated가 오지 않는다.
+	// 여기서 확실히 꺼야 뷰파인더가 평상시에 계속 도는 일이 없다.
+	if (UGCameraComponent* CamComp = GetCameraComponent())
+	{
+		CamComp->SetViewfinderActive(false);
+	}
+
 	G_LOG(TEXT("디카 비활성화: 귀가 상태 유지"));
 }
 
@@ -89,6 +109,61 @@ void UGDigicamComponent::HandleHorizontalInput(float Value)
 
 void UGDigicamComponent::HandleShutter()
 {
+	// 셔터는 오직 촬영만 한다. 이동은 HandleTravel의 몫이다.
+	// 찍히는 것은 "지금 눈앞의 장면"이고, 사진에 박히는 장소·연도도 "지금 있는 좌표"다.
+	if (CurrentState == EDigicamState::Inactive)
+	{
+		// 디지캠을 꺼내지 않았으면 찍을 카메라가 없다
+		return;
+	}
+
+	UGCameraComponent* CamComp = GetCameraComponent();
+	if (!CamComp)
+	{
+		G_WARN(TEXT("디지캠: 카메라 컴포넌트를 찾을 수 없어 촬영할 수 없습니다."));
+		return;
+	}
+
+	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
+
+	// 이동 페이드 중에는 화면이 이미 걷히는 중이라 의미 있는 사진이 나오지 않는다
+	if (SpacetimeSS && SpacetimeSS->IsTravelInProgress())
+	{
+		return;
+	}
+
+	// 시작 레벨처럼 PostLoadMap 훅을 놓쳤을 수 있는 경우를 위해 여기서 한 번 더 확정을 시도한다
+	if (SpacetimeSS)
+	{
+		SpacetimeSS->EnsureCurrentLocation();
+	}
+
+	FPhotoData Meta;
+	if (SpacetimeSS && SpacetimeSS->HasCurrentLocation())
+	{
+		const FSpacetimeData Here = SpacetimeSS->GetCurrentLocation();
+		Meta.InGameYear = Here.TargetYear;
+		Meta.PlaceName  = Here.PlaceName;
+		Meta.AreaCode   = Here.AreaCode;
+		Meta.StoryDate  = Here.StoryDate;
+		Meta.SubjectID  = Here.PhotoSubjectID;
+	}
+	else
+	{
+		// 좌표 미확정 — 기본값을 베껴 넣으면 사진에 엉뚱한 연도(FSpacetimeData의 기본값 2010)가
+		// 박힌다. 차라리 비워 두는 편이 정직하다.
+		G_WARN(TEXT("디지캠: 현재 좌표가 확정되지 않아 사진에 장소 정보를 남기지 못합니다. "
+			"이 레벨의 행이 DT_SpacetimeData에 있는지 확인하세요."));
+	}
+
+	if (!CamComp->TakePhoto(Meta))
+	{
+		G_WARN(TEXT("디지캠: 사진을 남기지 못했습니다 (인벤토리 공간 부족 등)."));
+	}
+}
+
+void UGDigicamComponent::HandleTravel()
+{
 	UGSpacetimeSubsystem* SpacetimeSS = GetWorld()->GetGameInstance()->GetSubsystem<UGSpacetimeSubsystem>();
 
 	if (CurrentState != EDigicamState::ReadyToSnap || (SpacetimeSS && SpacetimeSS->IsTravelInProgress()))
@@ -96,20 +171,6 @@ void UGDigicamComponent::HandleShutter()
 		G_WARN(TEXT("좌표 불일치 또는 이동 중 — 이동 불가"));
 		OnShutterDenied.Broadcast(LastSearchResult);
 		return;
-	}
-
-	// 이동 전 현재 장면 촬영
-	if (AActor* Owner = GetOwner())
-	{
-		if (UGCameraComponent* CamComp = Owner->FindComponentByClass<UGCameraComponent>())
-		{
-			FPhotoData Meta;
-			Meta.InGameYear  = CurrentMatchedData.TargetYear;
-			Meta.PlaceName   = CurrentMatchedData.PlaceName;
-			Meta.AreaCode    = CurrentMatchedData.AreaCode;
-			Meta.StoryDate   = CurrentMatchedData.StoryDate;
-			CamComp->TakePhoto(Meta);
-		}
 	}
 
 	if (!SpacetimeSS) return;

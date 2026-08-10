@@ -4,6 +4,7 @@
 #include "GameFramework/SaveGame.h"
 #include "Guest/Data/DataTable/GQuestTypes.h"
 #include "Guest/Data/DataAssets/GSpacetimeTypes.h"
+#include "StructUtils/InstancedStruct.h"
 #include "GuestSaveGame.generated.h"
 
 
@@ -52,6 +53,11 @@ struct FGuestSavedInventoryEntry
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
 	int32 Quantity = 1;
+
+	// 개체별 데이터 (FGItemInstanceData 파생). 설계도만으로 설명되는 아이템은 비어 있다.
+	// 구버전 세이브에는 이 필드가 없으므로 빈 값으로 로드되며, 그대로 정상 동작한다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Inventory")
+	FInstancedStruct InstanceData;
 };
 
 UCLASS()
@@ -101,7 +107,19 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
 	float SavedWorldHour = -1.f;
 
-	// 디지캠으로 촬영한 사진 (Snapshot 텍스처는 직렬화되지 않고 CompressedImage에서 재생성)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Photo")
-	TArray<FPhotoData> SavedPhotos;
+	// 세계 날짜 (1일차부터). 날짜 개념이 없던 구버전 세이브 구분용 기본값 -1
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedWorldDay = -1;
+
+	// 저장 시점의 시공간 좌표 (연도 + 구역). 좌표 자체가 아니라 좌표를 찾는 열쇠만 저장한다 —
+	// DT_SpacetimeData의 다른 필드가 바뀌어도 로드 시 최신 값을 따라간다.
+	// 저장된 적 없는 구버전 세이브 구분용 기본값 -1 (그 경우 레벨 이름으로 역조회)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedLocationYear = -1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Spacetime")
+	int32 SavedLocationAreaCode = -1;
+
+	// 디지캠으로 촬영한 사진은 인벤토리 아이템(FGPhotoItemInstanceData)이므로
+	// SavedInventory에 함께 저장된다 — 별도 배열을 두지 않는다
 };

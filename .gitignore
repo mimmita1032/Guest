@@ -7,6 +7,7 @@ Build/
 DerivedDataCache/
 Intermediate/
 Saved/
+Packaged/
 
 # =====================================
 # IDE / 에디터 설정
@@ -50,6 +51,7 @@ Saved/
 
 .claude/
 CLAUDE.md
+/DevTools/
 
 # =====================================
 # OS 기본

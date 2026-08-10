@@ -6,6 +6,8 @@
 #include "Engine/DataTable.h"
 #include "GQuestTypes.generated.h"
 
+class UGNarrationDataAsset;
+
 UENUM(BlueprintType)
 enum class EQuestType : uint8
 {
@@ -21,7 +23,9 @@ enum class EQuestObjectiveType : uint8
 	Talk,
 	Collect,
 	Reach,
-	Place
+	Place,
+	// 사진 촬영. TargetID는 FPhotoData::SubjectID(= 촬영 좌표의 PhotoSubjectID)와 대조된다
+	Photo
 };
 
 // 퀘스트가 활성화되는 시간대 조건
@@ -134,6 +138,10 @@ struct FQuestData : public FTableRowBase
 	// 완료 시 스토리 진행도를 이 값으로 올림 (0 = 변화 없음, 현재 진행도보다 낮으면 무시)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
 	int32 StoryProgressOnComplete = 0;
+
+	// 완료 시 재생할 나레이션 연출 (일러스트+텍스트 슬라이드쇼). 비어있으면 재생하지 않음
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
+	TSoftObjectPtr<UGNarrationDataAsset> NarrationOnComplete;
 
 	// StepID로 단계 인덱스 조회 (없으면 INDEX_NONE)
 	int32 FindStepIndexByID(FName InStepID) const

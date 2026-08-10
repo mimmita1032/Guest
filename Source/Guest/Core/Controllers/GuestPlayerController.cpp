@@ -27,6 +27,7 @@
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
+#include "Guest/AI/GuestTeamIds.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 
 
@@ -53,6 +54,11 @@ void AGuestPlayerController::UpdateRotation(float DeltaTime)
 			GuestChar->GetMaxViewPitch());
 		SetControlRotation(NewRotation);
 	}
+}
+
+FGenericTeamId AGuestPlayerController::GetGenericTeamId() const
+{
+	return FGenericTeamId(GuestTeamIds::Player);
 }
 
 void AGuestPlayerController::BeginPlay()
@@ -100,6 +106,14 @@ void AGuestPlayerController::SetupInputComponent()
 		if (IA_ToggleDebugUI)
 		{
 			EIC->BindAction(IA_ToggleDebugUI, ETriggerEvent::Started, this, &AGuestPlayerController::ToggleDebugUI);
+		}
+		if (IA_SaveGame)
+		{
+			EIC->BindAction(IA_SaveGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowSaveBoard);
+		}
+		if (IA_LoadGame)
+		{
+			EIC->BindAction(IA_LoadGame, ETriggerEvent::Started, this, &AGuestPlayerController::ShowLoadBoard);
 		}
 		// IA_ToggleInventory는 AGuestCharacter::SetupPlayerInputComponent에서 바인딩
 	}
@@ -365,13 +379,11 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 
 		if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
 		{
-			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour);
+			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
+			SpacetimeSys->ExportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 		}
 
-		if (UGPhotoLibrarySubsystem* PhotoLib = GI->GetSubsystem<UGPhotoLibrarySubsystem>())
-		{
-			PhotoLib->ExportPhotoSaveData(SaveObject->SavedPhotos);
-		}
+		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음
 	}
 	
 	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(ControllerPawn))

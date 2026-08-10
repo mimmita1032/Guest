@@ -5,12 +5,12 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "DrawDebugHelpers.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Data/DataAssets/GAISightDataAsset.h"
 #include "Guest/Utils/GLog.h"
 
-const FName AGuardDogAIController::BB_TargetActor(TEXT("TargetActor"));
-const FName AGuardDogAIController::BB_LastKnownLocation(TEXT("LastKnownLocation"));
 const FName AGuardDogAIController::BB_IsAlerted(TEXT("IsAlerted"));
 
 AGuardDogAIController::AGuardDogAIController()
@@ -22,8 +22,8 @@ AGuardDogAIController::AGuardDogAIController()
 	PrimaryActorTick.bCanEverTick = false;
 #endif
 
-	// DataAsset이 없을 때 사용할 기본 시야 설정이다.
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	// SightConfig/AIPerceptionComp 객체 자체는 Base 생성자가 만든다.
+	// DataAsset이 없을 때 사용할 기본 시야 설정만 여기서 채운다.
 	SightConfig->SightRadius = 1500.f;
 	SightConfig->LoseSightRadius = 1800.f;
 	SightConfig->PeripheralVisionAngleDegrees = 60.f;
@@ -32,10 +32,7 @@ AGuardDogAIController::AGuardDogAIController()
 	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
 
-	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
-	AIPerceptionComp->ConfigureSense(*SightConfig);
-	AIPerceptionComp->SetDominantSense(SightConfig->GetSenseImplementation());
-	SetPerceptionComponent(*AIPerceptionComp);
+	FinalizeSightPerceptionSetup();
 }
 
 void AGuardDogAIController::BeginPlay()

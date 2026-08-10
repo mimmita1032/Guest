@@ -11,6 +11,7 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_GameMenu, "Guest.WidgetStack.GameMenu");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_Modal, "Guest.WidgetStack.Modal");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_BarDialogue, "Guest.WidgetStack.BarDialogue");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_WidgetStack_Narration, "Guest.WidgetStack.Narration");
 
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PressAnyKey, "Guest.Widget.PressAnyKey");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_PauseMenu, "Guest.Widget.PauseMenu");
@@ -33,6 +34,9 @@ namespace GuestGameplayTags
 	// 바 모드 대화 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_BarDialogue, "Guest.Widget.BarDialogue");
 
+	// 나레이션 위젯 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Narration, "Guest.Widget.Narration");
+
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Consumable, "Item.Type.Consumable");
@@ -49,16 +53,27 @@ namespace GuestGameplayTags
 	
 	//인풋
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Interact, "Guest.InputTag.Interact");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Attack,   "Guest.InputTag.Attack");
 
 	//Ability
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Interact, "Guest.Ability.Interact");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Melee,    "Guest.Ability.Melee");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Flash,    "Guest.Ability.Flash");
+
+	//인풋
+	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Flash,   "Guest.InputTag.Flash");
 
 	//State
-	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "Guest.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead,              "Guest.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Blinded,           "Guest.State.Blinded");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Calm,        "Guest.State.Alert.Calm");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Suspicious,  "Guest.State.Alert.Suspicious");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Alerted,     "Guest.State.Alert.Alerted");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_State_Alert_Chasing,     "Guest.State.Alert.Chasing");
+
+	//Enemy 타입 식별 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Enemy_Type_Reality,    "Guest.Enemy.Type.Reality");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Enemy_Type_AfterImage, "Guest.Enemy.Type.AfterImage");
 
 	//GE SetByCaller 데이터
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Damage, "Guest.Data.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
 
 }

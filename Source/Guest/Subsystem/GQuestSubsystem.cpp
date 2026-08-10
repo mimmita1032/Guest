@@ -2,6 +2,7 @@
 
 #include "GQuestSubsystem.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Data/DataAssets/GNarrationDataAsset.h"
 #include "../Save/GuestSaveGame.h"
 
 void UGQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -181,6 +182,15 @@ void UGQuestSubsystem::CompleteQuest(FName QuestID)
 
 	OnQuestListChanged.Broadcast();
 
+	if (!Data->NarrationOnComplete.IsNull())
+	{
+		if (UGNarrationDataAsset* NarrationAsset = Data->NarrationOnComplete.LoadSynchronous())
+		{
+			G_LOG(TEXT("퀘스트 시스템: [%s] 완료 나레이션 재생 요청"), *QuestID.ToString());
+			OnNarrationRequested.Broadcast(NarrationAsset);
+		}
+	}
+
 	if (!Data->NextQuestID.IsNone())
 	{
 		G_LOG(TEXT("퀘스트 시스템: 연결 퀘스트 [%s] 자동 수락"), *Data->NextQuestID.ToString());
@@ -205,6 +215,12 @@ void UGQuestSubsystem::SetStoryProgress(int32 NewProgress)
 bool UGQuestSubsystem::IsQuestActive(FName QuestID) const
 {
 	return ActiveQuests.Contains(QuestID);
+}
+
+FName UGQuestSubsystem::GetCurrentStepID(FName QuestID) const
+{
+	const FQuestRuntimeData* Runtime = ActiveQuests.Find(QuestID);
+	return Runtime ? Runtime->CurrentStepID : NAME_None;
 }
 
 bool UGQuestSubsystem::IsQuestCompleted(FName QuestID) const

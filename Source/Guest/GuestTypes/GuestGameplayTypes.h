@@ -11,15 +11,19 @@ USTRUCT( BlueprintType )
 struct FGuestCharacterBaseStats : public FTableRowBase
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> Class;
-	
+
 	UPROPERTY(EditAnywhere)
 	float Health;
-	
+
 	UPROPERTY(EditAnywhere)
 	float Battery;
+
+	// 잔상(AfterImage) Enemy 전용. 0이면 정화 시스템 미사용.
+	UPROPERTY(EditAnywhere)
+	float MaxPurifyGauge = 0.f;
 };
 
 USTRUCT(BlueprintType)

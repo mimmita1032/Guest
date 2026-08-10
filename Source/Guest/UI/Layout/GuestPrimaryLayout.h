@@ -25,6 +25,7 @@ class UCommonActivatableWidgetContainerBase;
  *   Stack_GameHUD     (ZOrder 1) - 상시 HUD
  *   Stack_GameMenu    (ZOrder 2) - 카메라 UI, 인벤토리 등
  *   Stack_BarDialogue (ZOrder 2) - 바 모드 전체화면 대화 (VA-11 HALL-A 스타일)
+ *   Stack_Narration   (ZOrder 2) - 퀘스트 완료 등 스토리 분기 전환 나레이션 (전체화면)
  *   Stack_Modal       (ZOrder 3) - 확인창, 알림 (최상단)
  */
 UCLASS(Abstract, BlueprintType, meta = (DisableNativeTick))
@@ -64,4 +65,8 @@ private:
     /** 바 모드 전체화면 대화 레이어. ZOrder 2 (GameMenu와 동급, 별도 스택). */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UCommonActivatableWidgetContainerBase> Stack_BarDialogue;
+
+    /** 스토리 분기 전환 나레이션 레이어. ZOrder 2 (GameMenu와 동급, 별도 스택). */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UCommonActivatableWidgetContainerBase> Stack_Narration;
 };

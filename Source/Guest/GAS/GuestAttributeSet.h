@@ -26,8 +26,10 @@ public:
 	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, MaxHealth)
 	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, CurrentBattery)
 	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, MaxBattery)
-	// 데미지 전달용 메타 속성. GE 적용 직후 0으로 리셋되며 저장되지 않는다.
-	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, Damage)
+	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, PurifyGauge)
+	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, MaxPurifyGauge)
+	// 정화량 전달용 메타 속성. GE 적용 직후 0으로 리셋되며 저장되지 않는다.
+	ATTRIBUTE_ACCESSORS(UGuestAttributeSet, PurifyAmount)
 
 private:
 	UPROPERTY()
@@ -43,7 +45,13 @@ private:
 	FGameplayAttributeData MaxBattery;
 
 	UPROPERTY()
-	FGameplayAttributeData Damage;
+	FGameplayAttributeData PurifyGauge;
+
+	UPROPERTY()
+	FGameplayAttributeData MaxPurifyGauge;
+
+	UPROPERTY()
+	FGameplayAttributeData PurifyAmount;
 
 	void ApplyDeath();
 

@@ -20,8 +20,9 @@ class GUEST_API UGInventoryItemWidget : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
+	// InRuntimeIcon이 있으면 InIcon 대신 그것을 표시한다 (사진처럼 개체마다 그림이 다른 아이템)
 	void InitItem(FInventoryItemHandle InHandle, TSoftObjectPtr<UTexture2D> InIcon,
-				  FIntPoint InGridSize, float InSlotSize);
+				  FIntPoint InGridSize, float InSlotSize, UTexture2D* InRuntimeIcon = nullptr);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnItemDroppedOutside OnItemDroppedOutside;
@@ -56,6 +57,10 @@ protected:
 private:
 	UPROPERTY()
 	TSoftObjectPtr<UTexture2D> CachedIcon;
+
+	// 개체별 아이콘 (드래그 비주얼 생성 시에도 그대로 이어가야 하므로 캐시한다)
+	UPROPERTY()
+	TObjectPtr<UTexture2D> CachedRuntimeIcon;
 
 	float CachedSlotSize = 60.0f;
 

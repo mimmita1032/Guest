@@ -209,12 +209,14 @@ void UGInventoryWidget::OnRefreshInventory()
 	}
 
 	// [헬퍼 람다] 아이템 위젯 생성
-	auto CreateItemWidget = [&](FInventoryItemHandle Handle, FIntPoint Size, TSoftObjectPtr<UTexture2D> Icon) -> UGInventoryItemWidget*
+	// RuntimeIcon은 사진처럼 개체마다 그림이 다른 아이템용. 없으면 Icon이 쓰인다
+	auto CreateItemWidget = [&](FInventoryItemHandle Handle, FIntPoint Size, TSoftObjectPtr<UTexture2D> Icon,
+								UTexture2D* RuntimeIcon = nullptr) -> UGInventoryItemWidget*
 	{
 		UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass);
 		if (ItemWidget)
 		{
-			ItemWidget->InitItem(Handle, Icon, Size, SlotSize);
+			ItemWidget->InitItem(Handle, Icon, Size, SlotSize, RuntimeIcon);
 			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
 			ItemWidget->OnItemRightClicked.AddDynamic(this, &UGInventoryWidget::HandleItemRightClicked);
 			ItemWidget->SetInteractionLocked(bPlacementModeActive);
@@ -233,7 +235,7 @@ void UGInventoryWidget::OnRefreshInventory()
 		// A. 그리드에 있는 아이템
 		if (RenderData.bIsValid && RenderData.Position.X >= 0 && RenderData.Position.Y >= 0)
 		{
-			if (UGInventoryItemWidget* ItemWidget = CreateItemWidget(Handle, RenderData.GridSize, RenderData.Icon))
+			if (UGInventoryItemWidget* ItemWidget = CreateItemWidget(Handle, RenderData.GridSize, RenderData.Icon, RenderData.RuntimeIcon))
 			{
 				if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
 				{
@@ -256,7 +258,7 @@ void UGInventoryWidget::OnRefreshInventory()
 		}
 
 		// 장비 슬롯 크기에 맞게 1x1 사이즈로 생성
-		UGInventoryItemWidget* EquipItemWidget = CreateItemWidget(Handle, FIntPoint(1, 1), EquipIcon);
+		UGInventoryItemWidget* EquipItemWidget = CreateItemWidget(Handle, FIntPoint(1, 1), EquipIcon, RenderData.RuntimeIcon);
 
 		if (InventoryComponent->GetEquippedItem(EEquipSlot::Helmet) == Handle && EquipSlot_Helmet)
 			EquipSlot_Helmet->RefreshSlotUI(EquipItemWidget);
@@ -288,7 +290,8 @@ void UGInventoryWidget::OnRefreshInventory()
 				}
 
 				// ★ 핵심 변경점: 퀵슬롯에도 장비창처럼 1x1 사이즈의 위젯을 직접 생성해서 부착합니다.
-				UGInventoryItemWidget* QuickItemWidget = CreateItemWidget(QHandle, FIntPoint(1, 1), QIcon);
+				UGInventoryItemWidget* QuickItemWidget = CreateItemWidget(QHandle, FIntPoint(1, 1), QIcon,
+					InventoryComponent->GetItemRenderData(QHandle).RuntimeIcon);
 				QWidget->RefreshSlotUI(QuickItemWidget);
 			}
 			else
