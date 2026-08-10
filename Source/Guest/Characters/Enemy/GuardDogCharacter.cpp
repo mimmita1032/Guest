@@ -52,11 +52,11 @@ void AGuardDogCharacter::SetChasing(const bool bNewChasing)
 	OnChasingStateChanged(bIsChasing);
 }
 
-void AGuardDogCharacter::RequestAttack()
+bool AGuardDogCharacter::RequestAttack()
 {
 	if (!CanAttack())
 	{
-		return;
+		return false;
 	}
 
 	MarkAttackRequested();
@@ -68,10 +68,11 @@ void AGuardDogCharacter::RequestAttack()
 
 	if (!bHitPlayer)
 	{
-		return;
+		return false;
 	}
 
 	ApplyAttackDamage(AttackHit.GetActor());
+	return true;
 }
 
 

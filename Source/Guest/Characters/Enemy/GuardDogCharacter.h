@@ -30,7 +30,7 @@ public:
 
 	/** 추후 BT Task 또는 Gameplay Ability가 호출할 공격 진입점이다. */
 	UFUNCTION(BlueprintCallable, Category = "Guest|GuardDog|Combat")
-	void RequestAttack();
+	bool RequestAttack();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Movement", meta = (ClampMin = "0.0", Units = "cm/s"))
