@@ -64,8 +64,10 @@ protected:
 	/** 실제 피해와 쿨다운 구현 전 사용할 Blueprint 공격 이벤트다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Guest|GuardDog|Combat")
 	void OnAttackRequested();
-
+	
 private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Movement", meta = (AllowPrivateAccess = "true"))
 	bool bIsChasing = false;
+	
+	bool PerformAttackTrace(FHitResult& OutHit) const;
 };

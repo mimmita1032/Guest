@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "Guest/Characters/Enemy/GuardDogCharacter.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Guest/AI/Controllers/GuardDogAIController.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Guest/Characters/Player/GuestCharacter.h"
 
 AGuardDogCharacter::AGuardDogCharacter()
 {
@@ -50,5 +51,55 @@ void AGuardDogCharacter::SetChasing(const bool bNewChasing)
 
 void AGuardDogCharacter::RequestAttack()
 {
+	FHitResult AttackHit;
+	const bool bHitPlayer = PerformAttackTrace(AttackHit);
+
 	OnAttackRequested();
+
+	if (!bHitPlayer)
+	{
+		return;
+	}
+}
+
+bool AGuardDogCharacter::PerformAttackTrace(FHitResult& OutHit) const
+{
+	const FVector TraceStart = GetActorLocation();
+	const FVector TraceEnd = TraceStart + GetActorForwardVector() * AttackRange;
+	
+	EDrawDebugTrace::Type DebugType = EDrawDebugTrace::None;
+
+	if (bDrawDebugAttackTrace)
+	{
+		DebugType = EDrawDebugTrace::ForDuration;
+	}
+	
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(const_cast<AGuardDogCharacter*>(this));
+	
+	TArray<FHitResult> HitResults;
+	
+	UKismetSystemLibrary::SphereTraceMulti(
+		this,
+		TraceStart,
+		TraceEnd,
+		AttackRadius,
+		UEngineTypes::ConvertToTraceType(ECC_Pawn),
+		false,
+		ActorsToIgnore,
+		DebugType,
+		HitResults,
+		true
+	);
+
+	for (const FHitResult& Hit : HitResults)
+	{
+		if (AGuestCharacter* Player = Cast<AGuestCharacter>(Hit.GetActor()))
+		{
+			OutHit = Hit;
+			return true;
+		}
+	}
+
+	return false;
 }
