@@ -70,4 +70,6 @@ private:
 	bool bIsChasing = false;
 	
 	bool PerformAttackTrace(FHitResult& OutHit) const;
+	
+	void ApplyAttackDamage(AActor* TargetActor) const;
 };

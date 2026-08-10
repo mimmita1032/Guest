@@ -5,6 +5,9 @@
 #include "Guest/AI/Controllers/GuardDogAIController.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 
 AGuardDogCharacter::AGuardDogCharacter()
 {
@@ -60,7 +63,10 @@ void AGuardDogCharacter::RequestAttack()
 	{
 		return;
 	}
+
+	ApplyAttackDamage(AttackHit.GetActor());
 }
+
 
 bool AGuardDogCharacter::PerformAttackTrace(FHitResult& OutHit) const
 {
@@ -102,4 +108,54 @@ bool AGuardDogCharacter::PerformAttackTrace(FHitResult& OutHit) const
 	}
 
 	return false;
+}
+
+void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
+{
+	if (!TargetActor || !DamageEffectClass)
+	{
+		return;
+	}
+
+	const IAbilitySystemInterface* TargetASCInterface = Cast<IAbilitySystemInterface>(TargetActor);
+	if (!TargetASCInterface)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* TargetASC = TargetASCInterface->GetAbilitySystemComponent();
+	if (!TargetASC)
+	{
+		return;
+	}
+
+	const IAbilitySystemInterface* SourceASCInterface = Cast<IAbilitySystemInterface>(this);
+	if (!SourceASCInterface)
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* SourceASC = SourceASCInterface->GetAbilitySystemComponent();
+	if (!SourceASC)
+	{
+		return;
+	}
+
+	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(
+		DamageEffectClass,
+		1.f,
+		SourceASC->MakeEffectContext()
+	);
+
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+
+	SpecHandle.Data->SetSetByCallerMagnitude(
+		GuestGameplayTags::TAG_Data_DamageAmount,
+		AttackDamage
+	);
+
+	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
 }

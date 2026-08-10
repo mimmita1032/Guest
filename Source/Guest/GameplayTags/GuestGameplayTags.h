@@ -76,5 +76,6 @@ namespace GuestGameplayTags
 
 	//GE SetByCaller 데이터
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_PurifyAmount);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_DamageAmount);
 }
 
