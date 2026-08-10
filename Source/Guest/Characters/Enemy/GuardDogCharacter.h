@@ -6,6 +6,8 @@
 #include "Guest/Characters/Enemy/GuestEnemyCharacter.h"
 #include "GuardDogCharacter.generated.h"
 
+class UGameplayEffect;
+
 /**
  * 맹견 몹의 캐릭터 베이스.
  * 이동 상태와 Blueprint 연동 지점을 담당한다.
@@ -36,6 +38,24 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Movement", meta = (ClampMin = "0.0", Units = "cm/s"))
 	float ChaseSpeed = 600.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat", meta = (ClampMin = "0.0", Units = "cm"))
+	float AttackRange = 180.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat", meta = (ClampMin = "0.0", Units = "cm"))
+	float AttackRadius = 55.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat", meta = (ClampMin = "0.0", Units = "s"))
+	float AttackCooldown = 1.25f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat", meta = (ClampMin = "0.0"))
+	float AttackDamage = 10.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat|Debug")
+	bool bDrawDebugAttackTrace = true;
 
 	/** 추격 상태 변경을 Animation Blueprint 등에 전달한다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Guest|GuardDog|Movement")
