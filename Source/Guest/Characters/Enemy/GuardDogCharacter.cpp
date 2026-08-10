@@ -54,6 +54,13 @@ void AGuardDogCharacter::SetChasing(const bool bNewChasing)
 
 void AGuardDogCharacter::RequestAttack()
 {
+	if (!CanAttack())
+	{
+		return;
+	}
+
+	MarkAttackRequested();
+
 	FHitResult AttackHit;
 	const bool bHitPlayer = PerformAttackTrace(AttackHit);
 
@@ -158,4 +165,24 @@ void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
 	);
 
 	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
+}
+
+bool AGuardDogCharacter::CanAttack() const
+{
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	const float CurrentTime = World->GetTimeSeconds();
+	return CurrentTime - LastAttackTime >= AttackCooldown;
+}
+
+void AGuardDogCharacter::MarkAttackRequested()
+{
+	if (const UWorld* World = GetWorld())
+	{
+		LastAttackTime = World->GetTimeSeconds();
+	}
 }
