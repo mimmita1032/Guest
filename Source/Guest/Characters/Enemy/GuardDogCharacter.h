@@ -55,7 +55,7 @@ protected:
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat|Debug")
-	bool bDrawDebugAttackTrace = true;
+	bool bDrawDebugAttackTrace = false;
 
 	/** 추격 상태 변경을 Animation Blueprint 등에 전달한다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Guest|GuardDog|Movement")
@@ -70,7 +70,7 @@ private:
 	bool bIsChasing = false;
 	
 	bool PerformAttackTrace(FHitResult& OutHit) const;
-	void ApplyAttackDamage(AActor* TargetActor) const;
+	bool ApplyAttackDamage(AActor* TargetActor) const;
 	
 	float LastAttackTime = -10000.f;
 

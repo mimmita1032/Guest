@@ -71,8 +71,7 @@ bool AGuardDogCharacter::RequestAttack()
 		return false;
 	}
 
-	ApplyAttackDamage(AttackHit.GetActor());
-	return true;
+	return ApplyAttackDamage(AttackHit.GetActor());
 }
 
 
@@ -118,35 +117,35 @@ bool AGuardDogCharacter::PerformAttackTrace(FHitResult& OutHit) const
 	return false;
 }
 
-void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
+bool AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
 {
 	if (!TargetActor || !DamageEffectClass)
 	{
-		return;
+		return false;
 	}
 
 	const IAbilitySystemInterface* TargetASCInterface = Cast<IAbilitySystemInterface>(TargetActor);
 	if (!TargetASCInterface)
 	{
-		return;
+		return false;
 	}
 
 	UAbilitySystemComponent* TargetASC = TargetASCInterface->GetAbilitySystemComponent();
 	if (!TargetASC)
 	{
-		return;
+		return false;
 	}
 
 	const IAbilitySystemInterface* SourceASCInterface = Cast<IAbilitySystemInterface>(this);
 	if (!SourceASCInterface)
 	{
-		return;
+		return false;
 	}
 
 	UAbilitySystemComponent* SourceASC = SourceASCInterface->GetAbilitySystemComponent();
 	if (!SourceASC)
 	{
-		return;
+		return false;
 	}
 
 	FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(
@@ -157,7 +156,7 @@ void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
 
 	if (!SpecHandle.IsValid())
 	{
-		return;
+		return false;
 	}
 
 	SpecHandle.Data->SetSetByCallerMagnitude(
@@ -166,6 +165,7 @@ void AGuardDogCharacter::ApplyAttackDamage(AActor* TargetActor) const
 	);
 
 	SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data, TargetASC);
+	return true;
 }
 
 bool AGuardDogCharacter::CanAttack() const
