@@ -349,13 +349,15 @@ void UGCameraComponent::SetViewfinderActive(bool bActive)
 	if (!CaptureComponent) return;
 	if (CaptureComponent->bCaptureEveryFrame == bActive) return;
 
-	CaptureComponent->bCaptureEveryFrame = bActive;
-
-	// 켜는 순간 한 장 그려두지 않으면 첫 프레임에 이전(또는 빈) 화면이 보인다
+	// 켜는 순간 한 장 그려두지 않으면 첫 프레임에 이전(또는 빈) 화면이 보인다.
+	// bCaptureEveryFrame을 켠 뒤에 부르면 엔진이 "이미 매 프레임 그리는데 또 그리라고 한다"며
+	// major inefficiency 경고를 띄우므로, 켜기 전에 한 장 뽑아둔다.
 	if (bActive)
 	{
 		CaptureComponent->CaptureScene();
 	}
+
+	CaptureComponent->bCaptureEveryFrame = bActive;
 }
 
 bool UGCameraComponent::IsViewfinderActive() const
