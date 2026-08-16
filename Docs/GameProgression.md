@@ -409,6 +409,40 @@ Step01(Photo) 중에는 무시된다. 그래서 이 구조가 안전하다.
   → **데모에서는 주택가 1장으로 축소 (확정).** 근거는 「상세 — Stage 2~4」 참고.
   늘릴 때는 `DT_SpacetimeData`에 좌표 행을 더하고 Step01에 목표만 추가하면 된다
 
+### 2-2. 피사체 컴포넌트 배치 (프레임 판정용) — 이게 없으면 예전대로 좌표 판정이다
+
+코드는 완료됐다(「피사체 인식」 참고). 남은 건 배치뿐이다.
+
+- ✅ `L_Residential_01` — `PhotoSubject_House` / `PhotoSubject_Apartment` 배치 완료
+- ⬜ `L_Landmark_Museum_01` / `L_Landmark_Traditional_01` / `L_Landmark_SkySpire_01`
+- ⬜ 배치가 끝난 레벨부터 `BP_GuestCharacter`의 카메라 컴포넌트에서 `SubjectResolution`을
+  `FrameOnly`로 옮긴다. 그 전까지는 기본값 `FrameThenPlace`라 기존 좌표 판정이 살아 있다
+
+**배치 방법.** Place Actors에서 **Actor**(Empty Actor가 아니다)를 놓고 Details의 **+ Add** →
+`Photo Subject`. 그 다음:
+
+- `SubjectID`를 `DT_QuestData`의 목표 `TargetID`와 맞춘다 (주택가는 `Photo_House`)
+- `BoxExtent`로 대상을 감싼다. 블록아웃 건물은 `SM_Cube` 수십 개라 오너 바운즈로는 안 된다
+- **컴포넌트의 상대 위치가 0인지 확인할 것.** 판정은 액터가 아니라 **컴포넌트 위치**를 쓴다.
+  실제로 (3000, 0, 600) 어긋난 채로 배치돼 상자가 그만큼 밀려 있었다
+- 임계값은 기본값(`MinScreenCoverage` 0.04 / `MinVisibleRatio` 0.25)으로 시작한다.
+  촬영하면 로그에 `피사체 판정: <ID> (점유율 %, 점수, 후보 N)`이 찍히니 그걸 보고 맞춘다
+
+**상자를 어디에 씌울지가 핵심이다.** 플레이어가 그 안을 걸어다니는 지역이면 그 안에서는
+판정이 안 된다(위 1번). `L_Residential_01`은 마을 전체를 낮게 덮는 상자 하나로
+「골목 하단에서 올려다보기」와 「정상에서 뒤돌아보기」 두 구도를 다 잡았다.
+언덕 상단 군집만 따로 씌우려 했으나 근접면이 언덕에 파묻혀 어느 방향에서도 가려져 실패했다.
+
+`L_Residential_01` 확정값:
+
+| 피사체 | 중심 | 반크기 |
+|---|---|---|
+| `Photo_House` | `2400, 0, 690` | `4100, 4300, 710` |
+| `Photo_Apartment` | `27045, -1000, 2530` | `3800, 14600, 2530` |
+
+랜드마크 3종은 각 맵의 오렌지 `PHOTO_*` 마커가 **사람이 서는 자리**이므로,
+거기서 보이는 것에 박스를 씌우면 된다.
+
 ### 3. 시간 경과 연출 — ✅ 완료
 - ✅ `DA_Narration_Tavern_001`의 **`Days To Advance On Finish`** = `1`
 - ✅ **`Hour On Finish`** = `9.0` (다음 날 아침)
@@ -542,25 +576,57 @@ Step01(Photo) 중에는 무시된다. 그래서 이 구조가 안전하다.
 - `L_CitySquare` — `Holo_*`는 `MI_DevSkyBlue` 더미다. 머티리얼·이펙트 교체 필요
 - `L_Landmark_SkySpire_01` — 엘리베이터 BP + `ITEM_SKY_001` 배치 (Stage 7)
 
-### 피사체 인식 설계 (예정 — 블록아웃 직후)
+### 피사체 인식 — ✅ 코드 완료 (에디터 배치 대기)
 
-**해결하려는 것:** 지금 사진의 `SubjectID`는 **촬영 당시 플레이어가 있던 좌표**에서 온다.
-그래서 한 레벨 안에서 "달동네를 찍었나 아파트를 찍었나"를 구분할 수 없다. 어디를 향해
-찍든 그 좌표의 `PhotoSubjectID` 하나로 기록된다.
+**해결한 것:** 사진의 `SubjectID`가 **촬영 당시 플레이어가 있던 좌표**에서 왔다.
+그래서 한 레벨 안에서 "달동네를 찍었나 아파트를 찍었나"를 구분할 수 없었다. 어디를 향해
+찍든 그 좌표의 `PhotoSubjectID` 하나로 기록됐다.
 
-**방식 (확정): 피사체마다 컴포넌트를 붙이고, 촬영 프레임 안의 점유율로 판정한다.**
+**방식: 피사체마다 컴포넌트를 붙이고, 촬영 프레임 안의 점유율로 판정한다.**
 
 ```
-UGPhotoSubjectComponent              피사체 액터에 부착. SubjectID, 최소 점유율 보유
-GPhotoSubjectRegistrySubsystem       BeginPlay에 자기등록 — 셔터 때 전체 액터 스캔을 피한다
-UGCameraComponent::ResolveSubject()  아래 순서로 판정, FName 반환
+UGPhotoSubjectComponent                 SceneComponent. SubjectID / MinScreenCoverage /
+                                        ScoreWeight / BoxExtent 보유
+UGPhotoSubjectRegistrySubsystem         WorldSubsystem. BeginPlay에 자기등록 —
+                                        셔터 때 전체 액터 스캔을 피한다
+UGCameraComponent::ResolveSubject()     아래 순서로 판정, FName 반환
+UGCameraComponent::ResolveSubjectID()   모드를 적용해 최종값 결정. 디지캠은 이것만 부른다
 ```
 
-1. 등록된 피사체 중 카메라 프러스텀 안에 있는 것만 추림
-2. 바운즈를 화면에 투영해 **화면 점유 면적** 계산
-3. 바운즈의 몇 점으로 트레이스해 **가려졌는지** 확인
-4. `점유율 × 중앙 근접도`로 점수를 매겨 1등 채택
-5. 기준 미달이면 `NAME_None`
+1. **카메라가 박스 안이면 탈락.** 그 안에 서 있는 것과 그것을 찍는 것은 다르다
+2. 박스 8꼭짓점을 NDC로 투영 — 카메라 뒤 꼭짓점은 버린다
+3. 화면 밖을 잘라낸 사각형 넓이 → **화면 점유율** (`MinScreenCoverage` 미만이면 탈락)
+4. 중심·8꼭짓점 **방향**으로 트레이스하되 **박스에 들어가기 직전까지만** 본다 →
+   **보이는 비율** (`MinVisibleRatio` 미만이면 탈락)
+5. `점유율 × 중앙 근접도 × 보이는 비율 × ScoreWeight`로 1등 채택
+6. 기준 미달이면 `NAME_None`
+
+**1번이 없으면 고치려던 버그가 되살아난다.** 달동네처럼 플레이어가 그 안을 걸어다니는 지역은
+박스 안에서 어느 방향을 보든 점유율이 100%로 잡혀서, 하늘을 찍어도 그 피사체가 1등이 된다.
+실측에서 정상에서 하늘을 향해도 `Photo_House`가 16.8%로 잡혔다.
+
+**4번을 꼭짓점까지 재면 안 된다.** 지형에 파묻힌 아래쪽 네 점이 늘 가려진 것으로 잡혀서
+눈에 뻔히 보이는 건물이 "안 보인다"고 판정된다. 근접면까지만 재면 피사체 자신의 지오메트리가
+가림으로 잡히는 일도 없다.
+
+**점유율만으로는 원경이 안 걸러진다.** 언덕 너머로 삐죽 보이는 아파트(점유율 15.9~24.0%)와
+정상에서 탁 트인 채로 마주 본 아파트(26.4%)가 넓이로는 거의 같다. 갈리는 건 **보이는 비율**로,
+각각 11~22% / 56%였다. `MinVisibleRatio` 기본값 0.25는 여기서 나왔다.
+
+**`SM_Cube` 수십 개로 흩어진 블록아웃 건물이 있으므로 바운즈는 컴포넌트 자신의 박스가 기본이다.**
+오너 액터 하나가 통째로 피사체인 경우에만 `bUseOwnerBounds`를 켠다.
+
+**전환은 단계적이다.** `UGCameraComponent::SubjectResolution`:
+
+| 모드 | 동작 |
+|---|---|
+| `FrameThenPlace` (기본) | 프레임 판정 우선, 없으면 좌표의 `PhotoSubjectID`로 떨어진다 |
+| `FrameOnly` | 프레임 판정만. 모든 레벨에 피사체를 배치한 뒤 여기로 옮긴다 |
+| `PlaceOnly` | 예전 방식. 문제 추적용 비상구 |
+
+기본값이 `FrameThenPlace`라 **피사체 컴포넌트를 아직 배치하지 않은 레벨에서도 기존 퀘스트가
+그대로 돌아간다.** 배치가 끝난 뒤 `FrameOnly`로 옮기면 "아무 데나 보고 찍어도 목표가 진행되는"
+문제가 사라진다.
 
 중앙 라인트레이스 한 발이나 격자 트레이스로도 되지만 그 둘은 **"화면에 얼마나 크게
 담겼는가"를 모른다.** 멀리 점처럼 찍힌 것과 화면을 꽉 채운 것이 동점이 된다.
