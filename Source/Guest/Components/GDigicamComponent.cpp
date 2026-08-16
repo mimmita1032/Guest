@@ -139,6 +139,7 @@ void UGDigicamComponent::HandleShutter()
 	}
 
 	FPhotoData Meta;
+	FName PlaceSubjectID = NAME_None;
 	if (SpacetimeSS && SpacetimeSS->HasCurrentLocation())
 	{
 		const FSpacetimeData Here = SpacetimeSS->GetCurrentLocation();
@@ -146,7 +147,7 @@ void UGDigicamComponent::HandleShutter()
 		Meta.PlaceName  = Here.PlaceName;
 		Meta.AreaCode   = Here.AreaCode;
 		Meta.StoryDate  = Here.StoryDate;
-		Meta.SubjectID  = Here.PhotoSubjectID;
+		PlaceSubjectID  = Here.PhotoSubjectID;
 	}
 	else
 	{
@@ -155,6 +156,11 @@ void UGDigicamComponent::HandleShutter()
 		G_WARN(TEXT("디지캠: 현재 좌표가 확정되지 않아 사진에 장소 정보를 남기지 못합니다. "
 			"이 레벨의 행이 DT_SpacetimeData에 있는지 확인하세요."));
 	}
+
+	// "무엇을 찍었는가"는 좌표가 아니라 프레임에서 나온다.
+	// 한 레벨에 찍을 것이 여럿이면 좌표만으로는 구별할 수 없기 때문이다.
+	// 셔터 직전에 판정해야 뷰파인더에 담긴 그림과 결과가 어긋나지 않는다.
+	Meta.SubjectID = CamComp->ResolveSubjectID(PlaceSubjectID);
 
 	if (!CamComp->TakePhoto(Meta))
 	{
