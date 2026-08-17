@@ -1,8 +1,11 @@
 // Copyright (c) 2026 Anything Left Behind?. All rights reserved.
 
 #include "Guest/Characters/Enemy/GuardDogCharacter.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Guest/AI/Controllers/GuardDogAIController.h"
+#include "Guest/Animation/GuardDogAnimInstance.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "AbilitySystemComponent.h"
@@ -56,10 +59,11 @@ bool AGuardDogCharacter::RequestAttack()
 {
 	if (!CanAttack())
 	{
-		return false;
+		return true;
 	}
 
 	MarkAttackRequested();
+	PlayAttackMontage();
 
 	FHitResult AttackHit;
 	const bool bHitPlayer = PerformAttackTrace(AttackHit);
@@ -68,10 +72,55 @@ bool AGuardDogCharacter::RequestAttack()
 
 	if (!bHitPlayer)
 	{
+		return true;
+	}
+
+	ApplyAttackDamage(AttackHit.GetActor());
+	return true;
+}
+
+bool AGuardDogCharacter::PlayAttackMontage()
+{
+	if (!AttackMontage || !GetMesh())
+	{
 		return false;
 	}
 
-	return ApplyAttackDamage(AttackHit.GetActor());
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return false;
+	}
+
+	const float MontageDuration = AnimInstance->Montage_Play(AttackMontage, AttackMontagePlayRate);
+	if (MontageDuration <= 0.f)
+	{
+		return false;
+	}
+
+	if (UGuardDogAnimInstance* GuardDogAnimInstance = Cast<UGuardDogAnimInstance>(AnimInstance))
+	{
+		GuardDogAnimInstance->SetAttacking(true);
+	}
+
+	FOnMontageEnded MontageEndedDelegate;
+	MontageEndedDelegate.BindUObject(this, &AGuardDogCharacter::HandleAttackMontageEnded);
+	AnimInstance->Montage_SetEndDelegate(MontageEndedDelegate, AttackMontage);
+
+	return true;
+}
+
+void AGuardDogCharacter::HandleAttackMontageEnded(UAnimMontage* Montage, const bool bInterrupted)
+{
+	if (Montage != AttackMontage || !GetMesh())
+	{
+		return;
+	}
+
+	if (UGuardDogAnimInstance* GuardDogAnimInstance = Cast<UGuardDogAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		GuardDogAnimInstance->SetAttacking(false);
+	}
 }
 
 

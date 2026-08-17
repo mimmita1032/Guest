@@ -7,6 +7,7 @@
 #include "GuardDogCharacter.generated.h"
 
 class UGameplayEffect;
+class UAnimMontage;
 
 /**
  * 맹견 몹의 캐릭터 베이스.
@@ -54,6 +55,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat|Animation")
+	TObjectPtr<UAnimMontage> AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat|Animation", meta = (ClampMin = "0.0"))
+	float AttackMontagePlayRate = 1.f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Guest|GuardDog|Combat|Debug")
 	bool bDrawDebugAttackTrace = false;
 
@@ -71,6 +78,8 @@ private:
 	
 	bool PerformAttackTrace(FHitResult& OutHit) const;
 	bool ApplyAttackDamage(AActor* TargetActor) const;
+	bool PlayAttackMontage();
+	void HandleAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	
 	float LastAttackTime = -10000.f;
 

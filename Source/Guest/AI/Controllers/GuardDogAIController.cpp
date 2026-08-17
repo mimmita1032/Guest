@@ -7,6 +7,7 @@
 #include "DrawDebugHelpers.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
+#include "Guest/Characters/Enemy/GuardDogCharacter.h"
 #include "Guest/Characters/Player/GuestCharacter.h"
 #include "Guest/Data/DataAssets/GAISightDataAsset.h"
 #include "Guest/Utils/GLog.h"
@@ -135,6 +136,14 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 		// 발견 상태: 현재 타깃을 기록하고 경계 상태로 전환한다.
 		SensedPlayer = Actor;
 
+		if (AGuardDogCharacter* GuardDog = Cast<AGuardDogCharacter>(GetPawn()))
+		{
+			GuardDog->SetChasing(true);
+		}
+
+		StopMovement();
+		SetFocus(Actor, EAIFocusPriority::Gameplay);
+
 		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
 		{
 			BlackboardComp->SetValueAsObject(BB_TargetActor, Actor);
@@ -154,9 +163,17 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 		// 상실 상태: 타깃은 비우되 이후 수색을 위해 마지막 위치는 남긴다.
 		SensedPlayer = nullptr;
 
+		if (AGuardDogCharacter* GuardDog = Cast<AGuardDogCharacter>(GetPawn()))
+		{
+			GuardDog->SetChasing(false);
+		}
+
+		ClearFocus(EAIFocusPriority::Gameplay);
+
 		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
 		{
 			BlackboardComp->SetValueAsVector(BB_LastKnownLocation, Stimulus.StimulusLocation);
+			BlackboardComp->SetValueAsBool(BB_IsAlerted, false);
 			BlackboardComp->ClearValue(BB_TargetActor);
 		}
 
