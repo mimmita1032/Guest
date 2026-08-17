@@ -172,6 +172,7 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
 		{
 			BlackboardComp->SetValueAsVector(BB_LastKnownLocation, Stimulus.StimulusLocation);
+			BlackboardComp->SetValueAsBool(BB_IsAlerted, false);
 			BlackboardComp->ClearValue(BB_TargetActor);
 		}
 
