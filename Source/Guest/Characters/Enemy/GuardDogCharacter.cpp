@@ -68,10 +68,11 @@ bool AGuardDogCharacter::RequestAttack()
 
 	if (!bHitPlayer)
 	{
-		return false;
+		return true;
 	}
 
-	return ApplyAttackDamage(AttackHit.GetActor());
+	ApplyAttackDamage(AttackHit.GetActor());
+	return true;
 }
 
 
