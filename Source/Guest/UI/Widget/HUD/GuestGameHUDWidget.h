@@ -45,7 +45,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_Battery;
 
-	// --- 퀵슬롯 이미지 바인딩 (BindWidgetOptional로 설정하여 에디터 작업 전 크래시 방지) ---
+	// --- 퀵슬롯 이미지 바인딩 (4칸으로 복구) ---
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UImage> Img_QuickSlot_0;
 

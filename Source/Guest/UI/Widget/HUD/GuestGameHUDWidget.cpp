@@ -71,9 +71,10 @@ void UGuestGameHUDWidget::UpdateQuickSlotsUI()
     UGInventoryComponent* InvComp = GuestChar->FindComponentByClass<UGInventoryComponent>();
     if (!InvComp) return;
 
-    // UI 이미지 배열화 (순회 접근 용이)
+    // UI 이미지 배열화 (4칸으로 복구)
     TArray<UImage*> QuickSlotImages = { Img_QuickSlot_0, Img_QuickSlot_1, Img_QuickSlot_2, Img_QuickSlot_3 };
 
+    // 반복 횟수 4로 수정
     for (int32 i = 0; i < 4; ++i)
     {
         UImage* TargetImage = QuickSlotImages[i];
