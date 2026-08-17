@@ -141,6 +141,7 @@ void AGuardDogAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStim
 			GuardDog->SetChasing(true);
 		}
 
+		StopMovement();
 		SetFocus(Actor, EAIFocusPriority::Gameplay);
 
 		if (UBlackboardComponent* BlackboardComp = GetBlackboardComponent())
