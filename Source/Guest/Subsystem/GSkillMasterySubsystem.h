@@ -65,27 +65,15 @@ public:
 #pragma region Discovery & Progress
 public:
 	// Book 연동은 Phase 3. 여기서는 Locked → InTheory 전이만 담당하는 Runtime API.
-	// 반환값 true = 실제로 InTheory로 전이됨, false = Data 미준비 / 존재하지 않는 SkillTag / 이미 Locked가 아님
+	// 정책: 선행 Skill이 모두 Mastered여야 진입 가능 ("아직 이해할 수 없는 내용입니다") — 미충족 시 Locked 유지.
+	// 반환값 true = 실제로 InTheory로 전이됨,
+	// false = Data 미준비 / 존재하지 않는 SkillTag / 이미 Locked가 아님 / 선행 Skill 미충족
 	UFUNCTION(BlueprintCallable, Category = "Skill")
 	bool DiscoverSkill(FGameplayTag SkillTag);
 
 	// Phase 3의 실제 이벤트 발신부(Flash 사용, WeakPoint 관찰 등)가 호출할 진행도 누적 API
 	UFUNCTION(BlueprintCallable, Category = "Skill")
 	void HandleSkillProgressEvent(FGameplayTag ProgressEventTag, float Amount);
-#pragma endregion
-
-	/*===========================================================
-	 * [디버그 전용] Skill 시스템 콘솔/BP 테스트 함수
-	 * 실제 발신부(Phase 3)가 준비되기 전까지 PIE에서 Discover/Progress 흐름을 검증하기 위한 용도.
-	 * DiscoverSkill/HandleSkillProgressEvent를 그대로 호출하는 얇은 래퍼이며 별도 상태를 갖지 않는다.
-	 *===========================================================*/
-#pragma region Debug
-public:
-	UFUNCTION(BlueprintCallable, Category = "Skill|Debug")
-	bool Debug_DiscoverSkill(FGameplayTag SkillTag) { return DiscoverSkill(SkillTag); }
-
-	UFUNCTION(BlueprintCallable, Category = "Skill|Debug")
-	void Debug_AddSkillProgress(FGameplayTag ProgressEventTag, float Amount) { HandleSkillProgressEvent(ProgressEventTag, Amount); }
 #pragma endregion
 
 private:
@@ -96,6 +84,8 @@ private:
 	void TryMasterSkill(FGameplayTag SkillTag);
 
 	// RequiredSkills가 모두 Mastered인지 확인. Invalid/존재하지 않는 선행 Skill은 로그 후 미충족으로 처리.
+	// DiscoverSkill()의 Locked → InTheory 진입 조건 검사에서만 사용한다.
+	// (Mastered 상태가 역행하는 기능이 없어 TryMasterSkill()에서는 재검사하지 않는다.)
 	bool ArePrerequisiteSkillsMastered(const UGSkillDefinition& Definition) const;
 
 private:

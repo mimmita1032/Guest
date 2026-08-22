@@ -116,6 +116,22 @@ bool UGSkillMasterySubsystem::DiscoverSkill(FGameplayTag SkillTag)
 		return false;
 	}
 
+	const UGSkillDefinition* Definition = SkillDefinitionCache.FindRef(SkillTag);
+	if (!Definition)
+	{
+		G_WARN(TEXT("Skill 시스템: SkillTag [%s]의 Definition을 캐시에서 찾을 수 없어 DiscoverSkill 보류"), *SkillTag.ToString());
+		return false;
+	}
+
+	// 정책: 선행 Skill이 모두 Mastered여야 책 내용을 이해할 수 있다.
+	// 미충족 시 "아직 이해할 수 없는 내용입니다" — 상태를 바꾸지 않고 Locked를 유지한다.
+	if (!ArePrerequisiteSkillsMastered(*Definition))
+	{
+		G_LOG(TEXT("Skill 시스템: [%s] 선행 Skill 미충족 — 아직 이해할 수 없는 내용입니다 (Discover 보류, Locked 유지)"),
+			*SkillTag.ToString());
+		return false;
+	}
+
 	State->State = ESkillState::InTheory;
 	G_LOG(TEXT("Skill 시스템: [%s] Locked → InTheory"), *SkillTag.ToString());
 	OnSkillStateChanged.Broadcast(SkillTag, ESkillState::InTheory);
@@ -216,11 +232,7 @@ void UGSkillMasterySubsystem::TryMasterSkill(FGameplayTag SkillTag)
 		}
 	}
 
-	if (!ArePrerequisiteSkillsMastered(*Definition))
-	{
-		return;
-	}
-
+	// 선행 Skill 검사는 DiscoverSkill()의 진입 조건으로 이미 보장되어 여기서는 재검사하지 않는다.
 	State->State = ESkillState::Mastered;
 	G_LOG(TEXT("Skill 시스템: [%s] InTheory → Mastered"), *SkillTag.ToString());
 	OnSkillStateChanged.Broadcast(SkillTag, ESkillState::Mastered);
