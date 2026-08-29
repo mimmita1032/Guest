@@ -8,6 +8,7 @@
 
 class UGuestCommonButton;
 class UTextBlock;
+class UUserWidget; // 세이브 프로필 리스트 위젯을 위해 추가
 
 /**
  * UGuestMainMenuWidget
@@ -19,6 +20,7 @@ class UTextBlock;
  * - 화면 Open / Close : GuestActivatableBase 에서 자동 처리
  * - 버튼 클릭 사운드  : UGuestCommonButton 내부에서 자동 처리되므로 메뉴 위젯 단에서 호출 불필요
  */
+
 UCLASS(Abstract, BlueprintType, meta = (DisableNativeTick))
 class GUEST_API UGuestMainMenuWidget : public UGuestActivatableBase
 {
@@ -41,13 +43,10 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> Text_Title;
 
-    // ── 메뉴 버튼 (커스텀 사운드 버튼 적용) ──
+    // ── 메뉴 버튼 (통합됨) ──
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UGuestCommonButton> Button_Continue;
-
-    UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UGuestCommonButton> Button_NewGame;
+    TObjectPtr<UGuestCommonButton> Button_StartGame; // 기존 계속하기/새 게임 통합
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UGuestCommonButton> Button_Settings;
@@ -55,22 +54,20 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UGuestCommonButton> Button_Quit;
 
+    // ── 서브 위젯 (세이브 프로필 리스트) ──
+    
+    // 에디터에서 WBP_MainMenu 안에 세이브 리스트 위젯을 배치해두고 숨겨놓은 상태로 연결합니다.
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UUserWidget> SaveProfileListWidget; 
+
     // ── 버튼 핸들러 ──
 
     UFUNCTION()
-    void OnContinueClicked();
-
-    UFUNCTION()
-    void OnNewGameClicked();
+    void OnStartGameClicked();
 
     UFUNCTION()
     void OnSettingsClicked();
 
     UFUNCTION()
     void OnQuitClicked();
-
-    // ── 내부 헬퍼 ──
-
-    /** 세이브 데이터 존재 여부 확인. TODO: 실제 세이브 시스템 연동 필요. */
-    bool HasSaveData() const;
 };
