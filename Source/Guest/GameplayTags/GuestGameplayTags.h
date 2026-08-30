@@ -49,6 +49,10 @@ namespace GuestGameplayTags
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_1995);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Era_2026);
 	
+	// ★ 테스트용 장비 부위 태그 2개 추가
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Equip_Helmet);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Equip_Chest);
+	
 	//테스트 인풋
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_InputTag_Test);
 	
@@ -76,6 +80,7 @@ namespace GuestGameplayTags
 
 	//GE SetByCaller 데이터
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_PurifyAmount);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_DamageAmount);
 
 	//Skill 식별 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Camera_Flash);

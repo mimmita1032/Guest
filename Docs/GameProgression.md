@@ -1,4 +1,4 @@
-# 게임 진행 흐름 (Game Progression)
+﻿# 게임 진행 흐름 (Game Progression)
 
 이 문서는 게임 오프닝부터 실제 플레이 순서대로 어떤 일이 벌어지는지, 그리고 각 시점이 `StoryProgress`(`GQuestSubsystem`)의 몇 단계에 해당하는지를 정리한다.
 목적: 만들어둔 시스템(퀘스트/대화/인벤토리/세이브 등)을 실제 플레이 가능한 한 줄기 경로로 연결하고, 아직 없는 기능을 이 문서 기준으로 파악한다.
@@ -7,6 +7,18 @@
 - 확정된 진행 단계만 표에 채운다. 미정인 부분은 `TBD`로 남긴다.
 - `StoryProgress` 값은 `FQuestData::RequiredStoryProgress` / `StoryProgressOnComplete`와 그대로 대응해야 한다.
 - 구현 여부(구현됨 / 부분구현 / 미구현)를 표시해서, 이 문서만 보고 다음에 뭘 만들어야 하는지 알 수 있게 한다.
+
+### 노션 문서와의 역할 분담
+
+내용이 겹치면 반드시 한쪽이 낡는다. 이렇게 나눈다.
+
+| | 담는 것 |
+|---|---|
+| **이 문서** | 데모 진행 흐름, 스테이지별 구현 현황, 설계 결정과 그 이유. 코드와 함께 버전 관리된다 |
+| **노션 「퀘스트 작성 가이드」** | 퀘스트를 새로 만들 때의 작업 절차, 필드별 의미, 함정, 검증 방법 |
+| **노션 「퀘스트 DB」** | 퀘스트별 실제 기입값 (Steps, Target ID, 대화 노드 등) |
+
+**"어떤 필드에 뭘 넣는가"는 이 문서에 쓰지 않는다.** 노션을 가리킨다.
 
 ## 데모 범위
 
@@ -28,12 +40,12 @@
 | StoryProgress | 위치/씬 | 사건 | 플레이어 행동 | 다음 단계 트리거 | 구현 상태 |
 |---|---|---|---|---|---|
 | 0 | 현실 · 들판 (`L_Field_01`) | 오프닝. 들판에 핀 꽃을 발견 | 꽃을 화분에 옮겨 담는다 | 화분 들고 주점으로 이동 | 구현됨 |
-| 1 | 주점 (`L_TavernMain`) | 귀가. 주점에 화분을 놓는다 | 테이블에 화분 배치 | 배치 완료 → 나레이션 재생 | 부분구현 |
-| 2 | 주점 (`L_TavernMain`) | 나레이션 종료 후 **하루 경과**. 스미스 첫 방문 | 맥주 2잔 접객 → 의뢰 수주 | 대화 완료 → `Q_Smith_001` 수락 | 미구현 |
-| 3 | 현실 · 주택가 (`L_Residential_01`) | 평범한 건물 촬영 | 아파트/주택가/달동네 3종 촬영 | 사진 3장 확보 후 귀가 | 미구현 |
-| 4 | 주점 (`L_TavernMain`) | 사진 전달. 스미스가 "영감이 안 온다"며 보수 지불 | 스미스와 대화 | `Q_Smith_001` 완료 | 미구현 |
+| 1 | 주점 (`L_TavernMain`) | 귀가. 주점에 화분을 놓는다 | 테이블에 화분 배치 | 배치 완료 → 나레이션 재생 | 구현됨 |
+| 2 | 주점 (`L_TavernMain`) | 나레이션 종료 후 **하루 경과**. 스미스 첫 방문 | 맥주 접객 → 의뢰 수주 | 대화 완료 → `Q_Smith_001` 수락 | 구현됨 |
+| 3 | 현실 · 주택가 (`L_Residential_01`) | 평범한 건물 촬영. **맹견이 잘못된 길을 막는다** | 주택가 풍경 촬영, 맹견은 따돌린다 | 사진 확보 후 귀가 | 부분구현 |
+| 4 | 주점 (`L_TavernMain`) | 사진 전달. 스미스가 "영감이 안 온다"며 보수 지불 | 스미스와 대화 | `Q_Smith_001` 완료 | 구현됨 |
 | 5 | 주점 (`L_TavernMain`) | 스미스 재방문. 독특한 건물 의뢰 | 대화 | `Q_Smith_002` 수락 | 미구현 |
-| 6 | 현실 · 랜드마크 3종 | 독특한 건물 촬영 | 박물관/전통건축/스카이스파이어 촬영 | 사진 전달 → 스미스가 스카이스파이어 선택 | 미구현 |
+| 6 | 현실 · 랜드마크 3종 | 독특한 건물 촬영 | 미술관/전통건축/스카이스파이어 촬영 | **3장을 다 전달** → 스미스가 스카이스파이어를 택함 | 미구현 |
 | 7 | 현실 · 스카이스파이어 (`L_Landmark_SkySpire_01`) | 추가 의뢰 — 입체 모형 수거 | 내부 전망대에서 모형 획득 | 모형 들고 귀가 | 미구현 |
 | 8 | 주점 (`L_TavernMain`) | 모형 전달. 스미스 보수 지불 후 한동안 이탈 | 스미스와 대화 | `Q_Smith_003` 완료 | 미구현 |
 | 9 | 중앙 도시 (`L_CitySquare`) | **엔딩** — 스미스가 완성된 홀로그램 설계도를 보여주며 감사 인사 | 관람 | 데모 종료 화면 | 미구현 |
@@ -45,7 +57,8 @@
 콘텐츠 배치보다 **먼저** 끝내야 하는 것들. 나중에 하면 이미 만든 퀘스트/세이브를 다시 손봐야 한다.
 
 > **진행 상황 (2026-07-26): A·B·C·D 코드 작업 완료.** 브랜치 `feat/item-instance-data`.
-> 남은 것은 **에디터 작업**(맨 아래 「에디터에서 해야 할 일」)과 **E(데모 엔딩 화면)**.
+> **(2026-08-05): 에디터 작업 1~5 완료 — Stage 0~1이 한 줄기로 완주된다.** 브랜치 `feat/quest-content-04`.
+> 남은 선행 작업은 **E(데모 엔딩 화면)** 뿐이고, 다음은 Stage 2(스미스 첫 방문) 콘텐츠다.
 
 ### A. 인벤토리 개체별 데이터 (per-instance data) — ✅ 완료
 
@@ -178,11 +191,35 @@ struct FGuestSavedInventoryEntry {
 **날짜 진행 트리거 (확정):** 자정 경과(자동) + 나레이션 종료(데이터 지정).
 `UGNarrationDataAsset::DaysToAdvanceOnFinish` / `HourOnFinish`를 채우면 나레이션이 끝날 때 날짜가 넘어간다.
 화면이 페이드아웃되는 동안 적용되므로, 나레이션이 걷히면 이미 다음 날이다.
+
+### 진행도도 나레이션이 올린다 — `StoryProgressOnFinish`
+
+스토리 진행도를 올리는 곳은 **둘**이고, 어느 쪽을 쓰느냐가 곧 시점을 정한다.
+
+| 올리는 곳 | 시점 |
+|---|---|
+| `FQuestData::StoryProgressOnComplete` | 퀘스트가 완료되는 즉시 |
+| `UGNarrationDataAsset::StoryProgressOnFinish` | 나레이션이 끝나고 화면이 걷힐 때 |
+
+처음에는 퀘스트 쪽만 있었는데, 그러면 **연출 도중에 세계가 바뀐다.** `CompleteQuest`가
+진행도를 올리면 그 안에서 곧바로 `OnQuestListChanged`가 브로드캐스트되고, 그것을 구독하는
+NPC가 가시성을 재평가한다. 나레이션 요청은 그보다 뒤라서, **스미스가 나레이션과 동시에
+나타나버렸다** — 하룻밤이 지나고 찾아와야 할 손님이 하루가 지나기도 전에 앉아 있었다.
+
+그래서 진행도 상승을 나레이션 종료 시점으로 옮겼다. 날짜도 진행도도 같은 자리에서 바뀌므로
+**세계가 바뀌는 시점이 한 곳으로 모인다.**
+
 → Stage 1의 "꽃 배치 → 나레이션 → 하루 뒤 스미스"가 **코드 수정 없이 데이터만으로** 완성된다.
+`Q_Field_002`는 진행도를 올리지 않고, `DA_Narration_Tavern_001`이 `StoryProgressOnFinish = 2`로 올린다.
+
+> 나레이션이 붙은 퀘스트에서 **둘을 동시에 쓰지 않는다.** 둘 다 채우면 진행도가 두 번 올라
+> 게이팅이 엉뚱하게 풀린다.
 
 ### E. 데모 엔딩 화면
 
 - ⬜ 데모 종료 화면 (`Credit|Ending|Demo` 관련 코드 현재 전무)
+
+> **범위 (2026-08-26 확정): "데모가 여기서 끝났다" 정도로 간단하게.** 제작진 크레딧은 넣지 않는다.
 - 나레이션 시스템(`UGNarrationDataAsset` + `WBP_Narration`)을 그대로 재사용하면 신규 위젯 없이 처리 가능
 
 ---
@@ -199,10 +236,10 @@ struct FGuestSavedInventoryEntry {
   - ✅ `AGItemPickup` — 꽃 줍기·인벤토리 획득·퀘스트 목표 갱신
   - ✅ `AGQuestAutoStarter` — 레벨 진입 시 NPC 없이 퀘스트 자동 수락
   - ✅ `DA_Item_Flower` (`Content/Items/Definitions/Quest/`)
-  - ✅ `DT_QuestData`의 `Q_Field_001` (Step01: Collect(Flower) → ReachHome)
+  - ✅ `DT_QuestData`의 `Q_Field_001` '분위기 전환' (Step01: Collect(Flower))
   - ✅ `L_Field_01`에 `AGItemPickup`(꽃) + `AGQuestAutoStarter` 배치
-  - ⬜ **(에디터)** `Q_Field_001`을 꽃 줍기까지로 축소 + `StoryProgressOnComplete = 1` (아래 「퀘스트 분할」)
-- **구현 상태**: 구현됨
+  - ✅ **(에디터)** `Q_Field_001`을 꽃 줍기까지로 축소 + `StoryProgressOnComplete = 1` (아래 「퀘스트 분할」)
+- **구현 상태**: 구현됨 — 실측 확인 완료 (꽃 줍기 → 진행도 1 → `Q_Field_002` 자동 수락)
 
 ### 퀘스트 분할 — 주점 이동 게이팅 (확정)
 
@@ -213,15 +250,22 @@ struct FGuestSavedInventoryEntry {
 그런데 원래 설계는 꽃 줍기와 주점 도착·배치가 **같은 퀘스트의 다른 단계**였다.
 그러면 진행도가 오르는 시점이 주점에서 화분을 놓은 *뒤*라서, 주점 이동을 막는 데 쓸 수 없다.
 
-**채택안 — 퀘스트를 둘로 쪼갠다** (데이터만으로 해결):
+**채택안 — 퀘스트를 둘로 쪼갠다** (데이터만으로 해결). ✅ 적용 완료:
 
 | 퀘스트 | 범위 | 핵심 필드 |
 |---|---|---|
-| `Q_Field_001` | 꽃 줍기까지 | `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002` |
-| `Q_Field_002` | 귀가 + 화분 배치 | `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋 |
+| `Q_Field_001` '분위기 전환' | 꽃 줍기까지 | `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002` |
+| `Q_Field_002` '꽃의 자리' | 귀가(Step02) + 화분 배치(Step03) | `RequiredStoryProgress = 1`, `NarrationOnComplete = DA_Narration_Tavern_001` |
 
-그리고 `DT_SpacetimeData`의 `Tavern` 행에 **`RequiredStoryProgress = 1`**.
+그리고 `DT_SpacetimeData`의 `Tavern` 행에 **`RequiredStoryProgress = 1`**. ✅
 → 꽃을 줍기 전에는 주점 좌표가 `Locked`으로 뜨고 이동이 거부된다.
+
+> ⚠️ **미검증**: "꽃을 줍지 않고 주점 이동을 시도하면 거부된다"는 경로는 아직 실제로 밟아보지 않았다.
+> 데이터는 넣었으나 거부 동작 자체는 확인 필요.
+
+**주의 — `NextQuestID`는 비어 있어도 경고가 없다.** `GQuestSubsystem.cpp:194`가
+`if (!NextQuestID.IsNone())`로 조용히 건너뛰므로, 연결이 안 되면 로그에 아무것도 남지 않는다.
+"퀘스트 완료" 다음 줄에 "연결 퀘스트 … 자동 수락"이 없으면 이 필드를 의심할 것.
 
 **기각안**: `FQuestStepData`에 단계 단위 `StoryProgressOnComplete`를 추가하는 방법.
 퀘스트를 하나로 유지할 수 있지만 개념이 하나 늘어난다. 스미스 체인도 퀘스트 단위로 끊기므로
@@ -241,13 +285,14 @@ struct FGuestSavedInventoryEntry {
   - ✅ `AGItemPlacementPoint` — 인벤토리에서 제거 후 월드에 시각화 + Place 목표 브로드캐스트
   - ✅ `EQuestObjectiveType::Place`
   - ✅ 나레이션 시스템 (`UGNarrationDataAsset`, `WBP_Narration`, `GQuestSubsystem::OnNarrationRequested`)
-  - ⬜ (에디터) `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place) — 「퀘스트 분할」 참고
-  - ⬜ (에디터) `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem=DA_Item_Flower) 배치
+  - ✅ (에디터) `DT_QuestData`에 **`Q_Field_002`** 신설 (Step02 Reach → Step03 Place) — 「퀘스트 분할」 참고
+  - ✅ (에디터) `L_TavernMain`에 `AGQuestReachTrigger`(`Reach_Home`) + `AGItemPlacementPoint`(RequiredItem=DA_Item_Flower) 배치
   - ✅ (에디터) `DT_SpacetimeData`의 `Tavern` 행 (2026 / 0)
-  - ⬜ (에디터) `Tavern` 행의 `RequiredStoryProgress`를 `1`로 — 꽃을 줍기 전에는 주점에 못 가게
-  - ⬜ (에디터) 나레이션 애셋 본문 작성 — "다음 날 아침…" 문구로 하루 경과를 연출
-  - ⬜ 날짜 시스템(선행작업 D) 연동
-- **구현 상태**: 부분구현 (C++ 준비 완료, 콘텐츠 작업 남음)
+  - ✅ (에디터) `Tavern` 행의 `RequiredStoryProgress`를 `1`로 — 꽃을 줍기 전에는 주점에 못 가게
+  - ⬜ (에디터) 나레이션 애셋 본문 작성 — 현재 `DA_Narration_Tavern_001`은 테스트용 텍스트 상태
+  - ✅ 날짜 시스템(선행작업 D) 연동 — `DaysToAdvanceOnFinish = 1`, `HourOnFinish = 9.0`
+- **구현 상태**: 구현됨 — 실측 확인 완료
+  (도착 → Step02 완료 → Step03 → 화분 배치 → `Q_Field_002` 완료 → 나레이션 → `1일 경과 → 2일차 9.00시`)
 
 ## 상세 — Stage 2~4: 스미스 첫 방문 (`Q_Smith_001` 평범한 것들의 기록)
 
@@ -257,32 +302,94 @@ struct FGuestSavedInventoryEntry {
   2. 두 번째 맥주를 주문하며 자신이 건축가임을 밝힘
   3. 주인공이 주점을 물려받았다는 것을 언급, 마음에 드는 건물이 없었다고 한탄
   4. 현실 세계의 건물들을 보면 영감이 떠오를지도 모르겠다며 의뢰
-- **수거 대상**: 아파트 / 주택가 / 달동네 사진 3종 — 노션 레벨 DB상 촬영 구역은 `L_Residential_01` ("현실 세계 — 주택가 구역", 미시작)
+- **수거 대상**: **주택가 사진 1장** (`Photo_House`). 좌표는 `DT_SpacetimeData`의 `Residential_2010` 행 → `L_Residential_01`, 2010/7
 - **결말**: 스미스는 "이미 비슷한 걸 지어봤다"며 영감을 못 얻지만, 다음엔 독특한 것을 달라고 하며 **보수 지불**
+
+> **사진 3종 → 1장 축소 (확정).** 판정이 장소 단위(한 좌표 = 한 피사체)라 3종을 구분하려면
+> 좌표 세 개가 필요한데, 셋이 같은 레벨을 가리키면 플레이어는 같은 풍경을 세 번 찍게 되고
+> 레벨을 셋으로 나누면 작업량이 3배가 된다. 데모의 핵심 루프 시연에는 1장으로 충분하다.
+> 늘릴 때는 `DT_SpacetimeData`에 좌표 행을 더하고 Step01에 목표만 추가하면 된다.
+
+### 맹견 — 잘못된 길을 막는 장애물 (2026-08-26 확정)
+
+주택가에는 맹견이 있다. **성격은 전투가 아니라 길막이다.**
+
+- **촬영을 막지 않는다.** 가면 안 되는 길(샛길·지름길 입구)을 지킨다
+- **죽일 필요 없다.** 싸우는 게 아니라 피하고 **따돌리는** 것
+- **`Q_Smith_001` 완료 조건과 무관하다.** 사진만 찍어 오면 퀘스트는 닫힌다
+
+그래서 시야 수치(`DA_GuardDog_Sight`)의 기준은 "얼마나 무서운가"가 아니라
+**"도망치면 실제로 떨어지는가"** 다. 모퉁이를 돈 뒤에도 계속 붙어 있으면
+장애물이 아니라 벌이 된다.
+
+AI 자체는 구현이 끝나 있다(PR #64·#81·#102·#105·#111). 남은 건 배치와 NavMesh다.
+
+### 죽으면 어떻게 되는가 (2026-08-26 확정)
+
+**주점으로 돌아간다.**
+
+일반 아이템은 잃고 **퀘스트 아이템은 잃지 않는다**는 것이 원칙이다.
+다만 주택가에서 잃을 일반 아이템이 없고 사진은 퀘스트 아이템이므로,
+**데모에서는 아이템 손실 처리를 만들지 않는다.**
+
+> 현재 `AGuestCharacter::HandleDeath()`는 이동·입력만 끊고 끝난다.
+> 플레이어 쪽 피격 경로(체력 감소)도 비어 있어, 맹견을 배치하려면 이 둘이 먼저 필요하다.
+
+### 퀘스트 구조
+
+수락은 **대화**가, 완료는 **Talk 목표**가 맡는다.
+
+```
+Q_Smith_001  '평범한 것들의 기록'   (RequiredStoryProgress = 2)
+├ Step01  Photo  Photo_House    "주택가의 평범한 풍경을 찍어오자"
+└ Step02  Talk   Smith_Deliver  "스미스에게 사진을 보여주자"
+
+수락: DT_Smith의 Smith_Order_05 노드에 QuestEventID = Q_Smith_001
+```
+
+**`TalkObjectiveID`가 NPC당 하나뿐**이기 때문이다. 스미스는 「의뢰 수주」와 「사진 전달」 두 번
+대화하는데 Talk 목표 ID는 하나만 가질 수 있어서, 수락을 Talk 목표로 두면 전달에 쓸 것이 없다.
+
+목표 갱신이 현재 단계만 훑으므로, 대화가 끝날 때마다 `Smith_Deliver`가 브로드캐스트돼도
+Step01(Photo) 중에는 무시된다. 그래서 이 구조가 안전하다.
+
+**선택지 조건**(`FDialogueChoice::ConditionID`)은 이때 구현했다. 필드만 있고 아무도 읽지 않아
+선택지가 늘 전부 보였다 — 첫 만남부터 "(사진을 보여준다)"가 떠 있었다. 이제 `Q_Smith_001`은
+"그 퀘스트 진행 중", `Q_Smith_001.Step02`는 "진행 중이고 현재 단계가 Step02"로 해석된다.
+단계까지 볼 수 있어야 "사진을 찍어온 뒤에만" 같은 조건이 표현된다. 사용법은 노션 가이드 참고.
+
 - **구현 현황**:
-  - ✅ NPC 등장 게이팅 — `AGuestNPCBase::RequiredStoryProgress` / `ApplyStoryProgressVisibility()`
+  - ✅ NPC 등장 게이팅 — `RequiredStoryProgress` / `ApplyStoryProgressVisibility()`
   - ✅ 바 대화 시스템 — `ABarCustomerNPC`, `WBP_BarDialogue`
-  - ⬜ 선행작업 A·B·C (사진 아이템화 + Photo 목표)
-  - ⬜ (에디터) `DT_QuestData`에 `Q_Smith_001` 행 — 현재 있는 행은 스텁 상태
-  - ⬜ (에디터) 스미스 대화 노드 작성 (`DT_Smith`, `DA_Smith_Dialogue`)
-  - ⬜ (에디터) `L_Residential_01` 촬영 구역 제작 — 아파트/주택가/달동네 3개소
-  - ⬜ 판정 기준에 따라 `DT_SpacetimeData` 구역 분리 여부 결정 (선행작업 C 참고)
-- **구현 상태**: 미구현
+  - ✅ 선행작업 A·B·C (사진 아이템화 + Photo 목표)
+  - ✅ (에디터) `DT_QuestData`의 `Q_Smith_001` 행
+  - ✅ (에디터) 스미스 대화 노드 (`DT_Smith` 9행 + `DA_Smith_Dialogue` 연결)
+  - ✅ (에디터) `BP_Smith` 등장 설정 및 `L_TavernMain` 배치
+  - ✅ 판정 기준 확정 — 장소 단위 (선행작업 C)
+  - ✅ (에디터) `L_Residential_01` 촬영 구역 제작 — 달동네 블록아웃 (PR #103)
+- **구현 상태**: 부분구현 — 퀘스트·대화 흐름과 촬영지 블록아웃 완성. 피사체 지정만 남음
 
 ## 상세 — Stage 5~6: 스미스 재방문 (`Q_Smith_002` 독특한 건물 탐색)
 
 - **활성화 조건**: `Q_Smith_001` 완료 후 일정 경과 (노션 기준). 데모에서는 `StoryProgress` 게이팅으로 처리
 - **대화**: 다시 맥주 두 잔. 삶이 무료해지고 있으며 정말 놀라운 것을 만들어 보고 싶다고 토로
 - **수거 대상**: 독특한 건물 사진 — 후보로 기존 랜드마크 맵 활용
-  - `L_Landmark_Museum_01`
+  - `L_Landmark_Museum_01` (미술관)
   - `L_Landmark_Traditional_01`
   - `L_Landmark_SkySpire_01`
 - **결말**: 스미스가 그중 **스카이스파이어**를 선택 → "좀 더 입체적으로 보고 싶다"며 추가 의뢰
+
+> **전달 방식 (2026-08-26 확정): 플레이어가 고르지 않는다.**
+> 사진 3장을 **다 주고**, 스미스가 그중에서 스스로 택한다.
+> 따라서 선택지를 런타임 인벤토리 내용으로 채우는 **대화 분기는 필요 없다.**
+> 퀘스트 목표는 "3장을 다 확보했는가"로 잡고, 스미스가 스카이스파이어를 골랐다고
+> 말하는 것은 평범한 대화 노드 하나로 처리한다.
 - **구현 현황**:
-  - ⬜ 전부 미구현. 선행작업 A·B·C 의존
-  - ⬜ (에디터) 랜드마크 3개 맵 촬영 대상 정비
-  - ⬜ 사진 여러 장 중 하나를 NPC가 고르는 대화 분기 — 기존 대화 시스템으로 가능한지 검증 필요
-- **구현 상태**: 미구현
+  - ⬜ 퀘스트·대화 미구현. 선행작업 A·B·C 의존
+  - ✅ (에디터) 랜드마크 3개 맵 블록아웃 — SkySpire(PR #104), Museum·Traditional(이번 작업)
+  - ⬜ (에디터) 랜드마크 3개 맵 촬영 대상 정비 — `PhotoSubjectID` 지정. 각 맵에 `PHOTO_*` 오렌지 마커로 촬영 지점을 잡아뒀다
+  - ~~사진 여러 장 중 하나를 NPC가 고르는 대화 분기~~ ✅ 불필요로 확정 — 3장을 다 주고 스미스가 택한다
+- **구현 상태**: 미구현 — 레벨만 준비됨
 
 ## 상세 — Stage 7~8: 모형 수거 (`Q_Smith_003` 전망대 모형 수거)
 
@@ -303,9 +410,11 @@ struct FGuestSavedInventoryEntry {
 - **결말**: 데모 종료 화면
 - **구현 현황**:
   - ⬜ 선행작업 E (데모 엔딩 화면)
-  - ⬜ (에디터) `L_CitySquare` 제작 + 홀로그램 연출
+  - ✅ (에디터) `L_CitySquare` 블록아웃 — 원형 광장 + 8주 열주, 중앙 단상에 스카이스파이어를 닮은 홀로그램 자리
+  - ⬜ (에디터) 홀로그램 연출 — 지금은 `20_Dais/Holo_*`가 `MI_DevSkyBlue` 더미 지오메트리다. 머티리얼·이펙트로 교체할 것
+  - ⬜ (에디터) 스미스 배치 — `60_Markers/SMITH_Stand`가 자리 표시. 관람 위치는 `VIEW_Ending`
   - ⬜ (에디터) 엔딩 나레이션 애셋
-- **구현 상태**: 미구현
+- **구현 상태**: 미구현 — 레벨만 준비됨
 
 ---
 
@@ -329,24 +438,124 @@ struct FGuestSavedInventoryEntry {
 ### 2. 촬영 대상 지정 (사진 퀘스트용)
 - ✅ `Residential_2010` 행 (`L_Residential_01`, 2010/7, `PhotoSubjectID = Photo_House`)
 - ✅ `Tavern` 행 (`L_TavernMain`, 2026/0, `PhotoSubjectID` 비움 — 의도된 것)
-- ⬜ 아파트/달동네 — 레벨을 나눌지 피사체 조준을 도입할지 미정 (「C. 판정 방식」 참고)
-  - 지금 구조에서는 **각각 다른 행**이어야 구분된다. 다만 같은 레벨을 세 행이 가리키면
-    플레이어 눈에는 같은 풍경을 세 번 찍는 것이 된다
+- ✅ `Museum_2026` (11) / `Traditional_2026` (12) / `SkySpire_2026` (13) — 2026년, `Photo_Museum` / `Photo_Traditional` / `Photo_SkySpire`
 
-### 3. 시간 경과 연출
-- ⬜ `DA_Narration`(꽃 배치 후 재생되는 것)의 **`Days To Advance On Finish`** 를 `1`로
-- ⬜ **`Hour On Finish`** 를 `9.0` 정도로 (다음 날 아침)
+> **`AreaCode` 규칙 (2026-08-27 신설).** 원래 규칙이 없었다. 앞으로는 이렇게 쓴다.
+>
+> | 대역 | 뜻 | 현재 |
+> |---|---|---|
+> | `0` | 주점 (허브) | Tavern |
+> | `1~9` | 레거시 개별 구역 | 들판 1, 주택가 7 |
+> | `10번대` | 랜드마크 | 미술관 11, 전통건축 12, 스카이스파이어 13 |
+> | `20번대` | 도시 | 중앙광장 21 (예정) |
+>
+> ⚠️ **기존 `AreaCode`를 다시 매기지 말 것.** 세이브가 `SavedLocationAreaCode`로 좌표를 역조회한다
+> (연도 + 구역코드가 열쇠다). 번호를 바꾸면 기존 세이브가 좌표를 못 찾는다.
 
-### 4. 퀘스트 분할 (주점 이동 게이팅 — 「Stage 0 · 퀘스트 분할」 참고)
-- ⬜ `DT_QuestData`의 `Q_Field_001`을 **꽃 줍기까지로 축소**
-  - `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002`
-- ⬜ `DT_QuestData`에 **`Q_Field_002`** 신설 (Reach + Place)
-  - `RequiredStoryProgress = 1`, `NarrationOnComplete` = 나레이션 애셋
-- ⬜ `DT_SpacetimeData`의 `Tavern` 행 → **`RequiredStoryProgress = 1`**
+> 랜드마크 3행의 `RequiredStoryProgress`는 **`5`** 다 (2026-08-27 인게임 검증 후 적용).
+> `Q_Smith_002`를 수락해야 랜드마크로 갈 수 있다.
+- ~~아파트/달동네 — 레벨을 나눌지 피사체 조준을 도입할지 미정~~
+  → **데모에서는 주택가 1장으로 축소 (확정).** 근거는 「상세 — Stage 2~4」 참고.
+  늘릴 때는 `DT_SpacetimeData`에 좌표 행을 더하고 Step01에 목표만 추가하면 된다
 
-### 5. 나머지 (기존 목록)
+### 2-2. 피사체 컴포넌트 배치 (프레임 판정용) — 이게 없으면 예전대로 좌표 판정이다
+
+코드는 완료됐다(「피사체 인식」 참고). 남은 건 배치뿐이다.
+
+- ✅ `L_Residential_01` — `PhotoSubject_House` / `PhotoSubject_Apartment` 배치 완료
+- ✅ `L_Landmark_Museum_01` — `PhotoSubject_Museum`
+- ✅ `L_Landmark_Traditional_01` — `PhotoSubject_Traditional`
+- ✅ `L_Landmark_SkySpire_01` — `PhotoSubject_SkySpire`
+
+셋 다 `60_PhotoSubjects` 폴더에 두었고, 마커 위치가 박스 밖인지 좌표로 검산했다.
+- ✅ `BP_GuestCharacter`의 카메라 컴포넌트 `SubjectResolution` = **`FrameOnly`** (2026-08-27)
+
+> **전환 근거 — 촬영 대상 5개 전부 프레임 판정으로 실측 확인했다.**
+>
+> | 피사체 | 점유율 | 점수 |
+> |---|---|---|
+> | `Photo_House` | 75.4% | 0.2075 |
+> | `Photo_Traditional` | 57.1% | 0.2210 |
+> | `Photo_Museum` | 23.0% | 0.0706 |
+> | `Photo_Apartment` | 21.2% | 0.0487 |
+> | `Photo_SkySpire` | 7.4% | 0.0281 |
+>
+> ⚠️ **스카이스파이어 7.4%는 임계값(`MinScreenCoverage` 0.04)에 여유가 거의 없다.**
+> 카메라 화각을 넓히면 점유율이 더 떨어져 판정이 죽는다. 화각을 건드릴 때 반드시 같이 볼 것.
+
+**배치 방법.** Place Actors에서 **Actor**(Empty Actor가 아니다)를 놓고 Details의 **+ Add** →
+`Photo Subject`. 그 다음:
+
+- `SubjectID`를 `DT_QuestData`의 목표 `TargetID`와 맞춘다 (주택가는 `Photo_House`)
+- `BoxExtent`로 대상을 감싼다. 블록아웃 건물은 `SM_Cube` 수십 개라 오너 바운즈로는 안 된다
+- **컴포넌트의 상대 위치가 0인지 확인할 것.** 판정은 액터가 아니라 **컴포넌트 위치**를 쓴다.
+  실제로 (3000, 0, 600) 어긋난 채로 배치돼 상자가 그만큼 밀려 있었다
+- 임계값은 기본값(`MinScreenCoverage` 0.04 / `MinVisibleRatio` 0.25)으로 시작한다.
+  촬영하면 로그에 `피사체 판정: <ID> (점유율 %, 점수, 후보 N)`이 찍히니 그걸 보고 맞춘다
+
+**상자를 어디에 씌울지가 핵심이다.** 플레이어가 그 안을 걸어다니는 지역이면 그 안에서는
+판정이 안 된다(위 1번). `L_Residential_01`은 마을 전체를 낮게 덮는 상자 하나로
+「골목 하단에서 올려다보기」와 「정상에서 뒤돌아보기」 두 구도를 다 잡았다.
+언덕 상단 군집만 따로 씌우려 했으나 근접면이 언덕에 파묻혀 어느 방향에서도 가려져 실패했다.
+
+`L_Residential_01` 확정값:
+
+| 피사체 | 중심 | 반크기 |
+|---|---|---|
+| `Photo_House` | `2400, 0, 690` | `4100, 4300, 710` |
+| `Photo_Apartment` | `27045, -1000, 2530` | `3800, 14600, 2530` |
+
+랜드마크 3종 확정값:
+
+| 레벨 | 피사체 | 중심 | 반크기 | 씌운 대상 |
+|---|---|---|---|---|
+| Museum | `Photo_Museum` | `2862, -500, 1360` | `4038, 2500, 1160` | `20_Museum` 전체 |
+| Traditional | `Photo_Traditional` | `243, 0, 1320` | `4058, 2550, 1120` | `30_Gate` + `40_Hall` |
+| SkySpire | `Photo_SkySpire` | `14000, 0, 18700` | `3600, 3600, 17900` | `Sky/Tower`만 |
+
+> **전통건축은 건물군 전체를 씌우면 안 된다.** 복합 전체 바운즈가 `X[-6900, 5540]`인데
+> 마커 세 개(`PHOTO_Axis` -2660 / `PHOTO_Diagonal` -1460 / `PHOTO_OutsideGate` -5460)가
+> **전부 그 안에 들어간다.** 그대로 씌우면 카메라가 박스 안이 되어 판정이 통째로 빠진다.
+> 그래서 본체인 `40_Hall`(X는 78부터)만 씌웠고, 세 마커 모두 박스 서쪽 바깥에 남는다.
+>
+> **처음엔 `40_Hall`만 씌웠다가 판정이 아예 안 나와서 문까지 넓혔다.** 문이 본체를 가려
+> 가시성이 임계값에 못 미쳤다. 문을 포함하니 점유율 57.1%로 통과했다.
+>
+> 대신 `PHOTO_Axis`(-2660)와 `PHOTO_Diagonal`(-1460)이 박스의 X·Y 안에 들어와,
+> **높이(박스 바닥 Z=200)로만 박스를 벗어난다.** 3인칭 카메라가 그보다 높이 올라가면
+> 그 두 지점은 판정이 죽는다. **문 밖(`PHOTO_OutsideGate`)이 확실한 자리다** —
+> 여기는 X로 벗어나므로 카메라 높이와 무관하다.
+> 마커 세 곳 중 한 곳만 통과하면 되는 것으로 확정했으므로 이대로 둔다.
+
+> **스카이스파이어는 타워만 씌웠다.** `Sky/Podium`까지 넣으면 박스가 과하게 넓어지는데,
+> 호수 건너 `PhotoSpot_Deck`(-18300)에서 보이는 실루엣은 타워가 전부다.
+
+> **박스 바닥을 지면이 아니라 눈높이 위(Z=200)에서 시작했다.** 미술관은 바닥이 Z=0이라
+> 박스를 지면까지 내리면 플레이어가 건물에 붙어 섰을 때 박스 안에 들어가 판정이 통째로 빠진다.
+> 바닥을 올려두면 그 문제가 없고, 화면 점유율 손해는 미미하다. 다른 랜드마크도 같은 방식으로 간다.
+
+랜드마크 3종은 각 맵의 오렌지 `PHOTO_*` 마커가 **사람이 서는 자리**이므로,
+거기서 보이는 것에 박스를 씌우면 된다.
+
+### 3. 시간 경과 연출 — ✅ 완료
+- ✅ `DA_Narration_Tavern_001`의 **`Days To Advance On Finish`** = `1`
+- ✅ **`Hour On Finish`** = `9.0` (다음 날 아침)
+
+> **함정**: `Hour On Finish`에는 `EditCondition = "DaysToAdvanceOnFinish > 0"`이 걸려 있다
+> (`GNarrationDataAsset.h:49`). `Days`를 1로 **확정하기 전에** `Hour`를 타이핑하면 값이 들어가지 않는다.
+> 기본값 `-1.0`은 "시각은 건드리지 않음"이라, 이 경우 날짜만 넘어가고 시계는 흐르던 그대로다.
+> 로그에 `→ 2일차 9.00시`가 아니라 어중간한 시각이 찍히면 이걸 의심할 것.
+
+### 4. 퀘스트 분할 (주점 이동 게이팅 — 「Stage 0 · 퀘스트 분할」 참고) — ✅ 완료
+- ✅ `DT_QuestData`의 `Q_Field_001`을 **꽃 줍기까지로 축소**
+  - `StoryProgressOnComplete = 1`, `NextQuestID = Q_Field_002`, `NarrationOnComplete` 비움
+- ✅ `DT_QuestData`에 **`Q_Field_002`** 신설 (Step02 Reach → Step03 Place)
+  - `RequiredStoryProgress = 1`, `NarrationOnComplete = DA_Narration_Tavern_001`
+- ✅ `DT_SpacetimeData`의 `Tavern` 행 → **`RequiredStoryProgress = 1`**
+
+### 5. 나머지
 - ⬜ `WBP_Narration`에 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut` (선택 — 없으면 컷 전환)
-- ⬜ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
+- ✅ `L_TavernMain`에 `AGQuestReachTrigger` + `AGItemPlacementPoint` 배치
 
 > ⚠️ **기존 세이브의 사진은 유실된다.** `SavedPhotos` 배열을 제거하고 인벤토리로 일원화했기 때문이다.
 > 개발 단계라 마이그레이션 코드는 넣지 않았다. 새로 시작하면 문제없다.
@@ -354,9 +563,9 @@ struct FGuestSavedInventoryEntry {
 ## 작업 순서 권고
 
 1. ~~**선행 시스템** — A(개체별 데이터) → B(사진 아이템화) → C(Photo 목표) → D(날짜)~~ ✅ 코드 완료
-2. **에디터 작업 1~3** — 특히 `DA_Item_Photo`가 없으면 촬영 자체가 동작하지 않는다
-3. **Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게
-4. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다
+2. ~~**에디터 작업 1~3** — 특히 `DA_Item_Photo`가 없으면 촬영 자체가 동작하지 않는다~~ ✅ 완료
+3. ~~**Stage 1 마무리** — 주점 배치 + 나레이션까지 한 줄기로 플레이 가능하게~~ ✅ 완료
+4. **Stage 2~4** — 스미스 첫 방문. 여기서 핵심 루프가 처음으로 완주된다 ← **지금 여기**
 5. **Stage 5~8** — 스미스 체인 나머지
 6. **Stage 9 + E** — 엔딩과 데모 종료 화면
 
@@ -391,22 +600,167 @@ struct FGuestSavedInventoryEntry {
 
 ## TODO
 
-### 다음 할 일 — 에디터 (Stage 1 완주까지)
-촬영·이동 파이프라인은 실측 확인 완료. 남은 것은 이 셋이고, 순서대로 하면 Stage 1이 한 줄기로 이어진다.
+### ✅ 완료 — Stage 1 완주 (2026-08-05)
+꽃 줍기부터 화분 배치 후 하루 경과까지 실측 확인 완료. 아래 셋 모두 끝났다.
 
-1. **`DA_Narration` 시간 경과 설정** — `Days To Advance On Finish = 1`, `Hour On Finish = 9.0`
-   → 「에디터에서 해야 할 일 · 3」
-2. **퀘스트 분할** — `Q_Field_001` 축소(`StoryProgressOnComplete = 1`) + `Q_Field_002` 신설 + `Tavern` 행 `RequiredStoryProgress = 1`
-   → 「에디터에서 해야 할 일 · 4」, 배경은 「Stage 0 · 퀘스트 분할」
-3. **`L_TavernMain` 배치** — `AGQuestReachTrigger` + `AGItemPlacementPoint`(RequiredItem = `DA_Item_Flower`)
-   → 「에디터에서 해야 할 일 · 5」
+1. ~~`DA_Narration` 시간 경과 설정~~ → `DA_Narration_Tavern_001`, `Days = 1` / `Hour = 9.0`
+2. ~~퀘스트 분할~~ → `Q_Field_001` 축소 + `Q_Field_002` 신설 + `Tavern` 행 게이팅
+3. ~~`L_TavernMain` 배치~~ → 기존 배치분으로 충족 (`Reach_Home` 트리거 + 배치 지점)
+
+### ✅ 완료 — Stage 2 스미스 첫 방문 (2026-08-07)
+
+`Q_Smith_001` 행, `DT_Smith` 대화 노드 9행, `BP_Smith` 배치·설정까지 끝났다.
+스미스에게 말을 걸어 의뢰를 받는 데까지 실측 확인 완료.
+
+> **`Q_Field_002`의 `NextQuestID`는 비워둔다 (확정).** 예전 계획은 여기에 `Q_Smith_001`을
+> 걸어 자동 수락시키는 것이었으나, **스미스 대화가 퀘스트를 수락**시키는 구조로 바꿨다.
+> 하루가 지나면 스미스가 등장하고, `DialogueTrigger`에 플레이어가 들어가면 대화가
+> 자동으로 시작되므로 별도 안내 없이 이어진다. 비어 있는 것이 정상이니 채우지 말 것.
+
+### ✅ 완료 — 갤러리 썸네일 회색 (2026-08-10)
+
+디지캠 갤러리 목록의 썸네일이 항상 회색으로만 보이던 문제. 원인은 코드가 아니라
+`WBP_DigiTab_PhotoEntry`의 **`Border` → `Content Color and Opacity`가 `(0,0,0,0)`** 이었던 것.
+
+이 값은 `Border` **자식 전부에 곱해진다.** 0이면 자식이 그리는 모든 색이 죽는다.
+`IMG_Thumbnail`만 들여다봐서는 절대 안 나온다 — 브러시·틴트·가시성·크기 전부 정상으로
+보이고, 실제로 정상이었다. 글자가 멀쩡했던 건 원래 검정이라 곱해도 티가 안 나서고,
+상세 패널(`IMG_SelectedPhoto`) 사진이 정상이었던 건 그 `Border` 밖이라서다.
+
+> **교훈: 자식 위젯이 "설정은 다 맞는데 안 보인다"면 부모의 `Content Color and Opacity`와
+> `Is Enabled`를 먼저 볼 것.** 리플렉터의 자식 속성만 봐서는 원인이 드러나지 않는다.
+
+### 다음 할 일
+
+1. ~~**`L_Residential_01` 촬영 구역 제작**~~ ✅ 완료 (PR #103). 이어서 `L_Landmark_SkySpire_01`(PR #104),
+   `L_Landmark_Museum_01` · `L_Landmark_Traditional_01` · `L_CitySquare` 블록아웃까지 완료.
+   **데모에 필요한 레벨 블록아웃은 전부 끝났다.** 남은 건 마감과 배치 작업뿐이다 (아래 6번)
+2. **피사체 인식 (프레임 기반)** ← **다음에 할 것.** 아래 「피사체 인식 설계」 참고.
+   블록아웃이 끝나 한 레벨에 피사체가 여럿 생겼으므로 이제 이게 병목이다
+3. **사진 비율·해상도 정리 (고도화 때)** — 촬영본이 `1920x1080`인데 썸네일 브러시는
+   `300x180`이라 상세 패널에서 사진이 찌그러진다. 또 한 장이 약 8MB(BGRA)라
+   장수가 쌓이면 메모리와 세이브 용량이 그대로 곱해진다. 촬영 해상도를 낮추거나
+   썸네일용 축소본을 따로 만드는 쪽으로 정리할 것
+4. **UI 텍스트 넘침 정리** — 전체화면에서 목표 문구·대사·버튼 라벨이 화면 밖으로 잘린다.
+   UMG TextBlock에 줄바꿈 기준 폭이 없어서다. 브랜치 `feat/packaging-test`에서 진행 중
+5. **패키징 테스트 환경** — `GameDefaultMap`·`bCookAll`은 잡았다. `Packaged/`를 `.gitignore`에
+   추가하고 한 번 패키징해볼 것
+6. **Stage 5~8** — 스미스 체인 나머지 (`Q_Smith_002`, `Q_Smith_003`)
+
+### 레벨 블록아웃 현황
+
+| 맵 | 상태 | 액터 | 촬영/관람 지점 마커 |
+|---|---|---|---|
+| `L_Field_01` | 완료 | — | — |
+| `L_TavernMain` | 완료 | — | — |
+| `L_Residential_01` | 블록아웃 완료 (PR #103) | 465 | — |
+| `L_Landmark_SkySpire_01` | 블록아웃 완료 (PR #104) | — | — |
+| `L_Landmark_Museum_01` | 블록아웃 완료 | 81 | `PHOTO_AxisFrontal`, `PHOTO_Diagonal` |
+| `L_Landmark_Traditional_01` | 블록아웃 완료 | 147 | `PHOTO_Axis`, `PHOTO_Diagonal`, `PHOTO_OutsideGate` |
+| `L_CitySquare` | 블록아웃 완료 | 120 | `VIEW_Ending`, `VIEW_Diagonal`, `SMITH_Stand` |
+
+세 맵 모두 `BlockingStarterPack` 프리미티브로 절차 생성했고, 아웃라이너 폴더로 구분해뒀다
+(`00_Env` / `10_Ground` / `20_*` …). 오렌지 큐브 마커는 **사람이 서는 자리**를 뜻한다 —
+피사체 인식이 들어오면 `UGPhotoSubjectComponent` 부착 위치를 잡는 기준으로 쓰고, 그 뒤 지운다.
+
+**남은 마감 (에디터 작업)**
+- `L_Landmark_Museum_01` — 광장 바닥이 넓고 단조롭다. 진입 동선에 단차나 식재를 더할 것
+- `L_Landmark_Traditional_01` — 지붕은 맞배 + 계단식 합각벽으로 근사했다. 팔작지붕으로 갈 거면
+  박스로는 사다리꼴이 안 되니 전용 메시가 필요하다
+- `L_CitySquare` — `Holo_*`는 `MI_DevSkyBlue` 더미다. 머티리얼·이펙트 교체 필요
+- `L_Landmark_SkySpire_01` — 엘리베이터 BP + `ITEM_SKY_001` 배치 (Stage 7)
+
+### 피사체 인식 — ✅ 코드 완료 (에디터 배치 대기)
+
+**해결한 것:** 사진의 `SubjectID`가 **촬영 당시 플레이어가 있던 좌표**에서 왔다.
+그래서 한 레벨 안에서 "달동네를 찍었나 아파트를 찍었나"를 구분할 수 없었다. 어디를 향해
+찍든 그 좌표의 `PhotoSubjectID` 하나로 기록됐다.
+
+**방식: 피사체마다 컴포넌트를 붙이고, 촬영 프레임 안의 점유율로 판정한다.**
+
+```
+UGPhotoSubjectComponent                 SceneComponent. SubjectID / MinScreenCoverage /
+                                        ScoreWeight / BoxExtent 보유
+UGPhotoSubjectRegistrySubsystem         WorldSubsystem. BeginPlay에 자기등록 —
+                                        셔터 때 전체 액터 스캔을 피한다
+UGCameraComponent::ResolveSubject()     아래 순서로 판정, FName 반환
+UGCameraComponent::ResolveSubjectID()   모드를 적용해 최종값 결정. 디지캠은 이것만 부른다
+```
+
+1. **카메라가 박스 안이면 탈락.** 그 안에 서 있는 것과 그것을 찍는 것은 다르다
+2. 박스 8꼭짓점을 NDC로 투영 — 카메라 뒤 꼭짓점은 버린다
+3. 화면 밖을 잘라낸 사각형 넓이 → **화면 점유율** (`MinScreenCoverage` 미만이면 탈락)
+4. 중심·8꼭짓점 **방향**으로 트레이스하되 **박스에 들어가기 직전까지만** 본다 →
+   **보이는 비율** (`MinVisibleRatio` 미만이면 탈락)
+5. `점유율 × 중앙 근접도 × 보이는 비율 × ScoreWeight`로 1등 채택
+6. 기준 미달이면 `NAME_None`
+
+**1번이 없으면 고치려던 버그가 되살아난다.** 달동네처럼 플레이어가 그 안을 걸어다니는 지역은
+박스 안에서 어느 방향을 보든 점유율이 100%로 잡혀서, 하늘을 찍어도 그 피사체가 1등이 된다.
+실측에서 정상에서 하늘을 향해도 `Photo_House`가 16.8%로 잡혔다.
+
+**4번을 꼭짓점까지 재면 안 된다.** 지형에 파묻힌 아래쪽 네 점이 늘 가려진 것으로 잡혀서
+눈에 뻔히 보이는 건물이 "안 보인다"고 판정된다. 근접면까지만 재면 피사체 자신의 지오메트리가
+가림으로 잡히는 일도 없다.
+
+**점유율만으로는 원경이 안 걸러진다.** 언덕 너머로 삐죽 보이는 아파트(점유율 15.9~24.0%)와
+정상에서 탁 트인 채로 마주 본 아파트(26.4%)가 넓이로는 거의 같다. 갈리는 건 **보이는 비율**로,
+각각 11~22% / 56%였다. `MinVisibleRatio` 기본값 0.25는 여기서 나왔다.
+
+**`SM_Cube` 수십 개로 흩어진 블록아웃 건물이 있으므로 바운즈는 컴포넌트 자신의 박스가 기본이다.**
+오너 액터 하나가 통째로 피사체인 경우에만 `bUseOwnerBounds`를 켠다.
+
+**전환은 단계적이다.** `UGCameraComponent::SubjectResolution`:
+
+| 모드 | 동작 |
+|---|---|
+| `FrameThenPlace` (기본) | 프레임 판정 우선, 없으면 좌표의 `PhotoSubjectID`로 떨어진다 |
+| `FrameOnly` | 프레임 판정만. 모든 레벨에 피사체를 배치한 뒤 여기로 옮긴다 |
+| `PlaceOnly` | 예전 방식. 문제 추적용 비상구 |
+
+기본값이 `FrameThenPlace`라 **피사체 컴포넌트를 아직 배치하지 않은 레벨에서도 기존 퀘스트가
+그대로 돌아간다.** 배치가 끝난 뒤 `FrameOnly`로 옮기면 "아무 데나 보고 찍어도 목표가 진행되는"
+문제가 사라진다.
+
+중앙 라인트레이스 한 발이나 격자 트레이스로도 되지만 그 둘은 **"화면에 얼마나 크게
+담겼는가"를 모른다.** 멀리 점처럼 찍힌 것과 화면을 꽉 채운 것이 동점이 된다.
+앞으로 올릴 것들 — 사진 평가/등급, 스미스의 "너무 멀리서 찍었네" 류 반응,
+DSLR 초점 대상 선정, 셰이드가 사진에 찍히는지 여부 — 이 전부가 이 점수 위에 얹힌다.
+싸게 시작하면 그때 판정부를 다시 쓰게 된다.
+
+**붙는 자리는 한 줄이다.** `SubjectID`라는 한 겹을 둔 덕분에 퀘스트 판정 로직은 그대로다.
+
+```cpp
+FPhotoData NewPhoto = Metadata;
+// 프레임 안의 피사체가 잡히면 그쪽이 우선, 없으면 좌표 기본값을 그대로 쓴다
+if (const FName Resolved = ResolveSubject(); !Resolved.IsNone())
+{
+    NewPhoto.SubjectID = Resolved;
+}
+```
+
+> ⚠️ **좌표 방식을 지우지 말 것.** 피사체를 하나도 안 심은 레벨(들판, 주점)은 지금처럼
+> 좌표값으로 동작하고, 심은 레벨만 새 방식이 이긴다. 기존 콘텐츠도 세이브도 안 건드린다.
+
+이게 들어오면 `L_Residential_01` 하나에 `Photo_House`(골목 저층)와
+`Photo_Apartment`(언덕 너머 원경)를 같이 둘 수 있다. 좌표를 나눌 필요도, 레벨을 쪼갤
+필요도 없다 — 위 「촬영 대상 지정」의 *"레벨을 나눌지 피사체 조준을 도입할지"* 에 대한 답이다.
+
+> 남은 검증: **꽃을 줍지 않고 주점 이동을 시도했을 때 실제로 거부되는지** (「Stage 0 · 퀘스트 분할」 참고)
+
+> ⚠️ **패키지에서는 메인메뉴·설정창을 볼 수 없다.** `TAG_Widget_MainMenu` / `TAG_Widget_PressAnyKey`를
+> 푸시하는 코드가 없고, `GuestPlayerController::BeginPlay`가 시작하자마자 `GameHUD`를 띄운다.
+> `UGuestMainMenuWidget::OnNewGameClicked()` / `HasSaveData()`도 TODO 상태다. 프론트엔드 흐름
+> 담당자에게 공유 필요.
 
 ### 기타
 - 노션 「퀘스트 흐름 개요」의 `Q_S_SMT_*` 표기를 `Q_Smith_*`로 갱신
 - 노션 「퀘스트 흐름 개요」에 꽃 퀘스트(`Q_Field_001`) 추가 — 현재 "게임 시작 즉시 스미스"로 되어 있어 실제 흐름과 다름
 - 각 Stage별 `RequiredStoryProgress` / `StoryProgressOnComplete` 실제 값 확정 후 `DT_QuestData`와 대조
-- 사진 목표 판정 기준 확정 (선행작업 C)
-- 날짜 진행 트리거 확정 (선행작업 D)
+- ~~사진 목표 판정 기준 확정 (선행작업 C)~~ ✅ 장소 단위(한 좌표 = 한 피사체)로 확정
+- ~~날짜 진행 트리거 확정 (선행작업 D)~~ ✅ 나레이션 종료 시점으로 확정, 실측 확인 완료
+- **`WBP_Narration`의 `Anim_ScreenFadeIn` / `Anim_ScreenFadeOut`** — 없어서 현재 컷 전환이다.
+  페이드가 붙으면 NPC 등장 순간이 더 자연스럽게 가려진다
 - **단계 단위 스토리 진행도** — `FQuestStepData`에 `StoryProgressOnComplete` 추가
   - 지금은 `FQuestData`(퀘스트 단위)에만 있어서, 한 퀘스트 중간에 무언가를 해금하려면
     퀘스트를 쪼개는 수밖에 없다 (Stage 0의 `Q_Field_001` 분할이 그 사례)

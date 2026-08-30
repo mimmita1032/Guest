@@ -3,6 +3,7 @@
 #include "Guest/UI/Widget/GuestNarrationWidgetBase.h"
 #include "Guest/Data/DataAssets/GNarrationDataAsset.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
@@ -125,17 +126,32 @@ void UGuestNarrationWidgetBase::FinishNarration()
 	// 시간 경과 연출 — 위젯이 닫히기 전에 적용해 둔다.
 	// 화면이 페이드아웃되는 동안 세계 날짜가 이미 넘어가 있으므로,
 	// 나레이션이 걷히면 플레이어는 바뀐 날짜의 세계를 보게 된다.
-	if (CurrentNarrationAsset && CurrentNarrationAsset->DaysToAdvanceOnFinish > 0)
+	if (CurrentNarrationAsset)
 	{
 		if (const UWorld* World = GetWorld())
 		{
 			if (UGameInstance* GI = World->GetGameInstance())
 			{
-				if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
+				if (CurrentNarrationAsset->DaysToAdvanceOnFinish > 0)
 				{
-					SpacetimeSys->AdvanceDay(
-						CurrentNarrationAsset->DaysToAdvanceOnFinish,
-						CurrentNarrationAsset->HourOnFinish);
+					if (UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>())
+					{
+						SpacetimeSys->AdvanceDay(
+							CurrentNarrationAsset->DaysToAdvanceOnFinish,
+							CurrentNarrationAsset->HourOnFinish);
+					}
+				}
+
+				// 진행도도 같은 시점에 올린다 — 게이팅된 NPC는 연출이 걷힌 뒤에 나타나야 한다.
+				if (CurrentNarrationAsset->StoryProgressOnFinish > 0)
+				{
+					if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+					{
+						if (CurrentNarrationAsset->StoryProgressOnFinish > QuestSys->GetStoryProgress())
+						{
+							QuestSys->SetStoryProgress(CurrentNarrationAsset->StoryProgressOnFinish);
+						}
+					}
 				}
 			}
 		}

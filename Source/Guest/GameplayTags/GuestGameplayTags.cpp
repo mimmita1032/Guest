@@ -43,6 +43,10 @@ namespace GuestGameplayTags
 	
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Era_1995, "Item.Era.1995");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Era_2026, "Item.Era.2026");
+
+	// ★ 테스트용 장비 부위 태그 2개 추가
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Equip_Helmet, "Item.Equip.Helmet");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Equip_Chest, "Item.Equip.Chest");
 	
 	//테스트 인풋
 	UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag_Test, "Guest.InputTag.Test");
@@ -71,6 +75,7 @@ namespace GuestGameplayTags
 
 	//GE SetByCaller 데이터
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_DamageAmount, "Guest.Data.DamageAmount");
 
 	//Skill 식별 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Camera_Flash,       "Guest.Skill.Camera.Flash");

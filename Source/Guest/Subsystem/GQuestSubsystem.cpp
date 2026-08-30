@@ -217,6 +217,12 @@ bool UGQuestSubsystem::IsQuestActive(FName QuestID) const
 	return ActiveQuests.Contains(QuestID);
 }
 
+FName UGQuestSubsystem::GetCurrentStepID(FName QuestID) const
+{
+	const FQuestRuntimeData* Runtime = ActiveQuests.Find(QuestID);
+	return Runtime ? Runtime->CurrentStepID : NAME_None;
+}
+
 bool UGQuestSubsystem::IsQuestCompleted(FName QuestID) const
 {
 	return CompletedQuests.Contains(QuestID);
@@ -309,7 +315,16 @@ void UGQuestSubsystem::ExportQuestSaveData(TArray<FGuestSavedActiveQuestEntry>& 
 		FGuestSavedActiveQuestEntry Entry;
 		Entry.QuestID = Pair.Key;
 		Entry.CurrentStepID = Pair.Value.CurrentStepID;
-		Entry.ObjectiveProgress = Pair.Value.ObjectiveProgress;
+
+		Entry.ObjectiveProgress.Reserve(Pair.Value.ObjectiveProgress.Num());
+		for (const FQuestObjectiveProgress& RuntimeProgress : Pair.Value.ObjectiveProgress)
+		{
+			FGuestSavedQuestObjective SavedProgress;
+			SavedProgress.ObjectiveID = RuntimeProgress.ObjectiveID;
+			SavedProgress.Count = RuntimeProgress.Count;
+			Entry.ObjectiveProgress.Add(SavedProgress);
+		}
+
 		OutActiveQuests.Add(MoveTemp(Entry));
 	}
 	OutCompletedQuestIDs = CompletedQuests.Array();
@@ -381,7 +396,7 @@ void UGQuestSubsystem::ImportQuestSaveData(const TArray<FGuestSavedActiveQuestEn
 		FQuestRuntimeData Runtime;
 		Runtime.InitializeForStep(*StepData);
 
-		for (const FQuestObjectiveProgress& Saved : Entry.ObjectiveProgress)
+		for (const FGuestSavedQuestObjective& Saved : Entry.ObjectiveProgress)
 		{
 			const FQuestObjectiveData* Obj = StepData->FindObjectiveByID(Saved.ObjectiveID);
 			FQuestObjectiveProgress* Target = Runtime.FindObjectiveProgress(Saved.ObjectiveID);

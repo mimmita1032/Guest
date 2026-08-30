@@ -3,6 +3,8 @@
 #include "GInventoryWidget.h"
 #include "GInventorySlotWidget.h"
 #include "GInventoryItemWidget.h"
+#include "GEquipSlotWidget.h"
+#include "GQuickSlotWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Components/CanvasPanel.h"
@@ -11,6 +13,7 @@
 #include "Guest/Components/CharacterComponents/GItemPlacementComponent.h"
 #include "Guest/Items/Definition/GItemDefinition.h"
 #include "Guest/Items/Instance/GItemInstance.h"
+#include "Guest/Items/Fragments/GItemFragmentInventory.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Guest/Utils/GLog.h"
@@ -72,7 +75,6 @@ void UGInventoryWidget::NativeOnDeactivated()
 		{
 			PlacementComp->OnPlacementStateChanged.RemoveDynamic(this, &UGInventoryWidget::HandlePlacementStateChanged);
 
-			// 인벤토리를 닫는 순간 배치 모드가 남아있으면 취소 — 고스트가 유령처럼 남는 것 방지
 			if (PlacementComp->IsPlacementActive())
 			{
 				PlacementComp->CancelPlacement();
@@ -136,10 +138,6 @@ void UGInventoryWidget::HandlePlacementStateChanged(bool bActive)
 {
 	bPlacementModeActive = bActive;
 	SetRenderOpacity(bActive ? 0.3f : 1.0f);
-
-	// 배치 모드 중엔 인벤토리 패널이 클릭을 가로채지 않도록 완전히 클릭 통과 상태로 전환.
-	// 그냥 SetInteractionLocked만으로는 그리드/슬롯 패널 자체가 여전히 히트테스트를 먹어서
-	// 확정 클릭이 PlayerController까지 안 닿는 문제가 있었음
 	SetVisibility(bActive ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Visible);
 
 	for (const TObjectPtr<UGInventoryItemWidget>& ItemWidget : SpawnedItemWidgets)
@@ -162,8 +160,6 @@ void UGInventoryWidget::NativeDestruct()
 
 TOptional<FUIInputConfig> UGInventoryWidget::GetDesiredInputConfig() const
 {
-	// GuestUISubsystem이 결정한 값을 그대로 반환 — 여기서 값을 따로 하드코딩하면
-	// CommonUI ActionRouter와 GuestUISubsystem이 서로 다른 입력모드를 주장할 수 있음
 	if (const UGuestUISubsystem* UISys = GetUISubsystem())
 	{
 		return UISys->GetDesiredUIInputConfig();
@@ -179,10 +175,17 @@ void UGInventoryWidget::OnRefreshInventory()
 		return;
 	}
 
+	// 1. 기존 위젯 비우기
 	Grid_Inventory->ClearChildren();
 	Canvas_Items->ClearChildren();
 	SpawnedItemWidgets.Reset();
 
+	if (EquipSlot_Helmet) EquipSlot_Helmet->RefreshSlotUI(nullptr);
+	if (EquipSlot_Chest)  EquipSlot_Chest->RefreshSlotUI(nullptr);
+	if (EquipSlot_Legs)   EquipSlot_Legs->RefreshSlotUI(nullptr);
+	if (EquipSlot_Boots)  EquipSlot_Boots->RefreshSlotUI(nullptr);
+
+	// 2. 그리드 배경 슬롯 생성
 	const int32 Columns   = InventoryComponent->Columns;
 	const int32 Rows      = InventoryComponent->Rows;
 	const int32 TotalSlots = Columns * Rows;
@@ -195,8 +198,6 @@ void UGInventoryWidget::OnRefreshInventory()
 			const int32 Col = i % Columns;
 
 			NewSlot->SetSlotPosition(Col, Row);
-
-			// OnRefreshInventory 호출마다 위젯을 새로 생성하므로 중복 바인딩 없음
 			NewSlot->OnSlotItemDropped.AddDynamic(this, &UGInventoryWidget::HandleSlotItemDropped);
 
 			if (UUniformGridSlot* GridSlot = Grid_Inventory->AddChildToUniformGrid(NewSlot, Row, Col))
@@ -207,32 +208,101 @@ void UGInventoryWidget::OnRefreshInventory()
 		}
 	}
 
-	const TArray<FInventoryItemHandle> Handles = InventoryComponent->GetAllHandles();
-
-	for (const FInventoryItemHandle& Handle : Handles)
+	// [헬퍼 람다] 아이템 위젯 생성
+	// RuntimeIcon은 사진처럼 개체마다 그림이 다른 아이템용. 없으면 Icon이 쓰인다
+	auto CreateItemWidget = [&](FInventoryItemHandle Handle, FIntPoint Size, TSoftObjectPtr<UTexture2D> Icon,
+								UTexture2D* RuntimeIcon = nullptr) -> UGInventoryItemWidget*
 	{
-		const FInventoryItemRenderData RenderData = InventoryComponent->GetItemRenderData(Handle);
-		if (!RenderData.bIsValid) continue;
-		if (RenderData.Position.X < 0 || RenderData.Position.Y < 0) continue;
-
-		if (UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass))
+		UGInventoryItemWidget* ItemWidget = CreateWidget<UGInventoryItemWidget>(GetOwningPlayer(), ItemWidgetClass);
+		if (ItemWidget)
 		{
-			ItemWidget->InitItem(Handle, RenderData.Icon, RenderData.GridSize, SlotSize, RenderData.RuntimeIcon);
+			ItemWidget->InitItem(Handle, Icon, Size, SlotSize, RuntimeIcon);
 			ItemWidget->OnItemDroppedOutside.AddDynamic(this, &UGInventoryWidget::HandleItemDroppedOutside);
 			ItemWidget->OnItemRightClicked.AddDynamic(this, &UGInventoryWidget::HandleItemRightClicked);
 			ItemWidget->SetInteractionLocked(bPlacementModeActive);
 			SpawnedItemWidgets.Add(ItemWidget);
+		}
+		return ItemWidget;
+	};
 
-			if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
+	// 3. 아이템 렌더링 (그리드 및 장비창)
+	const TArray<FInventoryItemHandle> Handles = InventoryComponent->GetAllHandles();
+
+	for (const FInventoryItemHandle& Handle : Handles)
+	{
+		FInventoryItemRenderData RenderData = InventoryComponent->GetItemRenderData(Handle);
+
+		// A. 그리드에 있는 아이템
+		if (RenderData.bIsValid && RenderData.Position.X >= 0 && RenderData.Position.Y >= 0)
+		{
+			if (UGInventoryItemWidget* ItemWidget = CreateItemWidget(Handle, RenderData.GridSize, RenderData.Icon, RenderData.RuntimeIcon))
 			{
-				CanvasSlot->SetAutoSize(false);
-				CanvasSlot->SetPosition(FVector2D(RenderData.Position.X * SlotSize, RenderData.Position.Y * SlotSize));
-				CanvasSlot->SetSize(FVector2D(RenderData.GridSize.X * SlotSize, RenderData.GridSize.Y * SlotSize));
+				if (UCanvasPanelSlot* CanvasSlot = Canvas_Items->AddChildToCanvas(ItemWidget))
+				{
+					CanvasSlot->SetAutoSize(false);
+					CanvasSlot->SetPosition(FVector2D(RenderData.Position.X * SlotSize, RenderData.Position.Y * SlotSize));
+					CanvasSlot->SetSize(FVector2D(RenderData.GridSize.X * SlotSize, RenderData.GridSize.Y * SlotSize));
+				}
+			}
+			continue;
+		}
+
+		// B. 장비창에 있는 아이템
+		UGItemInstance* ItemInst = InventoryComponent->GetItemByHandle(Handle);
+		if (!ItemInst) continue;
+
+		TSoftObjectPtr<UTexture2D> EquipIcon;
+		if (const UGItemFragmentInventory* InvFrag = ItemInst->FindFragmentByClass<UGItemFragmentInventory>())
+		{
+			EquipIcon = InvFrag->ItemIcon;
+		}
+
+		// 장비 슬롯 크기에 맞게 1x1 사이즈로 생성
+		UGInventoryItemWidget* EquipItemWidget = CreateItemWidget(Handle, FIntPoint(1, 1), EquipIcon, RenderData.RuntimeIcon);
+
+		if (InventoryComponent->GetEquippedItem(EEquipSlot::Helmet) == Handle && EquipSlot_Helmet)
+			EquipSlot_Helmet->RefreshSlotUI(EquipItemWidget);
+		else if (InventoryComponent->GetEquippedItem(EEquipSlot::Chest) == Handle && EquipSlot_Chest)
+			EquipSlot_Chest->RefreshSlotUI(EquipItemWidget);
+		else if (InventoryComponent->GetEquippedItem(EEquipSlot::Legs) == Handle && EquipSlot_Legs)
+			EquipSlot_Legs->RefreshSlotUI(EquipItemWidget);
+		else if (InventoryComponent->GetEquippedItem(EEquipSlot::Boots) == Handle && EquipSlot_Boots)
+			EquipSlot_Boots->RefreshSlotUI(EquipItemWidget);
+	}
+
+	// 4. 퀵슬롯 렌더링
+	TArray<UGQuickSlotWidget*> QuickSlotWidgets = { QuickSlot_0, QuickSlot_1, QuickSlot_2, QuickSlot_3 };
+	for (int32 i = 0; i < 4; ++i)
+	{
+		if (UGQuickSlotWidget* QWidget = QuickSlotWidgets[i])
+		{
+			FInventoryItemHandle QHandle = InventoryComponent->GetQuickSlotItem(i);
+			
+			if (QHandle.IsValid())
+			{
+				TSoftObjectPtr<UTexture2D> QIcon = nullptr;
+				if (UGItemInstance* QInst = InventoryComponent->GetItemByHandle(QHandle))
+				{
+					if (const UGItemFragmentInventory* InvFrag = QInst->FindFragmentByClass<UGItemFragmentInventory>())
+					{
+						QIcon = InvFrag->ItemIcon;
+					}
+				}
+
+				// ★ 핵심 변경점: 퀵슬롯에도 장비창처럼 1x1 사이즈의 위젯을 직접 생성해서 부착합니다.
+				UGInventoryItemWidget* QuickItemWidget = CreateItemWidget(QHandle, FIntPoint(1, 1), QIcon,
+					InventoryComponent->GetItemRenderData(QHandle).RuntimeIcon);
+				QWidget->RefreshSlotUI(QuickItemWidget);
+			}
+			else
+			{
+				// 핸들이 유효하지 않은(비어있는) 경우
+				QWidget->RefreshSlotUI(nullptr);
 			}
 		}
 	}
 
-	G_LOG(TEXT("인벤토리 갱신 완료: 총 %d칸, 아이템 %d개 배치"), TotalSlots, Handles.Num());
+	G_LOG(TEXT("인벤토리 UI 갱신 완료 (장비 및 퀵슬롯 연동): 총 %d칸, 아이템 %d개 배치"), TotalSlots, Handles.Num());
 }
 
 void UGInventoryWidget::HandleItemDroppedOutside(FInventoryItemHandle Handle)
@@ -240,7 +310,6 @@ void UGInventoryWidget::HandleItemDroppedOutside(FInventoryItemHandle Handle)
 	if (!Handle.IsValid()) return;
 	if (!InventoryComponent) return;
 
-	//사운드: 인벤토리 밖으로 버릴 때 (드롭 사운드)
 	if (UGuestSoundSubsystem* SoundSys = GetGameInstance()->GetSubsystem<UGuestSoundSubsystem>())
 	{
 		SoundSys->PlayGlobalSound(GuestSoundTags::TAG_Sound_Event_UI_ButtonClick, AudioDataAsset);
