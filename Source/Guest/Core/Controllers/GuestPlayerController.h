@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
+#include "GameplayTagContainer.h"
 #include "InputActionValue.h"
 #include "GuestPlayerController.generated.h"
 
@@ -140,13 +141,43 @@ public:
 	void DebugSetStoryProgress(int32 NewProgress);
 #pragma endregion
 #pragma region SaveDebug
-	
+
 public:
 	UFUNCTION(Exec)
 	void DebugSetHealth(float NewHealth);
 	UFUNCTION(Exec)
 	void DebugSetBattery(float NewBattery);
-	
+
+#pragma endregion
+/*===========================================================
+ * [디버그 전용] Skill 시스템 콘솔 테스트 함수
+ *
+ * ※ 사용법: 에디터 실행 중 콘솔(~ 키)을 열고 아래 명령어 입력
+ *
+ *  DebugDiscoverSkill Guest.Skill.Camera.Flash
+ *    → 해당 SkillTag를 Locked에서 InTheory로 강제 전이 (Book 연동 없이 Runtime API만 호출)
+ *
+ *  DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+ *    → 해당 ProgressEventTag를 요구하는 InTheory Skill들의 진행도를 강제로 누적
+ *
+ *  DebugSkillStatus Guest.Skill.Camera.Flash
+ *    → 해당 SkillTag의 현재 State와 ConditionProgress를 로그로 출력
+ *
+ * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
+ *===========================================================*/
+#pragma region SkillDebug
+public:
+	// [디버그] Skill 강제 Discover — 콘솔 입력: DebugDiscoverSkill Guest.Skill.Camera.Flash
+	UFUNCTION(Exec)
+	void DebugDiscoverSkill(FGameplayTag SkillTag);
+
+	// [디버그] Skill 진행도 강제 누적 — 콘솔 입력: DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+	UFUNCTION(Exec)
+	void DebugAddSkillProgress(FGameplayTag ProgressEventTag, float Amount);
+
+	// [디버그] Skill 상태/진행도 로그 출력 — 콘솔 입력: DebugSkillStatus Guest.Skill.Camera.Flash
+	UFUNCTION(Exec)
+	void DebugSkillStatus(FGameplayTag SkillTag);
 #pragma endregion
 	
 #pragma region Save

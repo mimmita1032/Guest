@@ -77,4 +77,14 @@ namespace GuestGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_DamageAmount, "Guest.Data.DamageAmount");
 
+	//Skill 식별 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Camera_Flash,       "Guest.Skill.Camera.Flash");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Camera_WeakPoint,   "Guest.Skill.Camera.WeakPoint");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Stealth_SilentStep, "Guest.Skill.Stealth.SilentStep");
+
+	//Skill Mastery Progress 이벤트 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Camera_FlashUsed,       "Guest.Skill.Progress.Camera.FlashUsed");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Camera_EnemyObserved,   "Guest.Skill.Progress.Camera.EnemyObserved");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Stealth_MovedNearEnemy, "Guest.Skill.Progress.Stealth.MovedNearEnemy");
+
 }

@@ -81,5 +81,15 @@ namespace GuestGameplayTags
 	//GE SetByCaller 데이터
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_PurifyAmount);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Data_DamageAmount);
+
+	//Skill 식별 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Camera_Flash);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Camera_WeakPoint);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Stealth_SilentStep);
+
+	//Skill Mastery Progress 이벤트 태그
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Progress_Camera_FlashUsed);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Progress_Camera_EnemyObserved);
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Skill_Progress_Stealth_MovedNearEnemy);
 }
 

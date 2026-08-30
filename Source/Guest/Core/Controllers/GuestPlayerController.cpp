@@ -25,6 +25,8 @@
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/Subsystem/GSkillMasterySubsystem.h"
+#include "Guest/Data/DataAssets/GSkillDefinition.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/AI/GuestTeamIds.h"
@@ -341,6 +343,82 @@ void AGuestPlayerController::DebugSetBattery(float NewBattery)
 	}
 }
 #pragma endregion
+
+#pragma region SkillDebug
+
+// 헬퍼: GSkillMasterySubsystem 조회 (실패 시 로그 출력 후 nullptr 반환)
+static UGSkillMasterySubsystem* GetSkillSys(APlayerController* PC)
+{
+	UGSkillMasterySubsystem* SkillSys = PC->GetGameInstance()->GetSubsystem<UGSkillMasterySubsystem>();
+	if (!SkillSys)
+	{
+		UE_LOG(LogGSystem, Error, TEXT("[디버그] GSkillMasterySubsystem을 찾을 수 없습니다."));
+	}
+	return SkillSys;
+}
+
+/*
+ * 콘솔 명령어: DebugDiscoverSkill Guest.Skill.Camera.Flash
+ * DiscoverSkill()을 그대로 호출한다. Book 연동 없이 Locked → InTheory만 강제 전이.
+ */
+void AGuestPlayerController::DebugDiscoverSkill(FGameplayTag SkillTag)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	const bool bDiscovered = SkillSys->DiscoverSkill(SkillTag);
+	G_LOG(TEXT("[디버그] Skill Discover 시도: %s → %s"),
+		*SkillTag.ToString(), bDiscovered ? TEXT("성공") : TEXT("실패/무시"));
+}
+
+/*
+ * 콘솔 명령어: DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+ * HandleSkillProgressEvent()를 그대로 호출한다. 해당 이벤트를 요구하는 InTheory Skill만 영향받음.
+ */
+void AGuestPlayerController::DebugAddSkillProgress(FGameplayTag ProgressEventTag, float Amount)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	G_LOG(TEXT("[디버그] Skill Progress 강제 추가: %s += %.2f"), *ProgressEventTag.ToString(), Amount);
+	SkillSys->HandleSkillProgressEvent(ProgressEventTag, Amount);
+}
+
+/*
+ * 콘솔 명령어: DebugSkillStatus Guest.Skill.Camera.Flash
+ * 해당 Skill의 State와 MasteryConditions별 진행도를 로그로 출력한다.
+ */
+void AGuestPlayerController::DebugSkillStatus(FGameplayTag SkillTag)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	if (!SkillSys->IsSkillDataReady())
+	{
+		G_LOG(TEXT("[디버그] Skill 데이터가 아직 준비되지 않음"));
+		return;
+	}
+
+	const UGSkillDefinition* Definition = SkillSys->FindSkillDefinition(SkillTag);
+	if (!Definition)
+	{
+		G_LOG(TEXT("[디버그] [%s] Definition을 찾을 수 없음"), *SkillTag.ToString());
+		return;
+	}
+
+	static const UEnum* StateEnum = StaticEnum<ESkillState>();
+	const ESkillState State = SkillSys->GetSkillState(SkillTag);
+	G_LOG(TEXT("[디버그] [%s] State=%s"), *SkillTag.ToString(), *StateEnum->GetNameStringByValue(static_cast<int64>(State)));
+
+	for (const FSkillMasteryCondition& Condition : Definition->MasteryConditions)
+	{
+		const float Progress = SkillSys->GetSkillProgress(SkillTag, Condition.ProgressEventTag);
+		G_LOG(TEXT("[디버그]  - %s : %.2f / %.2f"),
+			*Condition.ProgressEventTag.ToString(), Progress, Condition.RequiredAmount);
+	}
+}
+#pragma endregion
+
 #pragma region SaveGame
 
 bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex)

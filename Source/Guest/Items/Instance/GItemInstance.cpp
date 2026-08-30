@@ -27,7 +27,7 @@ bool FInventoryItemHandle::IsValid() const
 
 FInventoryItemHandle::FInventoryItemHandle(uint32 Id)
 	:HandleId(Id)
-{
+{ 
 }
 
 uint32 FInventoryItemHandle::GenerateNextId()
