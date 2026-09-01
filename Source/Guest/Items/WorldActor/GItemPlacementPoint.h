@@ -23,6 +23,11 @@ class GUEST_API AGItemPlacementPoint : public AActor, public IGInteractableInter
 public:
 	AGItemPlacementPoint();
 
+	// 이 지점을 세이브에서 식별하는 ID. 비워두면 액터 이름을 쓴다.
+	// 액터 이름을 바꾸면 이미 놓은 기록과 끊기므로, 중요한 지점은 값을 직접 지정할 것.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
+	FName PlacementID;
+
 	// 이 지점에 놓아야 하는 아이템
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
 	TObjectPtr<const UGItemDefinition> RequiredItem;
@@ -50,6 +55,11 @@ protected:
 
 private:
 	void UpdatePreviewVisuals();
+
+	// 이미 놓인 모습으로 보여준다 — 메시를 띄우고 고스트 머티리얼을 걷는다.
+	void ApplyPlacedVisuals();
+
+	FName ResolvePlacementID() const;
 
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynamicGhostMaterial;

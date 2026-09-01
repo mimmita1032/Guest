@@ -73,10 +73,18 @@ private:
 	/**
 	 * 선택지 표시 조건 판정.
 	 *  - 비어 있으면 항상 표시
-	 *  - "Q_Smith_001"        — 그 퀘스트가 진행 중일 때
-	 *  - "Q_Smith_001.Step02" — 진행 중이고 현재 단계가 Step02일 때
+	 *  - "Q_Smith_001"           — 그 퀘스트가 진행 중일 때
+	 *  - "Q_Smith_001.Step02"    — 진행 중이고 현재 단계가 Step02일 때
+	 *  - "Q_Smith_001.Completed" — 그 퀘스트를 완료했을 때
+	 *  - "!" 를 앞에 붙이면 부정. "&" 로 여러 조건을 이으면 모두 만족해야 한다.
+	 *
+	 * 예) "Q_Smith_001.Completed&!Q_Smith_002&!Q_Smith_002.Completed"
+	 *     — 1번을 끝냈고 2번은 아직 시작하지 않았을 때. 수락 선택지에 쓴다.
 	 */
 	bool IsChoiceConditionMet(FName ConditionID) const;
+
+	/** 조건 하나를 판정한다. 앞의 "!" 는 부정으로 해석한다. */
+	bool EvaluateSingleCondition(const FString& InCondition) const;
 
 	UFUNCTION()
 	void OnNextClicked();

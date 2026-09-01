@@ -461,6 +461,11 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 			SpacetimeSys->ExportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 		}
 
+		if (UGuestGameInstance* GuestGI = Cast<UGuestGameInstance>(GI))
+		{
+			GuestGI->ExportPlacementSaveData(SaveObject->SavedPlacedPointIDs);
+		}
+
 		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음
 	}
 	
