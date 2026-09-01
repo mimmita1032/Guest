@@ -17,6 +17,17 @@ public:
 	/** 슬롯에서 읽고, 같은 맵이면 즉시 적용 / 다른 맵이면 OpenLevel 후 적용 */
 	void RequestLoadFromSlot(const FString& SlotName, int32 UserIndex = 0);
 
+	/**
+	 * 배치가 끝난 지점을 기억한다.
+	 * 레벨 액터가 들고 있으면 맵을 다시 열 때 사라지므로,
+	 * 맵 전환과 무관하게 살아 있는 GameInstance가 대신 들고 있는다.
+	 */
+	void MarkPointPlaced(FName PlacementID);
+	bool IsPointPlaced(FName PlacementID) const;
+
+	void ExportPlacementSaveData(TArray<FName>& OutPlacedIDs) const;
+	void ImportPlacementSaveData(const TArray<FName>& InPlacedIDs);
+
 	/** 세이브/로드가 아닌 레벨 전환(디지캠 시공간 이동 등) 직전에 호출 — 위치는 새 레벨 기준 그대로 두고 인벤토리/GAS만 다음 맵으로 이어붙임 */
 	void CarryPlayerStateAcrossTravel();
 
@@ -31,6 +42,9 @@ protected:
 private:
 	// GAS 어트리뷰트(체력/배터리)를 세이브 데이터에서 복원
 	static void RestoreGASAttributes(APawn* Pawn, const UGuestSaveGame* SaveObject);
+
+	// 배치가 끝난 지점 ID 모음. 맵을 옮겨 다녀도 유지된다.
+	TSet<FName> PlacedPointIDs;
 
 	// 인벤토리 복원 + 사진 스냅샷 재생성을 한 묶음으로 처리.
 	// 사진이 인벤토리 아이템이라 둘은 항상 함께 가야 하므로 호출부를 분리하지 않는다.
