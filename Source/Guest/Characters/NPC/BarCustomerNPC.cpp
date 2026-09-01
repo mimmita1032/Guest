@@ -106,16 +106,8 @@ void ABarCustomerNPC::EndBarDialogue()
 	APawn* PlayerPawn = PC->GetPawn();
 	if (!PlayerPawn) return;
 
-	if (!TalkObjectiveID.IsNone())
-	{
-		if (UGameInstance* GI = GetGameInstance())
-		{
-			if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
-			{
-				QuestSys->OnObjectiveUpdated.Broadcast(TalkObjectiveID, 1);
-			}
-		}
-	}
+	// Talk 목표는 대화 노드(FDialogueNode::TalkObjectiveID)가 발화한다.
+	// 여기서 쏘면 바 대화 경로에서만 달성되고, E로 연 NPC 대화에서는 달성되지 않는다.
 
 	// 블렌드 중 이동 잠금 후 타이머로 복구
 	PC->SetIgnoreMoveInput(true);
