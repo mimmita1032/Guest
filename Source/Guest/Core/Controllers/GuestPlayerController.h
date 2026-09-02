@@ -101,6 +101,10 @@ private:
  *
  * ※ 사용법: 에디터 실행 중 콘솔(~ 키)을 열고 아래 명령어 입력
  *
+ *  DebugSkipToQuest Q_Smith_003
+ *    → 선행 퀘스트를 거슬러 올라가 전부 완료 처리한 뒤 목표 퀘스트를 수락
+ *      (뒤쪽 스테이지 확인용. 진행도만 올려서는 선행 검사를 통과하지 못한다)
+ *
  *  DebugAcceptQuest Q_Main_001
  *    → QuestID가 Q_Main_001인 퀘스트를 조건 검증 후 강제 수락
  *
@@ -120,6 +124,10 @@ private:
  *===========================================================*/
 #pragma region QuestDebug
 public:
+	// [디버그] 선행 사슬을 완료시키고 건너뛰기 — 콘솔 입력: DebugSkipToQuest Q_Smith_003
+	UFUNCTION(Exec)
+	void DebugSkipToQuest(FName QuestID);
+
 	// [디버그] 퀘스트 강제 수락 — 콘솔 입력: DebugAcceptQuest Q_Main_001
 	UFUNCTION(Exec)
 	void DebugAcceptQuest(FName QuestID);

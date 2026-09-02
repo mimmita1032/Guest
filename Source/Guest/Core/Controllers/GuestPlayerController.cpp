@@ -227,6 +227,23 @@ static UGQuestSubsystem* GetQuestSys(APlayerController* PC)
  * 선행 퀘스트·시간 조건 검증을 포함한 정상 수락 흐름을 그대로 탑니다.
  * DataTable에 해당 QuestID Row가 없으면 경고 로그가 출력됩니다.
  */
+/*
+ * 콘솔 명령어: DebugSkipToQuest Q_Smith_003
+ * 선행 퀘스트를 거슬러 올라가 전부 완료 처리한 뒤 목표 퀘스트를 수락합니다.
+ * 뒤쪽 스테이지를 확인하려고 매번 처음부터 플레이하지 않기 위한 것입니다.
+ *
+ * DebugSetStoryProgress로 진행도만 올려서는 안 됩니다 — 수락은 선행 퀘스트가
+ * 실제 완료 장부에 있는지를 봅니다. 나레이션과 보상은 건너뜁니다.
+ */
+void AGuestPlayerController::DebugSkipToQuest(FName QuestID)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	G_LOG(TEXT("[디버그] 퀘스트 건너뛰기: %s"), *QuestID.ToString());
+	QuestSys->DebugSkipToQuest(QuestID);
+}
+
 void AGuestPlayerController::DebugAcceptQuest(FName QuestID)
 {
 	UGQuestSubsystem* QuestSys = GetQuestSys(this);
