@@ -159,6 +159,50 @@ void UGQuestSubsystem::HandleObjectiveUpdated(FName TargetID, int32 Amount)
 	}
 }
 
+void UGQuestSubsystem::DebugSkipToQuest(FName QuestID)
+{
+	if (QuestID.IsNone()) return;
+
+	// RequiredQuestID를 거슬러 올라가 사슬을 만든다. 앞선 것이 배열 앞쪽에 온다.
+	TArray<FName> Chain;
+	FName Cursor = QuestID;
+	while (!Cursor.IsNone())
+	{
+		const FQuestData* Data = FindQuestData(Cursor);
+		if (!Data) break;
+
+		// 데이터가 순환하면 여기서 멈춘다
+		if (Chain.Contains(Cursor)) break;
+
+		Chain.Insert(Cursor, 0);
+		Cursor = Data->RequiredQuestID;
+	}
+
+	// 마지막 항목은 목표 퀘스트 자신이므로 완료시키지 않는다
+	for (int32 Index = 0; Index < Chain.Num() - 1; ++Index)
+	{
+		const FName ID = Chain[Index];
+		if (CompletedQuests.Contains(ID)) continue;
+
+		const FQuestData* Data = FindQuestData(ID);
+		if (!Data) continue;
+
+		ActiveQuests.Remove(ID);
+		CompletedQuests.Add(ID);
+
+		// 나레이션과 보상은 건너뛴다. 건너뛰기용이지 정상 완료 흐름이 아니다.
+		if (Data->StoryProgressOnComplete > StoryProgress)
+		{
+			SetStoryProgress(Data->StoryProgressOnComplete);
+		}
+
+		G_LOG(TEXT("[디버그] 선행 퀘스트 [%s] 완료 처리"), *ID.ToString());
+	}
+
+	OnQuestListChanged.Broadcast();
+	AcceptQuest(QuestID);
+}
+
 void UGQuestSubsystem::CompleteQuest(FName QuestID)
 {
 	const FQuestData* Data = FindQuestData(QuestID);
