@@ -86,6 +86,9 @@ private:
 
 	void FinishNarration();
 
+	// 위젯을 닫고, 엔딩 나레이션이면 데모 종료 화면으로 넘긴다.
+	void CloseNarration();
+
 	UFUNCTION()
 	void HandleAnimFinished();
 

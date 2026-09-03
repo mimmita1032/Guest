@@ -54,4 +54,11 @@ public:
 	// 게이팅된 NPC가 연출 도중에 나타나버린다. 연출이 끝난 뒤에 바뀌어야 할 것은 여기에 둔다.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|시간 경과")
 	int32 StoryProgressOnFinish = 0;
+
+	/**
+	 * 나레이션이 걷힌 뒤 데모 종료 화면을 띄울지 여부.
+	 * 엔딩 나레이션에만 켠다. 켜면 화면이 닫히는 대신 종료 화면으로 넘어간다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration|Finish")
+	bool bShowDemoEndOnFinish = false;
 };

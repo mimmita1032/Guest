@@ -36,6 +36,7 @@ namespace GuestGameplayTags
 
 	// 나레이션 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Narration, "Guest.Widget.Narration");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_DemoEnd, "Guest.Widget.DemoEnd");
 
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");

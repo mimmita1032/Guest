@@ -42,6 +42,9 @@ namespace GuestGameplayTags
 	// 나레이션 위젯 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_Narration);
 
+	// 데모 종료 화면 — 엔딩 나레이션이 걷힌 뒤 표시
+	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Widget_DemoEnd);
+
 	//아이템 태그
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Weapon);
 	GUEST_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Type_Consumable);
