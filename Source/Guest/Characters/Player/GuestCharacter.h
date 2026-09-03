@@ -173,6 +173,14 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
     float MinArmLengthWhenLookingDown = 150.0f;
 
+    // 위를 올려다볼 때(피치가 MaxViewPitch에 가까워질 때) 카메라가 지면 밑으로 내려가지
+    // 않도록 줄어드는 최소 길이. 반직관적이지만 이 값을 "줄일수록" 카메라가 덜 파묻힌다 —
+    // 위를 볼 때 카메라 위치는 sin(피치)×팔길이만큼 아래로 내려가므로, 팔이 길수록(=이 값이
+    // 클수록) 더 깊이 내려간다. Lyra의 TargetOffsetCurve처럼 결국 눈으로 보고 정하는 값이라
+    // EditAnywhere로 노출해뒀다 — 에디터에서 조정 가능
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Zoom")
+    float MinArmLengthWhenLookingUp = 180.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera|State")
     bool bIsFreeLooking = false;
 #pragma endregion // CameraZoom
@@ -191,8 +199,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
     float MinViewPitch = -25.0f;
 
+    // 원래 25도였다. 40도로 보수적으로 늘림 — MinArmLengthWhenLookingUp이 300이라
+    // 팔이 완만하게만 당겨지므로, 그 이상 넓히면 다시 지면에 파묻힐 수 있다.
+    // 더 넓히고 싶으면 이 값과 MinArmLengthWhenLookingUp을 같이 에디터에서 보며 조정할 것.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Pitch")
-    float MaxViewPitch = 25.0f;
+    float MaxViewPitch = 40.0f;
 #pragma endregion // CameraPitch
 
 #pragma region anim

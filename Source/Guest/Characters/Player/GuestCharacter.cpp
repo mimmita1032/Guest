@@ -171,12 +171,24 @@ void AGuestCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // 수평(0도)에서 MinViewPitch(제일 아래)로 내려다볼수록 목표 길이를 점점 줄여서,
-    // SpringArm이 바닥에 닿아 콜리전 트레이스로 확 당겨지는 것을 미리 방지
+    // 수평(0도)에서 MinViewPitch(제일 아래) 또는 MaxViewPitch(제일 위)로 갈수록 목표 길이를
+    // 점점 줄여서, SpringArm이 지면에 닿아 콜리전 트레이스로 확 당겨지는 것을 미리 방지한다.
+    // 위/아래로 당기는 정도가 다른 건(Down 150 / Up 300) 아래는 발밑을 보는 정도라 바짝
+    // 당겨도 되지만, 위는 세게 당기면 캐릭터 코앞 풀숲 등에 파묻히기 때문이다.
     const float ControlPitch = FRotator::NormalizeAxis(GetControlRotation().Pitch);
-    const float PitchAlpha = FMath::GetMappedRangeValueClamped(
-       FVector2D(0.0f, MinViewPitch), FVector2D(1.0f, 0.0f), ControlPitch);
-    const float PitchAdjustedTargetLength = FMath::Lerp(MinArmLengthWhenLookingDown, TargetZoomLength, PitchAlpha);
+    float PitchAdjustedTargetLength = TargetZoomLength;
+    if (ControlPitch < 0.0f)
+    {
+       const float DownAlpha = FMath::GetMappedRangeValueClamped(
+          FVector2D(0.0f, MinViewPitch), FVector2D(1.0f, 0.0f), ControlPitch);
+       PitchAdjustedTargetLength = FMath::Lerp(MinArmLengthWhenLookingDown, TargetZoomLength, DownAlpha);
+    }
+    else if (ControlPitch > 0.0f)
+    {
+       const float UpAlpha = FMath::GetMappedRangeValueClamped(
+          FVector2D(0.0f, MaxViewPitch), FVector2D(1.0f, 0.0f), ControlPitch);
+       PitchAdjustedTargetLength = FMath::Lerp(MinArmLengthWhenLookingUp, TargetZoomLength, UpAlpha);
+    }
 
     if (!FMath::IsNearlyEqual(SpringArmComp->TargetArmLength, PitchAdjustedTargetLength, 0.1f))
     {
