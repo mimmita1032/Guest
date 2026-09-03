@@ -4,6 +4,8 @@
 #include "Guest/Data/DataAssets/GNarrationDataAsset.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/UI/Subsystems/GuestUISubsystem.h"
+#include "Guest/GameplayTags/GuestGameplayTags.h"
 #include "Engine/GameInstance.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
@@ -164,7 +166,30 @@ void UGuestNarrationWidgetBase::FinishNarration()
 	}
 	else
 	{
-		DeactivateWidget();
+		CloseNarration();
+	}
+}
+
+void UGuestNarrationWidgetBase::CloseNarration()
+{
+	// 위젯을 닫기 전에 읽어둔다. 닫은 뒤에는 세션이 정리돼 애셋 참조가 사라진다.
+	const bool bShowDemoEnd = CurrentNarrationAsset && CurrentNarrationAsset->bShowDemoEndOnFinish;
+
+	DeactivateWidget();
+
+	if (!bShowDemoEnd) return;
+
+	if (const UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			if (UGuestUISubsystem* UISys = GI->GetSubsystem<UGuestUISubsystem>())
+			{
+				UISys->PushWidget(
+					GuestGameplayTags::TAG_WidgetStack_Frontend,
+					GuestGameplayTags::TAG_Widget_DemoEnd);
+			}
+		}
 	}
 }
 
@@ -180,7 +205,7 @@ void UGuestNarrationWidgetBase::HandleAnimFinished()
 
 	case ENarrationTransition::ScreenFadeOut:
 		PendingTransition = ENarrationTransition::None;
-		DeactivateWidget();
+		CloseNarration();
 		break;
 
 	default:
