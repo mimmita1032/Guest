@@ -3,6 +3,7 @@
 #include "GNarrationTrigger.h"
 #include "Guest/Data/DataAssets/GNarrationDataAsset.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Core/GameInstance/GuestGameInstance.h"
 #include "Guest/UI/Subsystems/GuestUISubsystem.h"
 #include "Guest/Utils/GLog.h"
 #include "Kismet/GameplayStatics.h"
@@ -32,6 +33,16 @@ void AGNarrationTrigger::BeginPlay()
 	{
 		const UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>();
 		if (!QuestSys || QuestSys->GetStoryProgress() < RequiredStoryProgress)
+		{
+			return;
+		}
+	}
+
+	// 엔딩을 보고 다시 들어와도 또 뜨지 않게 한다.
+	if (bPlayOnce)
+	{
+		UGuestGameInstance* GuestGI = Cast<UGuestGameInstance>(GI);
+		if (GuestGI && !GuestGI->TryMarkPlayedOnce(GetFName()))
 		{
 			return;
 		}

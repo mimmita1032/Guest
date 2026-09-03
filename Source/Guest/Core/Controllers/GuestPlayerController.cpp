@@ -331,6 +331,57 @@ void AGuestPlayerController::DebugSetStoryProgress(int32 NewProgress)
 #pragma endregion
 
 #pragma region  SaveDebug
+/*
+ * 콘솔 명령어: DebugKill
+ * 사망 경로를 그대로 태웁니다.
+ *
+ * DebugSetHealth 0 으로는 죽지 않습니다. 그것은 어트리뷰트를 직접 쓰는데,
+ * 사망 판정은 PostGameplayEffectExecute 안에 있어 GameplayEffect가 적용될 때만
+ * 호출되기 때문입니다.
+ */
+void AGuestPlayerController::DebugKill()
+{
+	APawn* P = GetPawn();
+	if (!P) return;
+
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(P);
+	UAbilitySystemComponent* ASC = ASCInterface ? ASCInterface->GetAbilitySystemComponent() : nullptr;
+	if (!ASC) return;
+
+	ASC->SetNumericAttributeBase(UGuestAttributeSet::GetCurrentHealthAttribute(), 0.f);
+
+	if (!ASC->HasMatchingGameplayTag(GuestGameplayTags::TAG_State_Dead))
+	{
+		G_LOG(TEXT("[디버그] 즉시 사망"));
+		ASC->AddLooseGameplayTag(GuestGameplayTags::TAG_State_Dead);
+	}
+}
+
+/*
+ * 콘솔 명령어: DebugTravel 2030 21
+ * RequiredStoryProgress를 무시하고 해당 좌표로 이동합니다.
+ * 뒤쪽 스테이지 확인용 — 정상 이동은 디지캠이 게이팅을 검사합니다.
+ */
+void AGuestPlayerController::DebugTravel(int32 Year, int32 AreaCode)
+{
+	UGameInstance* GI = GetGameInstance();
+	UGSpacetimeSubsystem* SpacetimeSys = GI ? GI->GetSubsystem<UGSpacetimeSubsystem>() : nullptr;
+	if (!SpacetimeSys) return;
+
+	FSpacetimeData Data;
+	const ESpacetimeSearchResult Result = SpacetimeSys->SearchSpacetime(Year, AreaCode, Data);
+
+	// Locked도 그대로 보낸다. 게이팅을 건너뛰는 것이 이 명령의 목적이다.
+	if (Result == ESpacetimeSearchResult::NoMatch)
+	{
+		G_WARN(TEXT("[디버그] 좌표 %d/%d 를 찾지 못했습니다."), Year, AreaCode);
+		return;
+	}
+
+	G_LOG(TEXT("[디버그] 강제 이동: %d/%d"), Year, AreaCode);
+	SpacetimeSys->ExecuteTravelIgnoringLock(Data);
+}
+
 void AGuestPlayerController::DebugSetHealth(float NewHealth)
 {
 	if (APawn* P = GetPawn())

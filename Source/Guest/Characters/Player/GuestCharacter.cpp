@@ -10,6 +10,8 @@
 #include "InputAction.h"
 #include "EnhancedInputSubsystems.h"
 #include "Guest/Utils/GLog.h"
+#include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Guest/Components/GDigicamComponent.h"
 #include "Guest/Components/GCameraComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
@@ -587,5 +589,33 @@ void AGuestCharacter::HandleDeath()
    // 콜리전 비활성화
    SetActorEnableCollision(false);
 
+   // 주점으로 돌려보낸다 (2026-08-26 확정).
+   // 바로 옮기면 죽은 것을 볼 새가 없으므로 잠깐 두었다가 넘긴다.
+   //
+   // 아이템 손실은 만들지 않는다 — 일반 아이템은 잃고 퀘스트 아이템은 잃지 않는 것이
+   // 원칙이지만, 데모에서 잃을 일반 아이템이 없고 사진은 퀘스트 아이템이다.
+   FTimerHandle Handle;
+   GetWorldTimerManager().SetTimer(Handle, this, &AGuestCharacter::ReturnToTavern, DeathReturnDelay, false);
+
    // 사망 몽타주 / GameOver UI는 Blueprint에서 처리
+}
+
+void AGuestCharacter::ReturnToTavern()
+{
+   UGameInstance* GI = UGameplayStatics::GetGameInstance(this);
+   if (!GI) return;
+
+   UGSpacetimeSubsystem* SpacetimeSys = GI->GetSubsystem<UGSpacetimeSubsystem>();
+   if (!SpacetimeSys) return;
+
+   // Locked도 받는다. 주점은 진행도 1을 요구하는데 그 전에 죽으면 돌아갈 곳이 없어진다.
+   FSpacetimeData Data;
+   if (SpacetimeSys->SearchSpacetime(TavernYear, TavernAreaCode, Data) == ESpacetimeSearchResult::NoMatch)
+   {
+      G_WARN(TEXT("사망 복귀 실패: 주점 좌표(%d/%d)를 찾지 못했습니다."), TavernYear, TavernAreaCode);
+      return;
+   }
+
+   G_LOG(TEXT("사망 — 주점으로 돌아갑니다."));
+   SpacetimeSys->ExecuteTravelIgnoringLock(Data);
 }

@@ -54,6 +54,14 @@ bool UGuestGameInstance::IsPointPlaced(FName PlacementID) const
 	return !PlacementID.IsNone() && PlacedPointIDs.Contains(PlacementID);
 }
 
+bool UGuestGameInstance::TryMarkPlayedOnce(FName EventID)
+{
+	if (EventID.IsNone()) return true;
+	if (PlayedOnceIDs.Contains(EventID)) return false;
+	PlayedOnceIDs.Add(EventID);
+	return true;
+}
+
 void UGuestGameInstance::ExportPlacementSaveData(TArray<FName>& OutPlacedIDs) const
 {
 	OutPlacedIDs = PlacedPointIDs.Array();

@@ -28,6 +28,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration")
 	int32 RequiredStoryProgress = 0;
 
+	/**
+	 * 켜면 세션 동안 한 번만 재생한다. 비워두면 액터 이름을 식별자로 쓴다.
+	 * 끄면 레벨에 들어올 때마다 다시 재생된다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Narration")
+	bool bPlayOnce = true;
+
 protected:
 	virtual void BeginPlay() override;
 
