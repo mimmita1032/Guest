@@ -25,6 +25,12 @@ public:
 	void MarkPointPlaced(FName PlacementID);
 	bool IsPointPlaced(FName PlacementID) const;
 
+	/**
+	 * 한 번만 재생해야 하는 연출을 기억한다.
+	 * 배치 지점과 같은 이유다 — 레벨 액터는 맵을 다시 열 때마다 새로 만들어진다.
+	 */
+	bool TryMarkPlayedOnce(FName EventID);
+
 	void ExportPlacementSaveData(TArray<FName>& OutPlacedIDs) const;
 	void ImportPlacementSaveData(const TArray<FName>& InPlacedIDs);
 
@@ -45,6 +51,9 @@ private:
 
 	// 배치가 끝난 지점 ID 모음. 맵을 옮겨 다녀도 유지된다.
 	TSet<FName> PlacedPointIDs;
+
+	// 이미 재생한 1회성 연출 ID
+	TSet<FName> PlayedOnceIDs;
 
 	// 인벤토리 복원 + 사진 스냅샷 재생성을 한 묶음으로 처리.
 	// 사진이 인벤토리 아이템이라 둘은 항상 함께 가야 하므로 호출부를 분리하지 않는다.

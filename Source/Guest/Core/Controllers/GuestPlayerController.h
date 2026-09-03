@@ -120,6 +120,13 @@ private:
  *  DebugSetStoryProgress 3
  *    → 스토리 진행도를 3으로 강제 설정 (RequiredStoryProgress 게이팅 테스트용)
  *
+ *  DebugKill
+ *    → 즉시 사망. DebugSetHealth 0 으로는 죽지 않는다 —
+ *      그것은 어트리뷰트를 직접 쓰는데 사망 판정은 GameplayEffect 경로에만 있다
+ *
+ *  DebugTravel 2030 21
+ *    → 진행도 게이팅을 무시하고 해당 좌표로 이동
+ *
  * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
  *===========================================================*/
 #pragma region QuestDebug
@@ -151,6 +158,14 @@ public:
 #pragma region SaveDebug
 
 public:
+	// [디버그] 즉시 사망 — 콘솔 입력: DebugKill
+	UFUNCTION(Exec)
+	void DebugKill();
+
+	// [디버그] 진행도 무시하고 시공간 이동 — 콘솔 입력: DebugTravel 2030 21
+	UFUNCTION(Exec)
+	void DebugTravel(int32 Year, int32 AreaCode);
+
 	UFUNCTION(Exec)
 	void DebugSetHealth(float NewHealth);
 	UFUNCTION(Exec)
