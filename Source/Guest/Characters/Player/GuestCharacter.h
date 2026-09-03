@@ -249,6 +249,20 @@ private:
     void OnDeadTagChanged(const FGameplayTag Tag, int32 NewCount);
 
     void HandleDeath();
+
+    /** 사망 후 주점으로 돌려보낸다. HandleDeath가 타이머로 부른다. */
+    void ReturnToTavern();
+
+    /** 죽은 것을 볼 시간. 이 뒤에 주점으로 넘어간다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Death", meta = (ClampMin = "0.0", Units = "s"))
+    float DeathReturnDelay = 2.0f;
+
+    /** 복귀할 주점 좌표. DT_SpacetimeData의 Tavern 행과 맞춰야 한다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    int32 TavernYear = 2026;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    int32 TavernAreaCode = 0;
 #pragma endregion
     
     ///     GAS     ///

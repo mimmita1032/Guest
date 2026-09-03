@@ -35,6 +35,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spacetime")
 	void ExecuteTravel(const FSpacetimeData& TargetData);
 
+	/**
+	 * 해금 여부를 보지 않고 이동한다.
+	 *
+	 * 사망 복귀처럼 "게이팅과 무관하게 반드시 보내야 하는" 경로에 쓴다.
+	 * 주점은 진행도 1을 요구하는데, 그 전에 죽으면 돌아갈 곳이 없어진다.
+	 */
+	void ExecuteTravelIgnoringLock(const FSpacetimeData& TargetData);
+
 	// 지금 플레이어가 있는 시공간 좌표.
 	// 촬영한 사진의 장소·연도·SubjectID가 전부 여기서 나온다 — 사진의 "언제 어디서"의 단일 출처.
 	UFUNCTION(BlueprintPure, Category = "Spacetime")
