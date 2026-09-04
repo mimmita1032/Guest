@@ -23,4 +23,10 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Text_Objective;
+
+	/** 목표 문구 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다. */
+	UPROPERTY(EditAnywhere, Category = "Quest|Layout", meta = (ClampMin = "0.0"))
+	float ObjectiveWrapTextAt = 0.f;
+
+	virtual void NativeOnInitialized() override;
 };

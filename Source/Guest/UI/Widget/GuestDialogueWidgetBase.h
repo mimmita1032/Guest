@@ -66,6 +66,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	TSubclassOf<UGDialogueChoiceWidget> ChoiceWidgetClass;
 
+	/**
+	 * 대사 본문 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다.
+	 * 부모가 폭을 안 잡아주는 배치라 전체화면에서 잘린다면 여기에 폭을 직접 준다.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Dialogue|Layout", meta = (ClampMin = "0.0"))
+	float DialogueWrapTextAt = 0.f;
+
 	void ShowCurrentNode();
 	void PopulateChoices(const TArray<FDialogueChoice>& Choices);
 	void AdvanceTo(FName NextNodeID);

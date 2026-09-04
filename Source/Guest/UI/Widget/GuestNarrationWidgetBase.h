@@ -74,6 +74,10 @@ private:
 	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
 	TObjectPtr<UWidgetAnimation> Anim_ImageFadeIn;
 
+	/** 나레이션 본문 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다. */
+	UPROPERTY(EditAnywhere, Category = "Narration|Layout", meta = (ClampMin = "0.0"))
+	float NarrationWrapTextAt = 0.f;
+
 	int32 CurrentBeatIndex = INDEX_NONE;
 	ENarrationTransition PendingTransition = ENarrationTransition::None;
 	FTimerHandle AutoAdvanceTimerHandle;

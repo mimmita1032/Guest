@@ -5,6 +5,7 @@
 #include "Guest/Data/DataTable/GDialogueTypes.h"
 #include "Guest/UI/Widget/GDialogueChoiceWidget.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Utils/GuestBlueprintLibrary.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/VerticalBox.h"
@@ -18,6 +19,11 @@ void UGuestDialogueWidgetBase::NativeOnInitialized()
 	{
 		Btn_Next->OnClicked().AddUObject(this, &UGuestDialogueWidgetBase::OnNextClicked);
 	}
+
+	// 대사와 응답 라벨은 데이터에서 오는 가변 길이라 WBP 설정에만 맡기면
+	// 전체화면에서 화면 밖으로 잘린다. 코드에서 줄바꿈을 보장한다.
+	UGuestBlueprintLibrary::ApplyAutoWrap(Text_DialogueLine, DialogueWrapTextAt);
+	UGuestBlueprintLibrary::ApplyAutoWrap(Text_PlayerResponse, DialogueWrapTextAt);
 }
 
 void UGuestDialogueWidgetBase::StartDialogueSession(UGDialogueDataAsset* InAsset)
