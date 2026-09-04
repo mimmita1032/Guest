@@ -748,7 +748,7 @@ Stage 9에는 퀘스트가 없다. `Q_Smith_003`이 완료되면 진행도가 5�
 | `L_TavernMain` | 지상 2층으로 재구축 (2026-09-04) | 221 | — |
 | `L_Residential_01` | 블록아웃 완료 (PR #103) | 465 | — |
 | `L_Landmark_SkySpire_01` | 블록아웃 완료 (PR #104) | — | — |
-| `L_Landmark_Museum_01` | 블록아웃 완료 | 81 | `PHOTO_AxisFrontal`, `PHOTO_Diagonal` |
+| `L_Landmark_Museum_01` | 블록아웃 완료 + 진입 동선 정리 (2026-09-05) | 108 | `PHOTO_AxisFrontal`, `PHOTO_Diagonal` |
 | `L_Landmark_Traditional_01` | 블록아웃 완료 | 147 | `PHOTO_Axis`, `PHOTO_Diagonal`, `PHOTO_OutsideGate` |
 | `L_CitySquare` | 블록아웃 완료 | 120 | `VIEW_Ending`, `VIEW_Diagonal`, `SMITH_Stand` |
 
@@ -781,7 +781,11 @@ Stage 9에는 퀘스트가 없다. `Q_Smith_003`이 완료되면 진행도가 5�
 
 **남은 마감 (에디터 작업)**
 - `L_TavernMain` — NavMesh 없음. 스미스가 이동해야 한다면 필요하다
-- `L_Landmark_Museum_01` — 광장 바닥이 넓고 단조롭다. 진입 동선에 단차나 식재를 더할 것
+- ~~`L_Landmark_Museum_01` — 광장 바닥이 넓고 단조롭다. 진입 동선에 단차나 식재를 더할 것~~
+  ✅ 정리 완료 (2026-09-05). 축을 따라 걸으면 연못 위를 그대로 지나가던 것을 고쳤다 —
+  수면을 좌우 두 개로 나누고 가운데에 코즈웨이를 냈다. 광장(20) → 전정(40) → 코즈웨이(40) →
+  계단(60·80·100·120) → 포디움(120)으로 20씩 오른다. 화단 열과 포장 줄눈으로 바닥을 끊었다.
+  새로 놓은 것은 전부 높이 120 이하 — `Photo_Museum`이 프레임 판정이라 시야를 막으면 안 된다
 - `L_Landmark_Traditional_01` — 지붕은 맞배 + 계단식 합각벽으로 근사했다. 팔작지붕으로 갈 거면
   박스로는 사다리꼴이 안 되니 전용 메시가 필요하다
 - `L_CitySquare` — `Holo_*`는 `MI_DevSkyBlue` 더미다. 머티리얼·이펙트 교체 필요
