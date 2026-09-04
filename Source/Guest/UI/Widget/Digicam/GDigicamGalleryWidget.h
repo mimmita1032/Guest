@@ -43,6 +43,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock> TXT_SelectedDate;
 
+	/** 장소명 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다. */
+	UPROPERTY(EditAnywhere, Category = "Digicam|Layout", meta = (ClampMin = "0.0"))
+	float PlaceNameWrapTextAt = 0.f;
+
 	// 사진 0장일 때 표시할 안내 위젯 (선택적)
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> WGT_EmptyHint;
