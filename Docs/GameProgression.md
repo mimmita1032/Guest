@@ -897,10 +897,8 @@ if (const FName Resolved = ResolveSubject(); !Resolved.IsNone())
   - 퀘스트 체인이 길어지면 "쪼개기"만으로는 관리가 어려워진다. 그때 도입할 것
 - **`FOnShutterDenied` 이름 정리** — 실제로는 *이동* 거부 시에만 발생한다.
   기존 BP 바인딩을 깨지 않으려 이름을 그대로 뒀다. `BTN_Shutter`(실제로는 이동 버튼)도 같은 빚
-- **여자 NPC 대화 데이터가 없다** — `BP_GuestNPC_Woman`의 `dialogue_asset`이 비어 있다.
-  원래 `DA_NPC_Woman_Dialogue`를 물고 있었는데 그 애셋의 타입이 사라지며 참조가 끊겼고,
-  끊긴 채 남아 쿡 경고를 내던 애셋은 PR #127에서 지웠다. 데모에 나오는 NPC라면
-  `BP_Smith`(`DA_Smith_Dialogue`)와 같은 방식으로 새로 만들어 붙여야 한다
+- `BP_GuestNPC_Woman`은 **테스트용 NPC**다. 대화 데이터(`dialogue_asset`)가 비어 있는 것은
+  정상이다 — 끊긴 채 남아 쿡 경고를 내던 `DA_NPC_Woman_Dialogue`는 PR #127에서 지웠다
 
 ### 패키징 (2026-09-05, PR #126)
 
