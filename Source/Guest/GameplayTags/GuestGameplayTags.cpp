@@ -27,6 +27,7 @@ namespace GuestGameplayTags
 	//세이브/ 로드 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_SaveBoard, "Guest.Widget.SaveBoard");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_LoadBoard, "Guest.Widget.LoadBoard");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_MainMenuSaveBoard, "Guest.Widget.MainMenuSaveBoard");
 	
 	// NPC 대화 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_NPCDialogue, "Guest.Widget.NPCDialogue");
