@@ -25,6 +25,8 @@
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
 #include "Guest/Subsystem/GSpacetimeSubsystem.h"
+#include "Guest/Subsystem/GSkillMasterySubsystem.h"
+#include "Guest/Data/DataAssets/GSkillDefinition.h"
 #include "Guest/UI/Widget/Quest/GQuestTrackerWidget.h"
 #include "Guest/UI/Settings/GuestUISettings.h"
 #include "Guest/AI/GuestTeamIds.h"
@@ -225,6 +227,23 @@ static UGQuestSubsystem* GetQuestSys(APlayerController* PC)
  * 선행 퀘스트·시간 조건 검증을 포함한 정상 수락 흐름을 그대로 탑니다.
  * DataTable에 해당 QuestID Row가 없으면 경고 로그가 출력됩니다.
  */
+/*
+ * 콘솔 명령어: DebugSkipToQuest Q_Smith_003
+ * 선행 퀘스트를 거슬러 올라가 전부 완료 처리한 뒤 목표 퀘스트를 수락합니다.
+ * 뒤쪽 스테이지를 확인하려고 매번 처음부터 플레이하지 않기 위한 것입니다.
+ *
+ * DebugSetStoryProgress로 진행도만 올려서는 안 됩니다 — 수락은 선행 퀘스트가
+ * 실제 완료 장부에 있는지를 봅니다. 나레이션과 보상은 건너뜁니다.
+ */
+void AGuestPlayerController::DebugSkipToQuest(FName QuestID)
+{
+	UGQuestSubsystem* QuestSys = GetQuestSys(this);
+	if (!QuestSys) return;
+
+	G_LOG(TEXT("[디버그] 퀘스트 건너뛰기: %s"), *QuestID.ToString());
+	QuestSys->DebugSkipToQuest(QuestID);
+}
+
 void AGuestPlayerController::DebugAcceptQuest(FName QuestID)
 {
 	UGQuestSubsystem* QuestSys = GetQuestSys(this);
@@ -312,6 +331,57 @@ void AGuestPlayerController::DebugSetStoryProgress(int32 NewProgress)
 #pragma endregion
 
 #pragma region  SaveDebug
+/*
+ * 콘솔 명령어: DebugKill
+ * 사망 경로를 그대로 태웁니다.
+ *
+ * DebugSetHealth 0 으로는 죽지 않습니다. 그것은 어트리뷰트를 직접 쓰는데,
+ * 사망 판정은 PostGameplayEffectExecute 안에 있어 GameplayEffect가 적용될 때만
+ * 호출되기 때문입니다.
+ */
+void AGuestPlayerController::DebugKill()
+{
+	APawn* P = GetPawn();
+	if (!P) return;
+
+	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(P);
+	UAbilitySystemComponent* ASC = ASCInterface ? ASCInterface->GetAbilitySystemComponent() : nullptr;
+	if (!ASC) return;
+
+	ASC->SetNumericAttributeBase(UGuestAttributeSet::GetCurrentHealthAttribute(), 0.f);
+
+	if (!ASC->HasMatchingGameplayTag(GuestGameplayTags::TAG_State_Dead))
+	{
+		G_LOG(TEXT("[디버그] 즉시 사망"));
+		ASC->AddLooseGameplayTag(GuestGameplayTags::TAG_State_Dead);
+	}
+}
+
+/*
+ * 콘솔 명령어: DebugTravel 2030 21
+ * RequiredStoryProgress를 무시하고 해당 좌표로 이동합니다.
+ * 뒤쪽 스테이지 확인용 — 정상 이동은 디지캠이 게이팅을 검사합니다.
+ */
+void AGuestPlayerController::DebugTravel(int32 Year, int32 AreaCode)
+{
+	UGameInstance* GI = GetGameInstance();
+	UGSpacetimeSubsystem* SpacetimeSys = GI ? GI->GetSubsystem<UGSpacetimeSubsystem>() : nullptr;
+	if (!SpacetimeSys) return;
+
+	FSpacetimeData Data;
+	const ESpacetimeSearchResult Result = SpacetimeSys->SearchSpacetime(Year, AreaCode, Data);
+
+	// Locked도 그대로 보낸다. 게이팅을 건너뛰는 것이 이 명령의 목적이다.
+	if (Result == ESpacetimeSearchResult::NoMatch)
+	{
+		G_WARN(TEXT("[디버그] 좌표 %d/%d 를 찾지 못했습니다."), Year, AreaCode);
+		return;
+	}
+
+	G_LOG(TEXT("[디버그] 강제 이동: %d/%d"), Year, AreaCode);
+	SpacetimeSys->ExecuteTravelIgnoringLock(Data);
+}
+
 void AGuestPlayerController::DebugSetHealth(float NewHealth)
 {
 	if (APawn* P = GetPawn())
@@ -341,6 +411,82 @@ void AGuestPlayerController::DebugSetBattery(float NewBattery)
 	}
 }
 #pragma endregion
+
+#pragma region SkillDebug
+
+// 헬퍼: GSkillMasterySubsystem 조회 (실패 시 로그 출력 후 nullptr 반환)
+static UGSkillMasterySubsystem* GetSkillSys(APlayerController* PC)
+{
+	UGSkillMasterySubsystem* SkillSys = PC->GetGameInstance()->GetSubsystem<UGSkillMasterySubsystem>();
+	if (!SkillSys)
+	{
+		UE_LOG(LogGSystem, Error, TEXT("[디버그] GSkillMasterySubsystem을 찾을 수 없습니다."));
+	}
+	return SkillSys;
+}
+
+/*
+ * 콘솔 명령어: DebugDiscoverSkill Guest.Skill.Camera.Flash
+ * DiscoverSkill()을 그대로 호출한다. Book 연동 없이 Locked → InTheory만 강제 전이.
+ */
+void AGuestPlayerController::DebugDiscoverSkill(FGameplayTag SkillTag)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	const bool bDiscovered = SkillSys->DiscoverSkill(SkillTag);
+	G_LOG(TEXT("[디버그] Skill Discover 시도: %s → %s"),
+		*SkillTag.ToString(), bDiscovered ? TEXT("성공") : TEXT("실패/무시"));
+}
+
+/*
+ * 콘솔 명령어: DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+ * HandleSkillProgressEvent()를 그대로 호출한다. 해당 이벤트를 요구하는 InTheory Skill만 영향받음.
+ */
+void AGuestPlayerController::DebugAddSkillProgress(FGameplayTag ProgressEventTag, float Amount)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	G_LOG(TEXT("[디버그] Skill Progress 강제 추가: %s += %.2f"), *ProgressEventTag.ToString(), Amount);
+	SkillSys->HandleSkillProgressEvent(ProgressEventTag, Amount);
+}
+
+/*
+ * 콘솔 명령어: DebugSkillStatus Guest.Skill.Camera.Flash
+ * 해당 Skill의 State와 MasteryConditions별 진행도를 로그로 출력한다.
+ */
+void AGuestPlayerController::DebugSkillStatus(FGameplayTag SkillTag)
+{
+	UGSkillMasterySubsystem* SkillSys = GetSkillSys(this);
+	if (!SkillSys) return;
+
+	if (!SkillSys->IsSkillDataReady())
+	{
+		G_LOG(TEXT("[디버그] Skill 데이터가 아직 준비되지 않음"));
+		return;
+	}
+
+	const UGSkillDefinition* Definition = SkillSys->FindSkillDefinition(SkillTag);
+	if (!Definition)
+	{
+		G_LOG(TEXT("[디버그] [%s] Definition을 찾을 수 없음"), *SkillTag.ToString());
+		return;
+	}
+
+	static const UEnum* StateEnum = StaticEnum<ESkillState>();
+	const ESkillState State = SkillSys->GetSkillState(SkillTag);
+	G_LOG(TEXT("[디버그] [%s] State=%s"), *SkillTag.ToString(), *StateEnum->GetNameStringByValue(static_cast<int64>(State)));
+
+	for (const FSkillMasteryCondition& Condition : Definition->MasteryConditions)
+	{
+		const float Progress = SkillSys->GetSkillProgress(SkillTag, Condition.ProgressEventTag);
+		G_LOG(TEXT("[디버그]  - %s : %.2f / %.2f"),
+			*Condition.ProgressEventTag.ToString(), Progress, Condition.RequiredAmount);
+	}
+}
+#pragma endregion
+
 #pragma region SaveGame
 
 bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int32 UserIndex)
@@ -381,6 +527,11 @@ bool AGuestPlayerController::SaveCurrentGameToSlot(const FString& SlotName, int3
 		{
 			SpacetimeSys->ExportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
 			SpacetimeSys->ExportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
+		}
+
+		if (UGuestGameInstance* GuestGI = Cast<UGuestGameInstance>(GI))
+		{
+			GuestGI->ExportPlacementSaveData(SaveObject->SavedPlacedPointIDs);
 		}
 
 		// 사진은 인벤토리 아이템이므로 SavedInventory에 함께 저장된다 — 별도 저장 없음

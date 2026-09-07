@@ -4,6 +4,7 @@
 #include "GuestAssetManager.h"
 
 #include "Guest/Items/Definition/GItemDefinition.h"
+#include "Guest/Data/DataAssets/GSkillDefinition.h"
 
 
 UGuestAssetManager& UGuestAssetManager::Get()
@@ -44,6 +45,32 @@ bool UGuestAssetManager::GetLoadedItems(TArray<const UGItemDefinition*>& OutItem
 }
 
 void UGuestAssetManager::GuestItemLoadFinished(FStreamableDelegate CallBack)
+{
+	CallBack.ExecuteIfBound();
+}
+
+void UGuestAssetManager::LoadGuestSkills(const FStreamableDelegate& LoadFinishedDelegate)
+{
+	LoadPrimaryAssetsWithType(UGSkillDefinition::GetGuestSkillAssetType(), TArray<FName>(), FStreamableDelegate::CreateUObject(this, &UGuestAssetManager::GuestSkillLoadFinished, LoadFinishedDelegate));
+}
+
+bool UGuestAssetManager::GetLoadedSkills(TArray<const UGSkillDefinition*>& OutSkills) const
+{
+	TArray<UObject*> LoadedObjects;
+	bool bLoaded = GetPrimaryAssetObjectList(UGSkillDefinition::GetGuestSkillAssetType(), LoadedObjects);
+
+	if (bLoaded)
+	{
+		for (UObject* LoadedObject : LoadedObjects)
+		{
+			OutSkills.Add(Cast<UGSkillDefinition>(LoadedObject));
+		}
+	}
+
+	return bLoaded;
+}
+
+void UGuestAssetManager::GuestSkillLoadFinished(FStreamableDelegate CallBack)
 {
 	CallBack.ExecuteIfBound();
 }

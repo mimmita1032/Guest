@@ -60,4 +60,13 @@ struct FDialogueNode : public FTableRowBase
 	/** 이 노드 도달 시 퀘스트 서브시스템에 전달할 이벤트 ID. 비어있으면 없음. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue|Quest")
 	FName QuestEventID;
+
+	/**
+	 * 이 노드 도달 시 달성 처리할 Talk 목표 ID. 비어있으면 없음.
+	 *
+	 * NPC가 아니라 노드가 들고 있는다. 같은 NPC라도 트리거로 다가가면 바 대화,
+	 * E를 누르면 NPC 대화로 열리는데, 목표를 NPC에 두면 한쪽 경로에서만 발화한다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue|Quest")
+	FName TalkObjectiveID;
 };

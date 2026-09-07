@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Components/Widget.h"
 #include "Guest/UI/Subsystems/GPhotoLibrarySubsystem.h"
+#include "Guest/Utils/GuestBlueprintLibrary.h"
 
 void UGDigicamGalleryWidget::NativeOnInitialized()
 {
@@ -17,6 +18,9 @@ void UGDigicamGalleryWidget::NativeOnInitialized()
 	{
 		PhotoLib->OnPhotoAdded.AddDynamic(this, &UGDigicamGalleryWidget::OnPhotoTaken);
 	}
+
+	// 장소명만 가변 길이다 — 연도/날짜는 형식이 고정이라 접을 필요가 없다.
+	UGuestBlueprintLibrary::ApplyAutoWrap(TXT_SelectedPlaceName, PlaceNameWrapTextAt);
 }
 
 void UGDigicamGalleryWidget::OnTabActivated_Implementation()

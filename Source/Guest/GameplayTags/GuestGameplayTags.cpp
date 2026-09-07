@@ -37,6 +37,7 @@ namespace GuestGameplayTags
 
 	// 나레이션 위젯 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_Narration, "Guest.Widget.Narration");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Widget_DemoEnd, "Guest.Widget.DemoEnd");
 
 	//아이템 태그
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Item_Type_Weapon, "Item.Type.Weapon");
@@ -77,5 +78,15 @@ namespace GuestGameplayTags
 	//GE SetByCaller 데이터
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_PurifyAmount, "Guest.Data.PurifyAmount");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Data_DamageAmount, "Guest.Data.DamageAmount");
+
+	//Skill 식별 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Camera_Flash,       "Guest.Skill.Camera.Flash");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Camera_WeakPoint,   "Guest.Skill.Camera.WeakPoint");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Stealth_SilentStep, "Guest.Skill.Stealth.SilentStep");
+
+	//Skill Mastery Progress 이벤트 태그
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Camera_FlashUsed,       "Guest.Skill.Progress.Camera.FlashUsed");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Camera_EnemyObserved,   "Guest.Skill.Progress.Camera.EnemyObserved");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Skill_Progress_Stealth_MovedNearEnemy, "Guest.Skill.Progress.Stealth.MovedNearEnemy");
 
 }

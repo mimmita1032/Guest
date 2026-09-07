@@ -2,6 +2,7 @@
 
 #include "GDigicamPhotoEntryWidget.h"
 #include "GPhotoEntryObject.h"
+#include "Guest/Utils/GuestBlueprintLibrary.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 
@@ -20,6 +21,9 @@ void UGDigicamPhotoEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObjec
 	}
 
 	TXT_Year->SetText(FText::AsNumber(Photo.InGameYear));
+
+	// 장소명은 길이가 제각각이라 목록 칸을 넘긴다 — 잘리는 대신 접히게 한다.
+	UGuestBlueprintLibrary::ApplyAutoWrap(TXT_PlaceName, PlaceNameWrapTextAt);
 	TXT_PlaceName->SetText(Photo.PlaceName);
 }
 

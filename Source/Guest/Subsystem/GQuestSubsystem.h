@@ -77,6 +77,14 @@ public:
 	// UI에서 퀘스트 정적 데이터 조회
 	const FQuestData* FindQuestDataPublic(FName QuestID) const { return FindQuestData(QuestID); }
 
+	/**
+	 * 디버그 전용 — 선행 퀘스트 사슬을 거슬러 올라가 전부 완료 처리한 뒤 목표 퀘스트를 수락한다.
+	 *
+	 * 뒤쪽 스테이지를 확인하려고 매번 처음부터 플레이하지 않기 위한 것이다.
+	 * 진행도만 올려서는 안 된다 — AcceptQuest가 RequiredQuestID를 실제 완료 장부에서 확인한다.
+	 */
+	void DebugSkipToQuest(FName QuestID);
+
 private:
 	// OnObjectiveUpdated 델리게이트 수신 핸들러
 	UFUNCTION()

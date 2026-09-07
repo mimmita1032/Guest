@@ -31,6 +31,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock> TXT_PlaceName;
 
+	/** 장소명 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다. */
+	UPROPERTY(EditAnywhere, Category = "Digicam|Layout", meta = (ClampMin = "0.0"))
+	float PlaceNameWrapTextAt = 0.f;
+
 private:
 	TWeakObjectPtr<UGPhotoEntryObject> CachedEntryObj;
 };

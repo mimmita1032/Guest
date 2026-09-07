@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
+#include "GameplayTagContainer.h"
 #include "InputActionValue.h"
 #include "GuestPlayerController.generated.h"
 
@@ -100,6 +101,10 @@ private:
  *
  * ※ 사용법: 에디터 실행 중 콘솔(~ 키)을 열고 아래 명령어 입력
  *
+ *  DebugSkipToQuest Q_Smith_003
+ *    → 선행 퀘스트를 거슬러 올라가 전부 완료 처리한 뒤 목표 퀘스트를 수락
+ *      (뒤쪽 스테이지 확인용. 진행도만 올려서는 선행 검사를 통과하지 못한다)
+ *
  *  DebugAcceptQuest Q_Main_001
  *    → QuestID가 Q_Main_001인 퀘스트를 조건 검증 후 강제 수락
  *
@@ -115,10 +120,21 @@ private:
  *  DebugSetStoryProgress 3
  *    → 스토리 진행도를 3으로 강제 설정 (RequiredStoryProgress 게이팅 테스트용)
  *
+ *  DebugKill
+ *    → 즉시 사망. DebugSetHealth 0 으로는 죽지 않는다 —
+ *      그것은 어트리뷰트를 직접 쓰는데 사망 판정은 GameplayEffect 경로에만 있다
+ *
+ *  DebugTravel 2030 21
+ *    → 진행도 게이팅을 무시하고 해당 좌표로 이동
+ *
  * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
  *===========================================================*/
 #pragma region QuestDebug
 public:
+	// [디버그] 선행 사슬을 완료시키고 건너뛰기 — 콘솔 입력: DebugSkipToQuest Q_Smith_003
+	UFUNCTION(Exec)
+	void DebugSkipToQuest(FName QuestID);
+
 	// [디버그] 퀘스트 강제 수락 — 콘솔 입력: DebugAcceptQuest Q_Main_001
 	UFUNCTION(Exec)
 	void DebugAcceptQuest(FName QuestID);
@@ -140,13 +156,51 @@ public:
 	void DebugSetStoryProgress(int32 NewProgress);
 #pragma endregion
 #pragma region SaveDebug
-	
+
 public:
+	// [디버그] 즉시 사망 — 콘솔 입력: DebugKill
+	UFUNCTION(Exec)
+	void DebugKill();
+
+	// [디버그] 진행도 무시하고 시공간 이동 — 콘솔 입력: DebugTravel 2030 21
+	UFUNCTION(Exec)
+	void DebugTravel(int32 Year, int32 AreaCode);
+
 	UFUNCTION(Exec)
 	void DebugSetHealth(float NewHealth);
 	UFUNCTION(Exec)
 	void DebugSetBattery(float NewBattery);
-	
+
+#pragma endregion
+/*===========================================================
+ * [디버그 전용] Skill 시스템 콘솔 테스트 함수
+ *
+ * ※ 사용법: 에디터 실행 중 콘솔(~ 키)을 열고 아래 명령어 입력
+ *
+ *  DebugDiscoverSkill Guest.Skill.Camera.Flash
+ *    → 해당 SkillTag를 Locked에서 InTheory로 강제 전이 (Book 연동 없이 Runtime API만 호출)
+ *
+ *  DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+ *    → 해당 ProgressEventTag를 요구하는 InTheory Skill들의 진행도를 강제로 누적
+ *
+ *  DebugSkillStatus Guest.Skill.Camera.Flash
+ *    → 해당 SkillTag의 현재 State와 ConditionProgress를 로그로 출력
+ *
+ * ※ Exec 함수는 에디터/개발 빌드에서만 동작하며 릴리즈 빌드에서는 무시됨
+ *===========================================================*/
+#pragma region SkillDebug
+public:
+	// [디버그] Skill 강제 Discover — 콘솔 입력: DebugDiscoverSkill Guest.Skill.Camera.Flash
+	UFUNCTION(Exec)
+	void DebugDiscoverSkill(FGameplayTag SkillTag);
+
+	// [디버그] Skill 진행도 강제 누적 — 콘솔 입력: DebugAddSkillProgress Guest.Skill.Progress.Camera.FlashUsed 1.0
+	UFUNCTION(Exec)
+	void DebugAddSkillProgress(FGameplayTag ProgressEventTag, float Amount);
+
+	// [디버그] Skill 상태/진행도 로그 출력 — 콘솔 입력: DebugSkillStatus Guest.Skill.Camera.Flash
+	UFUNCTION(Exec)
+	void DebugSkillStatus(FGameplayTag SkillTag);
 #pragma endregion
 	
 #pragma region Save

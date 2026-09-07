@@ -70,14 +70,19 @@ bool UGSpacetimeSubsystem::IsSpacetimeUnlocked(const FSpacetimeData& Data) const
 
 void UGSpacetimeSubsystem::ExecuteTravel(const FSpacetimeData& TargetData)
 {
-	if (TargetData.LevelName.IsNone()) return;
-	if (bTravelInProgress) return;
-
 	if (!IsSpacetimeUnlocked(TargetData))
 	{
 		G_WARN(TEXT("시공간 이동 거부 — 아직 해금되지 않은 좌표: %s"), *TargetData.PlaceName.ToString());
 		return;
 	}
+
+	ExecuteTravelIgnoringLock(TargetData);
+}
+
+void UGSpacetimeSubsystem::ExecuteTravelIgnoringLock(const FSpacetimeData& TargetData)
+{
+	if (TargetData.LevelName.IsNone()) return;
+	if (bTravelInProgress) return;
 
 	G_LOG(TEXT("시공간 이동 시작: %s (%.1f초 후 전환)"), *TargetData.PlaceName.ToString(), TravelFadeDelay);
 

@@ -103,6 +103,10 @@ class GUEST_API UGuestSaveGame : public USaveGame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	TArray<FName> SavedCompletedQuestIDs;
 
+	// 배치가 끝난 지점 ID. 비어 있어도 그대로 동작하므로 구버전 세이브와 호환된다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|World")
+	TArray<FName> SavedPlacedPointIDs;
+
 	// 스토리 진행도 (0 = 게임 시작). 특정 진행도부터 열리는 퀘스트 게이팅에 사용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Save|Quest")
 	int32 SavedStoryProgress = 0;

@@ -66,6 +66,13 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Dialogue")
 	TSubclassOf<UGDialogueChoiceWidget> ChoiceWidgetClass;
 
+	/**
+	 * 대사 본문 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다.
+	 * 부모가 폭을 안 잡아주는 배치라 전체화면에서 잘린다면 여기에 폭을 직접 준다.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Dialogue|Layout", meta = (ClampMin = "0.0"))
+	float DialogueWrapTextAt = 0.f;
+
 	void ShowCurrentNode();
 	void PopulateChoices(const TArray<FDialogueChoice>& Choices);
 	void AdvanceTo(FName NextNodeID);
@@ -73,10 +80,18 @@ private:
 	/**
 	 * 선택지 표시 조건 판정.
 	 *  - 비어 있으면 항상 표시
-	 *  - "Q_Smith_001"        — 그 퀘스트가 진행 중일 때
-	 *  - "Q_Smith_001.Step02" — 진행 중이고 현재 단계가 Step02일 때
+	 *  - "Q_Smith_001"           — 그 퀘스트가 진행 중일 때
+	 *  - "Q_Smith_001.Step02"    — 진행 중이고 현재 단계가 Step02일 때
+	 *  - "Q_Smith_001.Completed" — 그 퀘스트를 완료했을 때
+	 *  - "!" 를 앞에 붙이면 부정. "&" 로 여러 조건을 이으면 모두 만족해야 한다.
+	 *
+	 * 예) "Q_Smith_001.Completed&!Q_Smith_002&!Q_Smith_002.Completed"
+	 *     — 1번을 끝냈고 2번은 아직 시작하지 않았을 때. 수락 선택지에 쓴다.
 	 */
 	bool IsChoiceConditionMet(FName ConditionID) const;
+
+	/** 조건 하나를 판정한다. 앞의 "!" 는 부정으로 해석한다. */
+	bool EvaluateSingleCondition(const FString& InCondition) const;
 
 	UFUNCTION()
 	void OnNextClicked();

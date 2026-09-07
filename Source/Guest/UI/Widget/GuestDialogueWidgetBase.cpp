@@ -5,6 +5,7 @@
 #include "Guest/Data/DataTable/GDialogueTypes.h"
 #include "Guest/UI/Widget/GDialogueChoiceWidget.h"
 #include "Guest/Subsystem/GQuestSubsystem.h"
+#include "Guest/Utils/GuestBlueprintLibrary.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/VerticalBox.h"
@@ -18,6 +19,11 @@ void UGuestDialogueWidgetBase::NativeOnInitialized()
 	{
 		Btn_Next->OnClicked().AddUObject(this, &UGuestDialogueWidgetBase::OnNextClicked);
 	}
+
+	// 대사와 응답 라벨은 데이터에서 오는 가변 길이라 WBP 설정에만 맡기면
+	// 전체화면에서 화면 밖으로 잘린다. 코드에서 줄바꿈을 보장한다.
+	UGuestBlueprintLibrary::ApplyAutoWrap(Text_DialogueLine, DialogueWrapTextAt);
+	UGuestBlueprintLibrary::ApplyAutoWrap(Text_PlayerResponse, DialogueWrapTextAt);
 }
 
 void UGuestDialogueWidgetBase::StartDialogueSession(UGDialogueDataAsset* InAsset)
@@ -60,6 +66,17 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 		}
 	}
 
+	if (!Node->TalkObjectiveID.IsNone())
+	{
+		if (UGameInstance* GI = GetGameInstance())
+		{
+			if (UGQuestSubsystem* QuestSys = GI->GetSubsystem<UGQuestSubsystem>())
+			{
+				QuestSys->OnObjectiveUpdated.Broadcast(Node->TalkObjectiveID, 1);
+			}
+		}
+	}
+
 	if (Node->Choices.Num() > 0)
 	{
 		if (Btn_Next) Btn_Next->SetVisibility(ESlateVisibility::Collapsed);
@@ -96,24 +113,64 @@ void UGuestDialogueWidgetBase::ShowCurrentNode()
 	}
 }
 
-bool UGuestDialogueWidgetBase::IsChoiceConditionMet(FName ConditionID) const
+bool UGuestDialogueWidgetBase::EvaluateSingleCondition(const FString& InCondition) const
 {
-	// 조건이 없으면 항상 표시
-	if (ConditionID.IsNone()) return true;
-
 	const UWorld* World = GetWorld();
 	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 	const UGQuestSubsystem* QuestSys = GI ? GI->GetSubsystem<UGQuestSubsystem>() : nullptr;
 	if (!QuestSys) return false;
 
-	// "QuestID.StepID" — 단계까지 일치해야 한다. 점이 없으면 단계 무관.
-	FString QuestPart, StepPart;
-	if (ConditionID.ToString().Split(TEXT("."), &QuestPart, &StepPart))
+	FString Condition = InCondition.TrimStartAndEnd();
+
+	// 앞의 "!" 는 부정. 조건을 하나 더 만들지 않고 뒤집어 쓴다.
+	bool bNegate = false;
+	if (Condition.StartsWith(TEXT("!")))
 	{
-		return QuestSys->GetCurrentStepID(FName(*QuestPart)) == FName(*StepPart);
+		bNegate = true;
+		Condition = Condition.RightChop(1).TrimStartAndEnd();
 	}
 
-	return QuestSys->IsQuestActive(ConditionID);
+	if (Condition.IsEmpty()) return true;
+
+	bool bResult = false;
+	FString QuestPart, StepPart;
+	if (Condition.Split(TEXT("."), &QuestPart, &StepPart))
+	{
+		// "Completed" 는 단계 이름이 아니라 예약어다. 완료 여부를 묻는다.
+		// 수락 선택지처럼 "그 퀘스트가 끝난 뒤에만 보여야 하는" 분기에 쓴다.
+		if (StepPart.Equals(TEXT("Completed"), ESearchCase::IgnoreCase))
+		{
+			bResult = QuestSys->IsQuestCompleted(FName(*QuestPart));
+		}
+		else
+		{
+			bResult = QuestSys->GetCurrentStepID(FName(*QuestPart)) == FName(*StepPart);
+		}
+	}
+	else
+	{
+		bResult = QuestSys->IsQuestActive(FName(*Condition));
+	}
+
+	return bNegate ? !bResult : bResult;
+}
+
+bool UGuestDialogueWidgetBase::IsChoiceConditionMet(FName ConditionID) const
+{
+	// 조건이 없으면 항상 표시
+	if (ConditionID.IsNone()) return true;
+
+	// "&" 로 이어진 조건은 전부 만족해야 한다.
+	// 수락 선택지는 "1번 완료"와 "2번 미시작"을 동시에 요구하므로 하나로는 부족하다.
+	TArray<FString> Parts;
+	ConditionID.ToString().ParseIntoArray(Parts, TEXT("&"), true);
+	if (Parts.Num() == 0) return true;
+
+	for (const FString& Part : Parts)
+	{
+		if (!EvaluateSingleCondition(Part)) return false;
+	}
+	return true;
 }
 
 void UGuestDialogueWidgetBase::PopulateChoices(const TArray<FDialogueChoice>& Choices)

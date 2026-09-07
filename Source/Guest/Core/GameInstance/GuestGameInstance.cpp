@@ -43,6 +43,39 @@ static FString GuestGetPersistentMapPackageName(const UWorld* World)
 	return World -> PersistentLevel -> GetOutermost()->GetName();
 }
 
+void UGuestGameInstance::MarkPointPlaced(FName PlacementID)
+{
+	if (PlacementID.IsNone()) return;
+	PlacedPointIDs.Add(PlacementID);
+}
+
+bool UGuestGameInstance::IsPointPlaced(FName PlacementID) const
+{
+	return !PlacementID.IsNone() && PlacedPointIDs.Contains(PlacementID);
+}
+
+bool UGuestGameInstance::TryMarkPlayedOnce(FName EventID)
+{
+	if (EventID.IsNone()) return true;
+	if (PlayedOnceIDs.Contains(EventID)) return false;
+	PlayedOnceIDs.Add(EventID);
+	return true;
+}
+
+void UGuestGameInstance::ExportPlacementSaveData(TArray<FName>& OutPlacedIDs) const
+{
+	OutPlacedIDs = PlacedPointIDs.Array();
+}
+
+void UGuestGameInstance::ImportPlacementSaveData(const TArray<FName>& InPlacedIDs)
+{
+	PlacedPointIDs.Empty();
+	for (const FName& ID : InPlacedIDs)
+	{
+		if (!ID.IsNone()) PlacedPointIDs.Add(ID);
+	}
+}
+
 void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 UserIndex)
 {
 	if (!UGameplayStatics::DoesSaveGameExist(SlotName, UserIndex))
@@ -85,6 +118,9 @@ void UGuestGameInstance::RequestLoadFromSlot(const FString& SlotName, int32 User
 		SpacetimeSys->ImportTimeSaveData(SaveObject->SavedWorldHour, SaveObject->SavedWorldDay);
 		SpacetimeSys->ImportLocationSaveData(SaveObject->SavedLocationYear, SaveObject->SavedLocationAreaCode);
 	}
+
+	// 배치 지점 복원 — 액터보다 먼저 채워야 레벨이 열릴 때 BeginPlay에서 읽을 수 있다
+	ImportPlacementSaveData(SaveObject->SavedPlacedPointIDs);
 
 	// 사진은 인벤토리 아이템이므로 인벤토리 복원(ImportInventorySaveData)에 포함된다
 

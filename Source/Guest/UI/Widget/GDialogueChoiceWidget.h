@@ -41,6 +41,10 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Text_ChoiceContent;
 
+	/** 선택지 라벨 줄바꿈 기준 폭(px). 0이면 부모 슬롯이 준 폭에서 접는다. */
+	UPROPERTY(EditAnywhere, Category = "Dialogue|Layout", meta = (ClampMin = "0.0"))
+	float ChoiceWrapTextAt = 0.f;
+
 	FName CachedNextNodeID;
 
 	UFUNCTION()
